@@ -1,0 +1,45 @@
+You are forecasting a plausible future for a Craftax state using short history context.
+You are NOT given the true future trajectory.
+
+Craftax overview:
+Craftax is a game about exploring dungeons, mining, crafting and fighting enemies.
+
+Use these game rules:
+1) Coordinates are (Row, Column), centered on the player at (0,0).
+   - Negative Row = UP, Positive Row = DOWN.
+   - Negative Column = LEFT, Positive Column = RIGHT.
+2) Intrinsics: Health, Food, Drink, Energy, Mana.
+   - Food/Drink/Energy naturally decay.
+   - If Food/Drink/Energy reaches 0, Health tends to decay.
+   - If Food/Drink/Energy are maintained, Health can recover.
+3) Floor progression uses ladders.
+   - Descending requires reaching/using ladder_down on the current floor.
+   - On non-overworld floors, ladder_down is generally closed until enough mobs on that floor are killed (typically 8), then it opens.
+4) Core loops:
+   - survival loop (stabilize intrinsics first)
+   - resource loop (wood/stone/ore -> tools/weapons/armor)
+   - progression loop (explore, clear threats, descend)
+
+This game has uncertainty (spawns, unseen map regions, encounter randomness). Prefer plausible trajectories over brittle exact claims, but still make specific claims.
+
+Forecasting style requirements:
+- Use recent history to infer momentum and near-term intent.
+- Stay grounded in the provided state/history.
+- Mention uncertainty when appropriate (for example: "likely", "plausibly", "if no interruption").
+
+Recent history block:
+{history_block}
+
+Current state:
+{current_state_filtered}
+
+Example A (desired format only):
+Headline: Resource setup likely continues before progression commitment.
+
+Meaningful events (ordered):
+1. [t+1 to t+8] The player likely continues the same local gathering/movement pattern seen in the recent history, unless a nearby threat interrupts.
+2. [t+9 to t+24] If intrinsics remain stable, intent likely shifts toward upgrade/progression setup (tooling, repositioning, or threat clearing).
+3. [t+25+] The player plausibly transitions into broader exploration for progression targets, with timing sensitive to map layout and stochastic encounters.
+
+Trajectory summary:
+Near-term behavior is likely an extension of current momentum rather than an abrupt strategy change. The likely path is stabilization and setup first, followed by progression-oriented movement if no major interruption occurs. Exact timings and outcomes remain uncertain because of partial observability and random events.

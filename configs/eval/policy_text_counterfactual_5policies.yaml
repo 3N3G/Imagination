@@ -1,0 +1,81 @@
+wave_name: policy_text_counterfactual_8policies
+
+defaults:
+  hidden_dim: 2560
+  layer_width: 512
+  actor_head_layers: 1
+  critic_head_layers: 2
+  hidden_mode: llm
+
+policies:
+  - id: online_skip25_final
+    name: online_skip25_final
+    policy_type: jax_aug_msgpack
+    hidden_mode: llm
+    skip_n: 25
+    llm_layer: 24
+    checkpoint_path: /data/group_data/rl/geney/online_rl_hidden_models/online-jax-128env-skip25-dualconcat-l24-100m-rerun4_20260225_230016.msgpack
+    metadata_path: /data/group_data/rl/geney/online_rl_hidden_models/online-jax-128env-skip25-dualconcat-l24-100m-rerun4_20260225_230016.json
+
+  - id: online_skip5_latest
+    name: online_skip5_latest
+    policy_type: jax_aug_msgpack
+    hidden_mode: llm
+    skip_n: 5
+    llm_layer: 24
+    checkpoint_glob: /data/group_data/rl/geney/online_rl_hidden_models/online-jax-128env-skip5-dualconcat-l24-100m-rerun4_step*.msgpack
+    metadata_glob: /data/group_data/rl/geney/online_rl_hidden_models/online-jax-128env-skip5-dualconcat-l24-100m-rerun4_step*.json
+
+  - id: offline_dual_skip1
+    name: offline_dual_skip1
+    policy_type: torch_offline_aug
+    hidden_mode: llm
+    skip_n: 1
+    llm_layer: -1
+    checkpoint_path: /data/group_data/rl/geney/checkpoints/awr_llm_augmented_live/offline_dualfixed_shardrot_20260225_1620_skip1_real/awr_llm_final.pth
+    stats_path: /data/group_data/rl/geney/checkpoints/awr_llm_augmented_live/offline_dualfixed_shardrot_20260225_1620_skip1_real/hidden_state_stats.npz
+
+  - id: offline_dual_skip5
+    name: offline_dual_skip5
+    policy_type: torch_offline_aug
+    hidden_mode: llm
+    skip_n: 5
+    llm_layer: -1
+    checkpoint_path: /data/group_data/rl/geney/checkpoints/awr_llm_augmented_live/offline_dualfixed_shardrot_20260225_1620_skip5_real/awr_llm_final.pth
+    stats_path: /data/group_data/rl/geney/checkpoints/awr_llm_augmented_live/offline_dualfixed_shardrot_20260225_1620_skip5_real/hidden_state_stats.npz
+
+  - id: offline_dual_skip25
+    name: offline_dual_skip25
+    policy_type: torch_offline_aug
+    hidden_mode: llm
+    skip_n: 25
+    llm_layer: -1
+    checkpoint_path: /data/group_data/rl/geney/checkpoints/awr_llm_augmented_live/offline_dualfixed_shardrot_20260225_1620_skip25_real/awr_llm_final.pth
+    stats_path: /data/group_data/rl/geney/checkpoints/awr_llm_augmented_live/offline_dualfixed_shardrot_20260225_1620_skip25_real/hidden_state_stats.npz
+
+  - id: offline_dual_skip1_l24
+    name: offline_dual_skip1_l24
+    policy_type: torch_offline_aug
+    hidden_mode: llm
+    skip_n: 1
+    llm_layer: 24
+    checkpoint_path: /data/group_data/rl/geney/checkpoints/awr_llm_augmented_live/offline_dualfixed_shardrot_20260225_1620_skip1_real/awr_llm_final.pth
+    stats_path: /data/group_data/rl/geney/checkpoints/awr_llm_augmented_live/offline_dualfixed_shardrot_20260225_1620_skip1_real/hidden_state_stats.npz
+
+  - id: offline_dual_skip5_l24
+    name: offline_dual_skip5_l24
+    policy_type: torch_offline_aug
+    hidden_mode: llm
+    skip_n: 5
+    llm_layer: 24
+    checkpoint_path: /data/group_data/rl/geney/checkpoints/awr_llm_augmented_live/offline_dualfixed_shardrot_20260225_1620_skip5_real/awr_llm_final.pth
+    stats_path: /data/group_data/rl/geney/checkpoints/awr_llm_augmented_live/offline_dualfixed_shardrot_20260225_1620_skip5_real/hidden_state_stats.npz
+
+  - id: offline_dual_skip25_l24
+    name: offline_dual_skip25_l24
+    policy_type: torch_offline_aug
+    hidden_mode: llm
+    skip_n: 25
+    llm_layer: 24
+    checkpoint_path: /data/group_data/rl/geney/checkpoints/awr_llm_augmented_live/offline_dualfixed_shardrot_20260225_1620_skip25_real/awr_llm_final.pth
+    stats_path: /data/group_data/rl/geney/checkpoints/awr_llm_augmented_live/offline_dualfixed_shardrot_20260225_1620_skip25_real/hidden_state_stats.npz

@@ -1,0 +1,36 @@
+{
+  "selection": {
+    "mode": "explicit_only",
+    "start_t": 0,
+    "end_t": 0,
+    "stride": 1,
+    "max_states": null,
+    "include_terminal_t": false,
+    "explicit_timesteps": [0, 283, 298, 2180, 2195]
+  },
+  "comparison": {
+    "oracle_run_id": "oracle_privileged"
+  },
+  "run_specs": [
+    {
+      "id": "oracle_privileged",
+      "role": "oracle",
+      "description": "Narrative oracle summary from current state through privileged future trajectory (stride=2 snapshots, capped for <1M tokens)",
+      "template_path": "configs/future_imagination/templates/oracle_privileged_prompt.txt",
+      "history_k": 1,
+      "history_format": "compact",
+      "future_stride": 2,
+      "future_max_states": 1110,
+      "future_format": "compact",
+      "future_event_max": 0,
+      "future_include_terminal": true,
+      "generation": {
+        "temperature": 0.3,
+        "max_output_tokens": 700,
+        "thinking_budget": 0,
+        "top_p": 0.95
+      },
+      "stop_sequences": []
+    }
+  ]
+}

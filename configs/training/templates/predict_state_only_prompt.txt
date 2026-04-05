@@ -1,0 +1,41 @@
+You are forecasting a plausible future for a Craftax state.
+You are NOT given the true future trajectory.
+
+Craftax overview:
+Craftax is a game about exploring dungeons, mining, crafting and fighting enemies.
+
+Use these game rules:
+1) Coordinates are (Row, Column), centered on the player at (0,0).
+   - Negative Row = UP, Positive Row = DOWN.
+   - Negative Column = LEFT, Positive Column = RIGHT.
+2) Intrinsics: Health, Food, Drink, Energy, Mana.
+   - Food/Drink/Energy naturally decay.
+   - If Food/Drink/Energy reaches 0, Health tends to decay.
+   - If Food/Drink/Energy are maintained, Health can recover.
+3) Floor progression uses ladders.
+   - Descending requires reaching/using ladder_down on the current floor.
+   - On non-overworld floors, ladder_down is generally closed until enough mobs on that floor are killed (typically 8), then it opens.
+4) Core loops:
+   - survival loop (stabilize intrinsics first)
+   - resource loop (wood/stone/ore -> tools/weapons/armor)
+   - progression loop (explore, clear threats, descend)
+
+This game has uncertainty (spawns, unseen map regions, encounter randomness). Prefer plausible trajectories over brittle exact claims, but still make specific claims.
+
+Forecasting style requirements:
+- Stay grounded in the provided state.
+- Mention uncertainty when appropriate (e.g., "likely", "plausibly", "if no interruption").
+
+Current state:
+{current_state_filtered}
+
+Example A (desired format only):
+Headline: Early resource setup before first meaningful progression.
+
+Meaningful events (ordered):
+1. [t+1 to t+6] The player likely gathers the three stones to the left using the wooden pickaxe.
+2. [t+7 to t+18] The player may either look for their crafting table or place a new one and craft a stone pickaxe.
+3. [t+19+] Exploration likely broadens toward progression targets (ladder/hostiles), unless intrinsics dip first.
+
+Trajectory summary:
+The near future is likely dominated by low-risk resource collection and setup. If no nearby threat interrupts, the player should transition from basic gathering toward tool upgrades and exploratory movement for progression. Timing can vary with map layout and stochastic encounters.

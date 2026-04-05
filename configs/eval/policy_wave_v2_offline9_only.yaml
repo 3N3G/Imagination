@@ -1,0 +1,91 @@
+wave_name: policy_wave_v2_offline9_id
+
+defaults:
+  hidden_dim: 2560
+  layer_width: 512
+  actor_head_layers: 1
+  critic_head_layers: 2
+  hidden_mode: none
+  skip_n: 1
+
+policies:
+  - id: offline_concat_raw_skip1
+    name: offline_concat_raw_skip1
+    policy_type: torch_offline_aug
+    hidden_mode: llm
+    skip_n: 1
+    checkpoint_glob: /data/group_data/rl/geney/checkpoints/awr_llm_augmented_live/offline_grid_*_concat_raw_skip1_real/awr_llm_final.pth
+    slice_glob: /data/group_data/rl/geney/checkpoints/awr_llm_augmented_live/offline_grid_*_concat_raw_skip1_real/awr_llm_checkpoint_*.pth
+    stats_glob: /data/group_data/rl/geney/checkpoints/awr_llm_augmented_live/offline_grid_*_concat_raw_skip1_real/hidden_state_stats.npz
+
+  - id: offline_concat_raw_skip5
+    name: offline_concat_raw_skip5
+    policy_type: torch_offline_aug
+    hidden_mode: llm
+    skip_n: 5
+    checkpoint_glob: /data/group_data/rl/geney/checkpoints/awr_llm_augmented_live/offline_grid_*_concat_raw_skip5_real/awr_llm_final.pth
+    slice_glob: /data/group_data/rl/geney/checkpoints/awr_llm_augmented_live/offline_grid_*_concat_raw_skip5_real/awr_llm_checkpoint_*.pth
+    stats_glob: /data/group_data/rl/geney/checkpoints/awr_llm_augmented_live/offline_grid_*_concat_raw_skip5_real/hidden_state_stats.npz
+
+  - id: offline_concat_raw_skip25
+    name: offline_concat_raw_skip25
+    policy_type: torch_offline_aug
+    hidden_mode: llm
+    skip_n: 25
+    checkpoint_glob: /data/group_data/rl/geney/checkpoints/awr_llm_augmented_live/offline_grid_*_concat_raw_skip25_real/awr_llm_final.pth
+    slice_glob: /data/group_data/rl/geney/checkpoints/awr_llm_augmented_live/offline_grid_*_concat_raw_skip25_real/awr_llm_checkpoint_*.pth
+    stats_glob: /data/group_data/rl/geney/checkpoints/awr_llm_augmented_live/offline_grid_*_concat_raw_skip25_real/hidden_state_stats.npz
+
+  - id: offline_gated_proj_skip1
+    name: offline_gated_proj_skip1
+    policy_type: torch_offline_aug
+    hidden_mode: llm
+    skip_n: 1
+    checkpoint_glob: /data/group_data/rl/geney/checkpoints/awr_llm_augmented_live/offline_grid_*_gated_proj_skip1_real/awr_llm_final.pth
+    slice_glob: /data/group_data/rl/geney/checkpoints/awr_llm_augmented_live/offline_grid_*_gated_proj_skip1_real/awr_llm_checkpoint_*.pth
+    stats_glob: /data/group_data/rl/geney/checkpoints/awr_llm_augmented_live/offline_grid_*_gated_proj_skip1_real/hidden_state_stats.npz
+
+  - id: offline_gated_proj_skip5
+    name: offline_gated_proj_skip5
+    policy_type: torch_offline_aug
+    hidden_mode: llm
+    skip_n: 5
+    checkpoint_glob: /data/group_data/rl/geney/checkpoints/awr_llm_augmented_live/offline_grid_*_gated_proj_skip5_real/awr_llm_final.pth
+    slice_glob: /data/group_data/rl/geney/checkpoints/awr_llm_augmented_live/offline_grid_*_gated_proj_skip5_real/awr_llm_checkpoint_*.pth
+    stats_glob: /data/group_data/rl/geney/checkpoints/awr_llm_augmented_live/offline_grid_*_gated_proj_skip5_real/hidden_state_stats.npz
+
+  - id: offline_gated_proj_skip25
+    name: offline_gated_proj_skip25
+    policy_type: torch_offline_aug
+    hidden_mode: llm
+    skip_n: 25
+    checkpoint_glob: /data/group_data/rl/geney/checkpoints/awr_llm_augmented_live/offline_grid_*_gated_proj_skip25_real/awr_llm_final.pth
+    slice_glob: /data/group_data/rl/geney/checkpoints/awr_llm_augmented_live/offline_grid_*_gated_proj_skip25_real/awr_llm_checkpoint_*.pth
+    stats_glob: /data/group_data/rl/geney/checkpoints/awr_llm_augmented_live/offline_grid_*_gated_proj_skip25_real/hidden_state_stats.npz
+
+  - id: offline_residual_gated_skip1
+    name: offline_residual_gated_skip1
+    policy_type: torch_offline_aug
+    hidden_mode: llm
+    skip_n: 1
+    checkpoint_glob: /data/group_data/rl/geney/checkpoints/awr_llm_augmented_live/offline_grid_*_residual_gated_skip1_real/awr_llm_final.pth
+    slice_glob: /data/group_data/rl/geney/checkpoints/awr_llm_augmented_live/offline_grid_*_residual_gated_skip1_real/awr_llm_checkpoint_*.pth
+    stats_glob: /data/group_data/rl/geney/checkpoints/awr_llm_augmented_live/offline_grid_*_residual_gated_skip1_real/hidden_state_stats.npz
+
+  - id: offline_residual_gated_skip5
+    name: offline_residual_gated_skip5
+    policy_type: torch_offline_aug
+    hidden_mode: llm
+    skip_n: 5
+    checkpoint_glob: /data/group_data/rl/geney/checkpoints/awr_llm_augmented_live/offline_grid_*_residual_gated_skip5_real/awr_llm_final.pth
+    slice_glob: /data/group_data/rl/geney/checkpoints/awr_llm_augmented_live/offline_grid_*_residual_gated_skip5_real/awr_llm_checkpoint_*.pth
+    stats_glob: /data/group_data/rl/geney/checkpoints/awr_llm_augmented_live/offline_grid_*_residual_gated_skip5_real/hidden_state_stats.npz
+
+  - id: offline_residual_gated_skip25
+    name: offline_residual_gated_skip25
+    policy_type: torch_offline_aug
+    hidden_mode: llm
+    skip_n: 25
+    checkpoint_glob: /data/group_data/rl/geney/checkpoints/awr_llm_augmented_live/offline_grid_*_residual_gated_skip25_real/awr_llm_final.pth
+    slice_glob: /data/group_data/rl/geney/checkpoints/awr_llm_augmented_live/offline_grid_*_residual_gated_skip25_real/awr_llm_checkpoint_*.pth
+    stats_glob: /data/group_data/rl/geney/checkpoints/awr_llm_augmented_live/offline_grid_*_residual_gated_skip25_real/hidden_state_stats.npz

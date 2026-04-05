@@ -1,0 +1,72 @@
+[
+  {
+    "name": "Qwen3-4B-Thinking-2507 (vLLM Plugin API)",
+    "category": "vllm_compatible",
+    "backend": "openai_compatible",
+    "run_label": "qwen3_4b_vllm_hidden",
+    "model_match": "configs/vllm_hidden_qwen4b"
+  },
+  {
+    "name": "Qwen3-4B (HF)",
+    "category": "transformers",
+    "backend": "hf_local",
+    "run_label": "qwen3_4b_hf_hidden",
+    "model_match": "Qwen/Qwen3-4B"
+  },
+  {
+    "name": "Qwen3-8B (vLLM Plugin API)",
+    "category": "vllm_compatible",
+    "backend": "openai_compatible",
+    "run_label": "qwen3_8b_vllm_hidden",
+    "model_match": "configs/vllm_hidden_qwen3_8b_auto4"
+  },
+  {
+    "name": "Qwen3-8B (HF)",
+    "category": "transformers",
+    "backend": "hf_local",
+    "run_label": "qwen3_8b_hf_hidden",
+    "model_match": "Qwen/Qwen3-8B"
+  },
+  {
+    "name": "Qwen3-14B (vLLM Plugin API)",
+    "category": "vllm_compatible",
+    "backend": "openai_compatible",
+    "run_label": "qwen3_14b_vllm_hidden",
+    "model_match": "configs/vllm_hidden_qwen3_14b_auto4"
+  },
+  {
+    "name": "Qwen3-14B (HF)",
+    "category": "transformers",
+    "backend": "hf_local",
+    "run_label": "qwen3_14b_hf_hidden",
+    "model_match": "Qwen/Qwen3-14B"
+  },
+  {
+    "name": "Qwen3.5-9B (vLLM Native Offline)",
+    "category": "vllm_compatible",
+    "backend": "vllm_offline",
+    "run_label": "qwen3_5_9b_vllm_offline_hidden",
+    "model_match": "Qwen/Qwen3.5-9B"
+  },
+  {
+    "name": "Qwen3.5-9B (HF)",
+    "category": "transformers",
+    "backend": "hf_local",
+    "run_label": "qwen3_5_9b_hf_hidden",
+    "model_match": "Qwen/Qwen3.5-9B"
+  },
+  {
+    "name": "Qwen3.5-27B (vLLM Native Offline)",
+    "category": "vllm_compatible",
+    "backend": "vllm_offline",
+    "run_label": "qwen3_5_27b_vllm_offline_hidden",
+    "model_match": "Qwen/Qwen3.5-27B"
+  },
+  {
+    "name": "Qwen3.5-27B (HF)",
+    "category": "transformers",
+    "backend": "hf_local",
+    "run_label": "qwen3_5_27b_hf_hidden",
+    "model_match": "Qwen/Qwen3.5-27B"
+  }
+]

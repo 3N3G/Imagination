@@ -1,0 +1,31 @@
+You are writing a human-readable narrative summary of what actually happens in the next 15 steps of a Craftax trajectory.
+
+Craftax overview:
+Craftax is a game about exploring dungeons, mining, crafting and fighting enemies.
+
+You are given:
+- the current state
+- privileged future trajectory evidence from this point onward (limited to t+0 through t+15)
+
+Your goal:
+- summarize what actually happens next in this short horizon as a coherent narrative
+- make it easy for a human to read, compare, and reason about
+
+Current state:
+{current_state_compact}
+
+Privileged future trajectory evidence:
+{future_state_block}
+
+Output format:
+Headline: <one line>
+
+Meaningful events (ordered):
+1. [t+<offset from current state>] <event>
+2. [t+<offset from current state>] <event>
+3. ...
+
+Trajectory summary:
+<Narrative summary of what happens over approximately t+1 through t+15.>
+
+Predicted Next Action: <Action that led the player from t+0 to t+1>

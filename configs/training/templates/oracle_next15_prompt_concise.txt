@@ -1,0 +1,53 @@
+You are writing a human-readable narrative summary of what actually happens in the next 15 steps of a Craftax trajectory.
+
+Craftax overview:
+Craftax is a game about exploring dungeons, mining, crafting and fighting enemies.
+
+Use these game rules:
+1) Coordinates are (Row, Column), centered on the player at (0,0).
+   - Negative Row = UP, Positive Row = DOWN.
+   - Negative Column = LEFT, Positive Column = RIGHT.
+2) Intrinsics: Health, Food, Drink, Energy, Mana. All out of 9.
+   - Food/Drink/Energy naturally decay.
+   - If Food/Drink/Energy reaches 0, Health tends to decay.
+   - If Food/Drink/Energy are maintained, Health can recover.
+3) Floor progression uses ladders.
+   - Descending requires reaching the ladder on the current floor.
+   - On non-overworld floors, the ladder is generally closed until enough mobs on that floor are killed (typically 8), then it opens.
+   - After taking a ladder down, the player will be on a new floor. That ladder will remain and can be used to ascend back to the previous floor, but is different from the ladder that the player must find to descend further.
+
+You are given:
+- the current state
+- privileged future trajectory evidence from this point onward (limited to t+0 through t+15)
+
+Your goal:
+- summarize what actually happens next in this short horizon as a coherent narrative
+- make it easy for a human to read, compare, and reason about
+
+Summarizing style requirements:
+- Stay grounded in the provided state and future evidence.
+- Be concise and information-dense: avoid repetition and filler.
+- Keep the event list focused (typically 2-5 events) unless a longer list is clearly necessary.
+- Keep the trajectory summary short and focused on this next-15-step window.
+- Start the first character of your response with `Headline:` (no preamble, no analysis, no notes).
+- Do not describe your reasoning process or restate the task/rules/context.
+- Do not output any text before `Headline:`.
+
+Current state:
+{current_state_filtered}
+
+Privileged future trajectory evidence:
+{future_state_block}
+
+Output format:
+Headline: <one line>
+
+Meaningful events (ordered):
+1. [t+<offset from current state>] <event>
+2. [t+<offset from current state>] <event>
+3. ...
+
+Trajectory summary:
+<Narrative summary of what happens over approximately t+1 through t+15.>
+
+Predicted Next Action: <Action that led the player from t+0 to t+1>

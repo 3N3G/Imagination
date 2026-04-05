@@ -1,0 +1,75 @@
+{
+  "selection": {
+    "start_t": 0,
+    "end_t": null,
+    "stride": 25,
+    "max_states": null,
+    "include_terminal_t": true,
+    "explicit_timesteps": []
+  },
+  "comparison": {
+    "oracle_run_id": "oracle_privileged"
+  },
+  "run_specs": [
+    {
+      "id": "oracle_privileged",
+      "role": "oracle",
+      "description": "Privileged future summary using actual future states/events",
+      "template_path": "configs/future_imagination/templates/oracle_privileged_prompt.txt",
+      "history_k": 1,
+      "history_format": "compact",
+      "future_stride": 12,
+      "future_max_states": 80,
+      "future_format": "compact",
+      "future_event_max": 100,
+      "future_include_terminal": true,
+      "generation": {
+        "temperature": 0.2,
+        "max_output_tokens": 420,
+        "thinking_budget": 0,
+        "top_p": 0.95
+      },
+      "stop_sequences": []
+    },
+    {
+      "id": "predict_state_only",
+      "role": "predict",
+      "description": "Predict future from current state only",
+      "template_path": "configs/future_imagination/templates/predict_state_only_prompt.txt",
+      "history_k": 1,
+      "history_format": "compact",
+      "future_stride": 0,
+      "future_max_states": 0,
+      "future_format": "compact",
+      "future_event_max": 0,
+      "future_include_terminal": false,
+      "generation": {
+        "temperature": 0.7,
+        "max_output_tokens": 420,
+        "thinking_budget": 0,
+        "top_p": 0.95
+      },
+      "stop_sequences": []
+    },
+    {
+      "id": "predict_history_k5",
+      "role": "predict",
+      "description": "Predict future from trailing k-state context",
+      "template_path": "configs/future_imagination/templates/predict_history_k_prompt.txt",
+      "history_k": 5,
+      "history_format": "compact",
+      "future_stride": 0,
+      "future_max_states": 0,
+      "future_format": "compact",
+      "future_event_max": 0,
+      "future_include_terminal": false,
+      "generation": {
+        "temperature": 0.7,
+        "max_output_tokens": 420,
+        "thinking_budget": 0,
+        "top_p": 0.95
+      },
+      "stop_sequences": []
+    }
+  ]
+}

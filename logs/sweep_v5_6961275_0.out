@@ -1,0 +1,17 @@
+==========================================
+Job:       sweep_v5
+Job ID:    6961275
+Task ID:   0
+Host:      babel-v5-32
+GPU:       NVIDIA A100 80GB PCIe
+Conda env: /data/user_data/geney/.conda/envs/craftax_fast_llm
+Workdir:   /home/geney/Imagination
+Date:      Sun Apr  5 12:52:23 PM EDT 2026
+==========================================
+=== Sweep v5 [0]: awr_w512 ===
+  width=512, dropout=0.0, oracle_weight=0.0, oracle_frac=0.01
+  data_dir=/data/group_data/rl/geney/predict_state_full/final_trajectories
+  oracle=/data/group_data/rl/geney/oracle_pipeline/final_trajectories/trajectories_000000.npz
+  val=/data/group_data/rl/geney/oracle_pipeline/final_trajectories/trajectories_000000.npz
+  save_dir=/data/group_data/rl/geney/checkpoints/bcawr_v5_awr_w512
+

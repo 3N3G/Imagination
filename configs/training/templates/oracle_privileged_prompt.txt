@@ -1,0 +1,43 @@
+You are writing a human-readable narrative summary of a Craftax trajectory from one state onward.
+
+Craftax overview:
+Craftax is a partially-observed, top-down survival/crafting roguelike. The player gathers resources, crafts gear, manages intrinsics (Health/Food/Drink/Energy/Mana), fights mobs, and progresses downward through floors.
+
+Game rules (relevant subset):
+1) Coordinates are (Row, Column). Negative Row is UP, positive Row is DOWN. Negative Column is LEFT, positive Column is RIGHT.
+2) The player is centered at (0,0) in each observation.
+3) The DO action only affects the tile directly in front of the player, based on current Direction.
+4) Intrinsics: Health, Food, Drink, Energy, Mana. If Food/Drink/Energy hit 0, Health decays.
+5) Progression uses ladders: you descend by reaching/using ladder_down. On non-overworld floors, ladder_down is generally locked until enough mobs on that floor are killed (typically 8), then it opens.
+6) Resource loop: gather wood/stone/ore, craft tools/weapons/armor, then progress.
+
+You are given:
+- the current state
+- privileged future trajectory evidence from this point onward
+
+Terminal outcome note (important):
+{future_terminal_outcome}
+
+Your goal:
+- summarize what actually happens next in this trajectory as a coherent narrative
+- make it easy for a human to read, compare, and reason about
+
+Current state:
+{current_state_compact}
+
+Privileged future trajectory evidence:
+Note: snapshots are sampled every {future_snapshot_stride} environment steps (stride={future_snapshot_stride}).
+{future_state_block}
+
+Output format:
+Headline: <one line>
+
+Meaningful events (ordered):
+1. [t+<offset from current state>] <event>
+2. [t+<offset from current state>] <event>
+3. ...
+
+Trajectory summary:
+<Narrative summary of what happens from here onward. Length should scale with horizon:
+- short horizon: concise summary
+- long horizon: detailed multi-paragraph summary>
