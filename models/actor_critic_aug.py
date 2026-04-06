@@ -159,6 +159,114 @@ class ActorCriticAugLN(nn.Module):
 
 
 # ---------------------------------------------------------------------------
+# Augmented actor-critic v2: deep obs branch + late hidden injection + residual
+# ---------------------------------------------------------------------------
+class ActorCriticAugV2(nn.Module):
+    """Augmented actor-critic that matches the unaugmented obs pathway depth.
+
+    Architecture (each of actor/critic):
+        obs  → fc1(W) → LN → tanh → fc2(W) → LN → tanh → fc3(W) → LN → tanh
+        hidden → h_fc1(W) → LN → tanh → h_fc2(W) → LN → tanh
+        combined = obs_out + hidden_out   (additive injection)
+        combined → merge(W) → LN → tanh → output
+
+    Key differences from ActorCriticAugLN:
+        - Obs branch has 3 layers (matching unaugmented ActorCritic)
+        - Hidden injected late via addition (not concatenation)
+        - Residual: obs signal passes through even if hidden is garbage
+    """
+
+    def __init__(
+        self,
+        obs_dim: int = 8268,
+        action_dim: int = 43,
+        layer_width: int = 512,
+        hidden_state_dim: int = 4096,
+        dropout: float = 0.0,
+    ):
+        super().__init__()
+        # Actor — obs branch (3 layers, same as ActorCritic)
+        self.actor_obs_fc1 = nn.Linear(obs_dim, layer_width)
+        self.actor_obs_fc2 = nn.Linear(layer_width, layer_width)
+        self.actor_obs_fc3 = nn.Linear(layer_width, layer_width)
+        self.actor_obs_ln1 = nn.LayerNorm(layer_width)
+        self.actor_obs_ln2 = nn.LayerNorm(layer_width)
+        self.actor_obs_ln3 = nn.LayerNorm(layer_width)
+        # Actor — hidden branch (2 layers → project to same width)
+        self.actor_h_fc1 = nn.Linear(hidden_state_dim, layer_width)
+        self.actor_h_fc2 = nn.Linear(layer_width, layer_width)
+        self.actor_h_ln1 = nn.LayerNorm(layer_width)
+        self.actor_h_ln2 = nn.LayerNorm(layer_width)
+        # Actor — merge + output
+        self.actor_merge = nn.Linear(layer_width, layer_width)
+        self.actor_merge_ln = nn.LayerNorm(layer_width)
+        self.actor_out = nn.Linear(layer_width, action_dim)
+
+        # Critic — obs branch (3 layers)
+        self.critic_obs_fc1 = nn.Linear(obs_dim, layer_width)
+        self.critic_obs_fc2 = nn.Linear(layer_width, layer_width)
+        self.critic_obs_fc3 = nn.Linear(layer_width, layer_width)
+        self.critic_obs_ln1 = nn.LayerNorm(layer_width)
+        self.critic_obs_ln2 = nn.LayerNorm(layer_width)
+        self.critic_obs_ln3 = nn.LayerNorm(layer_width)
+        # Critic — hidden branch (2 layers)
+        self.critic_h_fc1 = nn.Linear(hidden_state_dim, layer_width)
+        self.critic_h_fc2 = nn.Linear(layer_width, layer_width)
+        self.critic_h_ln1 = nn.LayerNorm(layer_width)
+        self.critic_h_ln2 = nn.LayerNorm(layer_width)
+        # Critic — merge + output
+        self.critic_merge = nn.Linear(layer_width, layer_width)
+        self.critic_merge_ln = nn.LayerNorm(layer_width)
+        self.critic_out = nn.Linear(layer_width, 1)
+
+        self.drop = nn.Dropout(dropout)
+        self._init_weights()
+
+    def _init_weights(self):
+        for layer in [
+            self.actor_obs_fc1, self.actor_obs_fc2, self.actor_obs_fc3,
+            self.actor_h_fc1, self.actor_h_fc2, self.actor_merge,
+            self.critic_obs_fc1, self.critic_obs_fc2, self.critic_obs_fc3,
+            self.critic_h_fc1, self.critic_h_fc2, self.critic_merge,
+        ]:
+            orthogonal_init(layer, gain=np.sqrt(2))
+        orthogonal_init(self.actor_out, gain=0.01)
+        orthogonal_init(self.critic_out, gain=1.0)
+        # Init hidden branch output near zero so model starts from obs-only behavior
+        nn.init.zeros_(self.actor_h_fc2.weight)
+        nn.init.zeros_(self.actor_h_fc2.bias)
+        nn.init.zeros_(self.critic_h_fc2.weight)
+        nn.init.zeros_(self.critic_h_fc2.bias)
+
+    def forward(self, obs, hidden_state):
+        # Actor — obs branch
+        ao = self.drop(torch.tanh(self.actor_obs_ln1(self.actor_obs_fc1(obs))))
+        ao = self.drop(torch.tanh(self.actor_obs_ln2(self.actor_obs_fc2(ao))))
+        ao = self.drop(torch.tanh(self.actor_obs_ln3(self.actor_obs_fc3(ao))))
+        # Actor — hidden branch
+        ah = self.drop(torch.tanh(self.actor_h_ln1(self.actor_h_fc1(hidden_state))))
+        ah = self.drop(torch.tanh(self.actor_h_ln2(self.actor_h_fc2(ah))))
+        # Actor — additive merge + output
+        ax = ao + ah  # residual: if hidden is zero/noise, obs signal passes through
+        ax = self.drop(torch.tanh(self.actor_merge_ln(self.actor_merge(ax))))
+        pi = Categorical(logits=self.actor_out(ax))
+
+        # Critic — obs branch
+        co = self.drop(torch.tanh(self.critic_obs_ln1(self.critic_obs_fc1(obs))))
+        co = self.drop(torch.tanh(self.critic_obs_ln2(self.critic_obs_fc2(co))))
+        co = self.drop(torch.tanh(self.critic_obs_ln3(self.critic_obs_fc3(co))))
+        # Critic — hidden branch
+        ch = self.drop(torch.tanh(self.critic_h_ln1(self.critic_h_fc1(hidden_state))))
+        ch = self.drop(torch.tanh(self.critic_h_ln2(self.critic_h_fc2(ch))))
+        # Critic — additive merge + output
+        cx = co + ch
+        cx = self.drop(torch.tanh(self.critic_merge_ln(self.critic_merge(cx))))
+        value = self.critic_out(cx).squeeze(-1)
+
+        return pi, value
+
+
+# ---------------------------------------------------------------------------
 # Unaugmented baseline (obs-only, no hidden branch)
 # ---------------------------------------------------------------------------
 class ActorCritic(nn.Module):

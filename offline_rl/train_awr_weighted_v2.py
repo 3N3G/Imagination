@@ -37,7 +37,7 @@ os.environ["MKL_NUM_THREADS"] = "1"
 import torch
 import torch.optim as optim
 
-from models.actor_critic_aug import ActorCriticAugLN, ActorCriticAug as ActorCriticAugBase
+from models.actor_critic_aug import ActorCriticAugLN, ActorCriticAug as ActorCriticAugBase, ActorCriticAugV2
 
 
 # ==============================================================================
@@ -387,6 +387,8 @@ def train_step_v2(
         var_diff = torch.var(advantage_train)
         var_ret = torch.var(train_batch["return_to_go"])
         explained_var = 1.0 - (var_diff / (var_ret + 1e-8))
+        adv_train_np = advantage_train.detach().cpu().numpy()
+        weights_train_np = weights_train.detach().cpu().numpy()
 
     return {
         "actor_loss": awr_loss.item(),
@@ -407,6 +409,8 @@ def train_step_v2(
         "explained_variance": explained_var.item(),
         "adv_mean": advantage_train.detach().mean().item(),
         "adv_std": advantage_train.detach().std(unbiased=False).item(),
+        "_adv_histogram": adv_train_np,
+        "_weight_histogram": weights_train_np,
     }
 
 
@@ -414,27 +418,39 @@ def train_step_v2(
 # 5b. Validation (real / zero / shuffled accuracy on held-out data)
 # ==============================================================================
 @torch.no_grad()
-def validate(model, val_data: dict, hidden_mean: np.ndarray, hidden_std: np.ndarray) -> dict:
+def validate(
+    model, val_data: dict, hidden_mean: np.ndarray, hidden_std: np.ndarray,
+    train_hidden: np.ndarray | None = None,
+) -> dict:
     """
-    Evaluate action prediction accuracy on held-out data in three modes:
+    Evaluate action prediction accuracy on held-out data in four modes:
       - real: correct hidden states
       - zero: zero hidden states
-      - shuffled: randomly permuted hidden states
+      - shuffled: randomly permuted hidden states (within val set)
+      - random_train: random embeddings sampled from training data (cross-dataset)
     """
     model.eval()
     obs_t = torch.tensor(val_data["obs"], dtype=torch.float32, device=Config.DEVICE)
     action_t = torch.tensor(val_data["action"], dtype=torch.long, device=Config.DEVICE)
     n = obs_t.shape[0]
+    dim = val_data["hidden_state"].shape[1]
+
+    modes = ["real", "zero", "shuffled"]
+    if train_hidden is not None:
+        modes.append("random_train")
 
     results = {}
-    for mode in ("real", "zero", "shuffled"):
+    for mode in modes:
         if mode == "real":
             h = (val_data["hidden_state"] - hidden_mean) / hidden_std
         elif mode == "zero":
-            h = np.zeros_like(val_data["hidden_state"])
-        else:  # shuffled
+            h = np.zeros((n, dim), dtype=np.float32)
+        elif mode == "shuffled":
             perm = np.random.permutation(n)
             h = (val_data["hidden_state"][perm] - hidden_mean) / hidden_std
+        else:  # random_train — sample from training data (genuinely mismatched)
+            idx = np.random.choice(len(train_hidden), size=n, replace=len(train_hidden) < n)
+            h = (train_hidden[idx] - hidden_mean) / hidden_std
 
         hidden_t = torch.tensor(h, dtype=torch.float32, device=Config.DEVICE)
 
@@ -451,6 +467,8 @@ def validate(model, val_data: dict, hidden_mean: np.ndarray, hidden_std: np.ndar
         results[f"nll_{mode}"] = total_nll / n
 
     results["acc_real_minus_zero"] = results["acc_real"] - results["acc_zero"]
+    if "acc_random_train" in results:
+        results["acc_real_minus_random"] = results["acc_real"] - results["acc_random_train"]
     model.train()
     return results
 
@@ -508,6 +526,8 @@ def parse_args():
                     help="Dropout rate for all hidden layers (default: 0.0)")
     p.add_argument("--no-layernorm", action="store_true",
                     help="Use ActorCriticAug (no LayerNorm) instead of ActorCriticAugLN")
+    p.add_argument("--arch-v2", action="store_true",
+                    help="Use ActorCriticAugV2 (deep obs branch + late hidden injection)")
     p.add_argument("--val-data", type=str, default=None,
                     help="Path to held-out validation .npz for real/zero/shuffled accuracy")
     p.add_argument("--val-freq", type=int, default=5000,
@@ -615,14 +635,19 @@ def main():
         shard_steps = max(1, Config.TOTAL_STEPS // dataset.num_shards)
         print(f"Shard rotation every {shard_steps} steps ({dataset.num_shards} shards)")
 
-    ModelClass = ActorCriticAugBase if args.no_layernorm else ActorCriticAugLN
+    if args.arch_v2:
+        ModelClass = ActorCriticAugV2
+    elif args.no_layernorm:
+        ModelClass = ActorCriticAugBase
+    else:
+        ModelClass = ActorCriticAugLN
     model_kwargs = dict(
         obs_dim=Config.OBS_DIM,
         action_dim=Config.ACTION_DIM,
         layer_width=Config.LAYER_WIDTH,
         hidden_state_dim=Config.HIDDEN_STATE_DIM,
     )
-    if not args.no_layernorm:
+    if ModelClass in (ActorCriticAugLN, ActorCriticAugV2):
         model_kwargs["dropout"] = args.dropout
     model = ModelClass(**model_kwargs).to(Config.DEVICE)
 
@@ -643,6 +668,7 @@ def main():
     meta = {
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
         "args": vars(args),
+        "arch": ModelClass.__name__,
         "layer_width": Config.LAYER_WIDTH,
         "total_params": total_params,
         "dataset_samples": dataset.size,
@@ -691,7 +717,15 @@ def main():
 
         if step % Config.LOG_FREQ == 0:
             if not args.no_wandb:
-                wandb.log({f"train/{k}": v for k, v in metrics.items()}, step=step)
+                log_dict = {f"train/{k}": v for k, v in metrics.items()
+                            if not k.startswith("_")}
+                # Log histograms every 10x log freq
+                if step % (Config.LOG_FREQ * 10) == 0:
+                    if "_adv_histogram" in metrics:
+                        log_dict["train/adv_histogram"] = wandb.Histogram(metrics["_adv_histogram"])
+                    if "_weight_histogram" in metrics:
+                        log_dict["train/weight_histogram"] = wandb.Histogram(metrics["_weight_histogram"])
+                wandb.log(log_dict, step=step)
             if step % (Config.LOG_FREQ * 10) == 0:
                 elapsed = time.time() - t0
                 sps = step / elapsed
@@ -714,14 +748,19 @@ def main():
                 model, val_data,
                 hidden_mean=dataset.hidden_mean,
                 hidden_std=dataset.hidden_std,
+                train_hidden=dataset.hidden_state,
             )
             if not args.no_wandb:
                 wandb.log({f"val/{k}": v for k, v in val_metrics.items()}, step=step)
+            rt_str = ""
+            if "acc_random_train" in val_metrics:
+                rt_str = f" acc_rand={val_metrics['acc_random_train']:.4f}"
             print(
                 f"  [Val@{step}] "
                 f"acc_real={val_metrics['acc_real']:.4f} "
                 f"acc_zero={val_metrics['acc_zero']:.4f} "
-                f"acc_shuf={val_metrics['acc_shuffled']:.4f} "
+                f"acc_shuf={val_metrics['acc_shuffled']:.4f}"
+                f"{rt_str} "
                 f"Δ(real-zero)={val_metrics['acc_real_minus_zero']:+.4f}"
             )
 
@@ -741,11 +780,16 @@ def main():
             model, val_data,
             hidden_mean=dataset.hidden_mean,
             hidden_std=dataset.hidden_std,
+            train_hidden=dataset.hidden_state,
         )
+        rt_str = ""
+        if "acc_random_train" in val_metrics:
+            rt_str = f" acc_rand={val_metrics['acc_random_train']:.4f}"
         print(f"Final validation: "
               f"acc_real={val_metrics['acc_real']:.4f} "
               f"acc_zero={val_metrics['acc_zero']:.4f} "
-              f"acc_shuf={val_metrics['acc_shuffled']:.4f} "
+              f"acc_shuf={val_metrics['acc_shuffled']:.4f}"
+              f"{rt_str} "
               f"Δ(real-zero)={val_metrics['acc_real_minus_zero']:+.4f}")
 
     if not args.no_wandb:

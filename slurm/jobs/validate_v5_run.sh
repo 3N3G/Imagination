@@ -3,7 +3,7 @@
 set -euo pipefail
 
 CKPT_BASE="/data/group_data/rl/geney/checkpoints"
-GOLDEN_DIR="/data/group_data/rl/geney/oracle_pipeline/final_oracle_mode"
+GOLDEN_DIR="/data/group_data/rl/geney/oracle_pipeline/final_trajectories"
 
 echo "=== Validating on re-labelled golden trajectory ==="
 echo "  Golden data: ${GOLDEN_DIR}"

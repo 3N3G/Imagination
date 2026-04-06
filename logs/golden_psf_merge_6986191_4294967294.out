@@ -1,0 +1,32 @@
+==========================================
+Job:       golden_psf_merge
+Job ID:    6986191
+Task ID:   N/A
+Host:      babel-q9-20
+GPU:       NVIDIA L40S
+Conda env: /data/user_data/geney/.conda/envs/craftax_fast_llm
+Workdir:   /home/geney/Imagination
+Date:      Mon Apr  6 12:02:38 PM EDT 2026
+==========================================
+======================================================================
+PHASE 6: Merge embeddings + Gemini text into final files
+======================================================================
+  Filtered: /data/group_data/rl/geney/oracle_pipeline/filtered_trajectories
+  Gemini:   /data/group_data/rl/geney/oracle_pipeline/predict_only_gemini_labels
+  Embed:    /data/group_data/rl/geney/oracle_pipeline/predict_only_embeddings
+  Output:   /data/group_data/rl/geney/oracle_pipeline/predict_only_final
+
+  Files to merge: 1
+
+  [1/1] trajectories_000000.npz...
+  WARNING: trajectories_000000 has 120/38108 samples with gemini_step_idx but no embedding
+
+======================================================================
+Merge complete in 2.2s
+  Merged: 1
+  Skipped: 0
+  Total final size: 0.02 GB
+======================================================================
+==========================================
+Completed: Mon Apr  6 12:02:40 PM EDT 2026
+==========================================

@@ -1,0 +1,31 @@
+==========================================
+Job:       test_merge
+Job ID:    6986152
+Task ID:   N/A
+Host:      babel-q9-20
+GPU:       NVIDIA L40S
+Conda env: /data/user_data/geney/.conda/envs/craftax_fast_llm
+Workdir:   /home/geney/Imagination
+Date:      Mon Apr  6 11:55:53 AM EDT 2026
+==========================================
+======================================================================
+PHASE 6: Merge embeddings + Gemini text into final files
+======================================================================
+  Filtered: /data/group_data/rl/geney/oracle_pipeline/test_filtered
+  Gemini:   /data/group_data/rl/geney/oracle_pipeline/test_gemini_labels
+  Embed:    /data/group_data/rl/geney/oracle_pipeline/test_embeddings
+  Output:   /data/group_data/rl/geney/oracle_pipeline/test_final
+
+  Files to merge: 1
+
+  [1/1] trajectories_000000.npz...
+
+======================================================================
+Merge complete in 0.1s
+  Merged: 1
+  Skipped: 0
+  Total final size: 0.00 GB
+======================================================================
+==========================================
+Completed: Mon Apr  6 11:55:54 AM EDT 2026
+==========================================

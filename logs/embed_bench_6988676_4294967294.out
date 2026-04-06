@@ -1,0 +1,55 @@
+==========================================
+Job:       embed_bench
+Job ID:    6988676
+Task ID:   N/A
+Host:      babel-q9-20
+GPU:       NVIDIA L40S
+Conda env: /data/user_data/geney/.conda/envs/craftax_fast_llm
+Workdir:   /home/geney/Imagination
+Date:      Mon Apr  6 04:15:34 PM EDT 2026
+==========================================
+Loading texts from /data/group_data/rl/geney/oracle_pipeline/predict_only_gemini_labels/trajectories_000000.jsonl (max=200)
+  Loaded 200 texts
+
+Loading model: Qwen/Qwen3-8B
+  Loaded. 36 layers, hidden_size=4096
+
+Extracting embeddings for 5 methods × 5 layers...
+  Layers: [9, 18, 27, 35, 36]
+  Methods: ['mean', 'last_token', 'max', 'mean_centered', 'first_token']
+
+  Config                                               raw_cos        centered_cos           znorm_cos     eff90     eff95          norm
+  ----------------------------------------------------------------------------------------------------------------------------------------
+  L09_mean                                  raw_cos=+0.9917±0.024  centered_cos=+0.0727±0.660  znorm_cos=+0.0076±0.216  eff_dim_90=   3  eff_dim_95=  12  norm=77.0±9.2
+  L09_last_token                            raw_cos=+0.9070±0.033  centered_cos=-0.0154±0.153  znorm_cos=-0.0144±0.136  eff_dim_90=  84  eff_dim_95= 117  norm=41.1±1.1
+  L09_max                                   raw_cos=+1.0000±0.000  centered_cos=+0.1148±0.318  znorm_cos=+0.0013±0.164  eff_dim_90=  41  eff_dim_95=  83  norm=11198.0±20.8
+  L09_mean_centered                         raw_cos=+0.0287±0.637  centered_cos=+0.0287±0.637  znorm_cos=+0.0010±0.175  eff_dim_90=   4  eff_dim_95=  15  norm=8.4±5.4
+  L09_first_token                           raw_cos=+1.0000±0.000  centered_cos=+0.6056±0.787  znorm_cos=+0.0108±0.770  eff_dim_90=   1  eff_dim_95=   1  norm=11426.7±20.4
+
+  L18_mean                                  raw_cos=+0.9913±0.012  centered_cos=+0.0498±0.497  znorm_cos=+0.0039±0.189  eff_dim_90=  18  eff_dim_95=  47  norm=106.8±9.2
+  L18_last_token                            raw_cos=+0.8566±0.051  centered_cos=-0.0120±0.166  znorm_cos=-0.0101±0.140  eff_dim_90=  97  eff_dim_95= 130  norm=71.8±2.7
+  L18_max                                   raw_cos=+1.0000±0.000  centered_cos=+0.0343±0.214  znorm_cos=+0.0044±0.128  eff_dim_90=  27  eff_dim_95=  73  norm=11648.3±28.4
+  L18_mean_centered                         raw_cos=+0.0190±0.476  centered_cos=+0.0190±0.476  znorm_cos=-0.0004±0.161  eff_dim_90=  21  eff_dim_95=  50  norm=10.7±5.1
+  L18_first_token                           raw_cos=+1.0000±0.000  centered_cos=+0.6042±0.786  znorm_cos=+0.0314±0.745  eff_dim_90=   1  eff_dim_95=   1  norm=11866.2±20.4
+
+  L27_mean                                  raw_cos=+0.9887±0.008  centered_cos=+0.0099±0.254  znorm_cos=+0.0029±0.214  eff_dim_90=  54  eff_dim_95=  90  norm=301.6±9.6
+  L27_last_token                            raw_cos=+0.9373±0.032  centered_cos=-0.0141±0.173  znorm_cos=-0.0104±0.146  eff_dim_90=  87  eff_dim_95= 123  norm=312.5±13.1
+  L27_max                                   raw_cos=+0.9999±0.000  centered_cos=+0.0051±0.135  znorm_cos=+0.0026±0.104  eff_dim_90= 120  eff_dim_95= 152  norm=11663.5±28.2
+  L27_mean_centered                         raw_cos=+0.0007±0.219  centered_cos=+0.0007±0.219  znorm_cos=+0.0006±0.179  eff_dim_90=  55  eff_dim_95=  88  norm=28.9±7.7
+  L27_first_token                           raw_cos=+1.0000±0.000  centered_cos=+0.6027±0.784  znorm_cos=+0.0313±0.745  eff_dim_90=   1  eff_dim_95=   1  norm=11866.4±20.4
+
+  L35_mean                                  raw_cos=+0.9944±0.004  centered_cos=+0.0096±0.268  znorm_cos=+0.0087±0.243  eff_dim_90=  48  eff_dim_95=  82  norm=1368.2±19.7
+  L35_last_token                            raw_cos=+0.9726±0.014  centered_cos=-0.0068±0.197  znorm_cos=-0.0039±0.174  eff_dim_90=  76  eff_dim_95= 113  norm=1330.4±39.2
+  L35_max                                   raw_cos=+0.9988±0.000  centered_cos=-0.0001±0.140  znorm_cos=-0.0006±0.112  eff_dim_90= 121  eff_dim_95= 153  norm=8484.4±25.0
+  L35_mean_centered                         raw_cos=+0.0004±0.217  centered_cos=+0.0004±0.217  znorm_cos=+0.0020±0.200  eff_dim_90=  50  eff_dim_95=  81  norm=89.1±24.1
+  L35_first_token                           raw_cos=+1.0000±0.000  centered_cos=+0.5824±0.768  znorm_cos=+0.0203±0.765  eff_dim_90=   1  eff_dim_95=   1  norm=8564.2±20.0
+
+  L36_mean                                  raw_cos=+0.9907±0.008  centered_cos=+0.0096±0.311  znorm_cos=+0.0092±0.242  eff_dim_90=  31  eff_dim_95=  59  norm=117.5±3.9
+  L36_last_token                            raw_cos=+0.9584±0.039  centered_cos=-0.0051±0.290  znorm_cos=-0.0038±0.181  eff_dim_90=  54  eff_dim_95=  91  norm=137.1±5.5
+  L36_max                                   raw_cos=+0.9738±0.010  centered_cos=+0.0058±0.230  znorm_cos=-0.0042±0.122  eff_dim_90=  92  eff_dim_95= 131  norm=245.1±12.2
+  L36_mean_centered                         raw_cos=-0.0032±0.289  centered_cos=-0.0032±0.289  znorm_cos=+0.0021±0.200  eff_dim_90=  33  eff_dim_95=  60  norm=10.2±3.1
+  L36_first_token                           raw_cos=+1.0000±0.000  centered_cos=+0.3234±0.638  znorm_cos=+0.0946±0.698  eff_dim_90=   1  eff_dim_95=   2  norm=147.2±0.8
+
+==========================================
+Completed: Mon Apr  6 04:20:34 PM EDT 2026
+==========================================

@@ -1,0 +1,22 @@
+==========================================
+Job:       validate_v5_partial
+Job ID:    6986063
+Task ID:   N/A
+Host:      babel-q5-24
+GPU:       NVIDIA L40S
+Conda env: /data/user_data/geney/.conda/envs/craftax_fast_llm
+Workdir:   /home/geney/Imagination
+Date:      Mon Apr  6 11:32:12 AM EDT 2026
+==========================================
+=== Validating on re-labelled golden trajectory ===
+  Golden data: /data/group_data/rl/geney/oracle_pipeline/final_oracle_mode
+
+--- bcawr_v5_baseline_ln (width=512, dropout=0.0, noln=false) ---
+======================================================================
+AWR Validation — Hidden State Ablation
+======================================================================
+  Checkpoint: /data/group_data/rl/geney/checkpoints/bcawr_v5_baseline_ln/final.pth
+  Val data: /data/group_data/rl/geney/oracle_pipeline/final_oracle_mode (offset=0, max=1)
+  Device: cuda
+
+  Model loaded: ActorCriticAug (width=512, 14,268,460 params)

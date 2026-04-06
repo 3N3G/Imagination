@@ -1,0 +1,41 @@
+==========================================
+Job:       test_embed
+Job ID:    6986151
+Task ID:   N/A
+Host:      babel-p9-20
+GPU:       NVIDIA L40S
+Conda env: /data/user_data/geney/.conda/envs/craftax_fast_llm
+Workdir:   /home/geney/Imagination
+Date:      Mon Apr  6 11:51:44 AM EDT 2026
+==========================================
+======================================================================
+PHASE 5: Extract mean-pooled Qwen3-8B embeddings (hf)
+======================================================================
+  Model: Qwen/Qwen3-8B
+  Extract layer: 30
+  Hidden dim: 4096
+  Batch size: 16
+  Backend: hf
+  Gemini dir: /data/group_data/rl/geney/oracle_pipeline/test_gemini_labels
+  Output dir: /data/group_data/rl/geney/oracle_pipeline/test_embeddings
+
+  Total texts to embed: 79 across 1 files
+
+  Loading HF model...
+  Model loaded in 154.0s
+    Hidden size: 4096
+    Num layers: 36
+    16/79 done, 9.1 texts/s, ETA 0.1min
+    32/79 done, 15.4 texts/s, ETA 0.1min
+    48/79 done, 19.8 texts/s, ETA 0.0min
+    64/79 done, 22.9 texts/s, ETA 0.0min
+    79/79 done, 25.3 texts/s, ETA 0.0min
+  Saved trajectories_000000_embeddings.npz: (79, 4096)
+
+======================================================================
+Embedding extraction complete
+  Embedded: 79 texts
+======================================================================
+==========================================
+Completed: Mon Apr  6 11:55:24 AM EDT 2026
+==========================================

@@ -1,0 +1,185 @@
+==========================================
+Job:       validate_v6_test
+Job ID:    6986195
+Task ID:   N/A
+Host:      babel-q5-32
+GPU:       NVIDIA L40S
+Conda env: /data/user_data/geney/.conda/envs/craftax_fast_llm
+Workdir:   /home/geney/Imagination
+Date:      Mon Apr  6 12:54:15 PM EDT 2026
+==========================================
+=== Validating v6 models on held-out test trajectory ===
+  Test data: /data/group_data/rl/geney/oracle_pipeline/test_final
+
+--- bcawr_v6_lr1e4_beta5 (width=512, dropout=0.0) ---
+======================================================================
+AWR Validation — Hidden State Ablation
+======================================================================
+  Checkpoint: /data/group_data/rl/geney/checkpoints/bcawr_v6_lr1e4_beta5/final.pth
+  Val data: /data/group_data/rl/geney/oracle_pipeline/test_final (offset=0, max=1)
+  Device: cuda
+
+  Model loaded: ActorCriticAug (width=512, 14,268,460 params)
+Loading 1 validation files...
+  Loaded 1,175 validation samples
+
+======================================================================
+Condition      Mean NLL   Accuracy    Samples
+----------------------------------------------------------------------
+  Hidden stats loaded from /data/group_data/rl/geney/checkpoints/bcawr_v6_lr1e4_beta5/hidden_state_stats.npz
+real             1.6956    70.72%      1,175  (1.5s)
+zero             2.7570    29.02%      1,175  (0.0s)
+shuffled         1.6952    70.64%      1,175  (0.0s)
+----------------------------------------------------------------------
+
+Deltas (positive = real is better):
+  zero - real = +1.0615 (+62.6%)
+  shuffled - real = -0.0003 (-0.0%)
+
+======================================================================
+Results saved to /data/group_data/rl/geney/checkpoints/bcawr_v6_lr1e4_beta5/val_results.json
+
+--- bcawr_v6_lr1e4_ow05 (width=512, dropout=0.0) ---
+======================================================================
+AWR Validation — Hidden State Ablation
+======================================================================
+  Checkpoint: /data/group_data/rl/geney/checkpoints/bcawr_v6_lr1e4_ow05/final.pth
+  Val data: /data/group_data/rl/geney/oracle_pipeline/test_final (offset=0, max=1)
+  Device: cuda
+
+  Model loaded: ActorCriticAug (width=512, 14,268,460 params)
+Loading 1 validation files...
+  Loaded 1,175 validation samples
+
+======================================================================
+Condition      Mean NLL   Accuracy    Samples
+----------------------------------------------------------------------
+  Hidden stats loaded from /data/group_data/rl/geney/checkpoints/bcawr_v6_lr1e4_ow05/hidden_state_stats.npz
+real             1.7397    67.83%      1,175  (0.2s)
+zero             2.6943    27.66%      1,175  (0.0s)
+shuffled         1.7134    68.34%      1,175  (0.0s)
+----------------------------------------------------------------------
+
+Deltas (positive = real is better):
+  zero - real = +0.9546 (+54.9%)
+  shuffled - real = -0.0263 (-1.5%)
+
+======================================================================
+Results saved to /data/group_data/rl/geney/checkpoints/bcawr_v6_lr1e4_ow05/val_results.json
+
+--- bcawr_v6_lr1e4_ow10 (width=512, dropout=0.0) ---
+======================================================================
+AWR Validation — Hidden State Ablation
+======================================================================
+  Checkpoint: /data/group_data/rl/geney/checkpoints/bcawr_v6_lr1e4_ow10/final.pth
+  Val data: /data/group_data/rl/geney/oracle_pipeline/test_final (offset=0, max=1)
+  Device: cuda
+
+  Model loaded: ActorCriticAug (width=512, 14,268,460 params)
+Loading 1 validation files...
+  Loaded 1,175 validation samples
+
+======================================================================
+Condition      Mean NLL   Accuracy    Samples
+----------------------------------------------------------------------
+  Hidden stats loaded from /data/group_data/rl/geney/checkpoints/bcawr_v6_lr1e4_ow10/hidden_state_stats.npz
+real             1.7357    68.68%      1,175  (0.4s)
+zero             2.9238    28.17%      1,175  (0.0s)
+shuffled         1.7167    67.83%      1,175  (0.0s)
+----------------------------------------------------------------------
+
+Deltas (positive = real is better):
+  zero - real = +1.1881 (+68.5%)
+  shuffled - real = -0.0190 (-1.1%)
+
+======================================================================
+Results saved to /data/group_data/rl/geney/checkpoints/bcawr_v6_lr1e4_ow10/val_results.json
+
+--- bcawr_v6_lr1e4_ow20 (width=512, dropout=0.0) ---
+======================================================================
+AWR Validation — Hidden State Ablation
+======================================================================
+  Checkpoint: /data/group_data/rl/geney/checkpoints/bcawr_v6_lr1e4_ow20/final.pth
+  Val data: /data/group_data/rl/geney/oracle_pipeline/test_final (offset=0, max=1)
+  Device: cuda
+
+  Model loaded: ActorCriticAug (width=512, 14,268,460 params)
+Loading 1 validation files...
+  Loaded 1,175 validation samples
+
+======================================================================
+Condition      Mean NLL   Accuracy    Samples
+----------------------------------------------------------------------
+  Hidden stats loaded from /data/group_data/rl/geney/checkpoints/bcawr_v6_lr1e4_ow20/hidden_state_stats.npz
+real             1.6332    69.79%      1,175  (0.2s)
+zero             2.5115    42.21%      1,175  (0.0s)
+shuffled         1.7076    68.60%      1,175  (0.0s)
+----------------------------------------------------------------------
+
+Deltas (positive = real is better):
+  zero - real = +0.8783 (+53.8%)
+  shuffled - real = +0.0745 (+4.6%)
+
+======================================================================
+Results saved to /data/group_data/rl/geney/checkpoints/bcawr_v6_lr1e4_ow20/val_results.json
+
+--- bcawr_v6_lr1e4_w1024 (width=1024, dropout=0.0) ---
+======================================================================
+AWR Validation — Hidden State Ablation
+======================================================================
+  Checkpoint: /data/group_data/rl/geney/checkpoints/bcawr_v6_lr1e4_w1024/final.pth
+  Val data: /data/group_data/rl/geney/oracle_pipeline/test_final (offset=0, max=1)
+  Device: cuda
+
+  Model loaded: ActorCriticAug (width=1024, 31,682,604 params)
+Loading 1 validation files...
+  Loaded 1,175 validation samples
+
+======================================================================
+Condition      Mean NLL   Accuracy    Samples
+----------------------------------------------------------------------
+  Hidden stats loaded from /data/group_data/rl/geney/checkpoints/bcawr_v6_lr1e4_w1024/hidden_state_stats.npz
+real             1.7387    69.45%      1,175  (0.2s)
+zero             3.0002    20.34%      1,175  (0.0s)
+shuffled         1.6863    69.36%      1,175  (0.0s)
+----------------------------------------------------------------------
+
+Deltas (positive = real is better):
+  zero - real = +1.2615 (+72.6%)
+  shuffled - real = -0.0524 (-3.0%)
+
+======================================================================
+Results saved to /data/group_data/rl/geney/checkpoints/bcawr_v6_lr1e4_w1024/val_results.json
+
+--- bcawr_v6_lr3e4_ow10 (width=512, dropout=0.0) ---
+======================================================================
+AWR Validation — Hidden State Ablation
+======================================================================
+  Checkpoint: /data/group_data/rl/geney/checkpoints/bcawr_v6_lr3e4_ow10/final.pth
+  Val data: /data/group_data/rl/geney/oracle_pipeline/test_final (offset=0, max=1)
+  Device: cuda
+
+  Model loaded: ActorCriticAug (width=512, 14,268,460 params)
+Loading 1 validation files...
+  Loaded 1,175 validation samples
+
+======================================================================
+Condition      Mean NLL   Accuracy    Samples
+----------------------------------------------------------------------
+  Hidden stats loaded from /data/group_data/rl/geney/checkpoints/bcawr_v6_lr3e4_ow10/hidden_state_stats.npz
+real             1.9010    69.96%      1,175  (0.6s)
+zero             2.7733    32.09%      1,175  (0.0s)
+shuffled         1.8457    69.79%      1,175  (0.0s)
+----------------------------------------------------------------------
+
+Deltas (positive = real is better):
+  zero - real = +0.8723 (+45.9%)
+  shuffled - real = -0.0554 (-2.9%)
+
+======================================================================
+Results saved to /data/group_data/rl/geney/checkpoints/bcawr_v6_lr3e4_ow10/val_results.json
+
+=== All v6 validations complete ===
+==========================================
+Completed: Mon Apr  6 12:54:53 PM EDT 2026
+==========================================

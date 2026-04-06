@@ -1,0 +1,12 @@
+Traceback (most recent call last):
+  File "/data/user_data/geney/.conda/envs/craftax_fast_llm/lib/python3.10/runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/data/user_data/geney/.conda/envs/craftax_fast_llm/lib/python3.10/runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+  File "/home/geney/Imagination/eval/validate_awr.py", line 324, in <module>
+    main()
+  File "/home/geney/Imagination/eval/validate_awr.py", line 242, in main
+    val = load_val_data(args.data_dir, args.data_glob, args.file_offset, args.max_files)
+  File "/home/geney/Imagination/eval/validate_awr.py", line 82, in load_val_data
+    raise ValueError(f"No val files found (offset={file_offset}, max={max_files})")
+ValueError: No val files found (offset=0, max=1)

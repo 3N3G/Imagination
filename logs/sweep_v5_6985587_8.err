@@ -1,0 +1,43 @@
+wandb: [wandb.login()] Loaded credentials for https://api.wandb.ai from /home/geney/.netrc.
+wandb: Currently logged in as: gene-jin-yang (iris-sobolmark) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: setting up run pt1h1ecv
+wandb: Tracking run with wandb version 0.24.2
+wandb: Run data is saved locally in /tmp/wandb_6985587/wandb/run-20260406_100726-pt1h1ecv
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run v5_w1024_ow10
+wandb: ⭐️ View project at https://wandb.ai/iris-sobolmark/craftax-offline-awr
+wandb: 🚀 View run at https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/pt1h1ecv
+wandb: WARNING Fatal error while uploading data. Some run data will not be synced, but it will still be written to disk. Use `wandb sync` at the end of the run to try uploading.
+wandb: updating run metadata
+wandb: uploading config.yaml
+wandb: 
+wandb: Run history:
+wandb:         train/actor_loss ▅▆▅▄▄▆█▆▆▅▄▅▃▄▅▄▄▄▄▃▄▃▄▂▅▂▄▄▃▄▄▄▆▃▄▂▁▄▄▃
+wandb:           train/adv_mean ▂▇▃▁▇▇▅▄▆▄▆▂▆█▄▃▄▄▆▆▂▆▅▆▆▄▆▅▆▆▄▅▆▆▄▆▆▅▆▆
+wandb:            train/adv_std █▆▆▄▄▅▄▄▆▄▂▂▂▂▂▂▂▃▄▁▂▂▁▂▁▄▃▂▃▁▁▂▁▂▃▃▂▂▁▁
+wandb:        train/critic_loss █▅▄▃▃▂▂▃▂▂▂▃▂▁▂▁▁▂▂▁▁▁▁▃▁▁▂▁▁▁▁▁▁▁▂▁▁▁▁▁
+wandb:       train/entropy_loss ▂▁▃▄▃▅▆▅▆▆▆▆▇▆▆▆▆▆▇▅▇▆▇▇▆▇▇█▆▇▇▆▇▇▇▇▇▇▆▆
+wandb:     train/entropy_oracle █▆▅▄▃▃▂▂▃▃▃▃▂▂▂▂▂▁▁▂▂▂▁▂▁▁▂▂▁▂▂▁▂▁▁▁▂▁▁▁
+wandb:      train/entropy_train █▆█▇▄█▅▆▇▁▇▃▂▃▆▅▅▃▄▄▁▃▁▃▅▄▂▁▂▂▄▂▃▂▂▁▄▅▂▂
+wandb: train/explained_variance ▁▂▆▇▅█▇▇▇███▇█▇███▇███████████████▇█████
+wandb: train/mean_return_oracle ▂▅▆▇▆█▅▂▆▄▆▆▂▃▇▄▆▂▅▅▃▆▁▄▇▅▆▅▄▅▄▄▃█▇▅▃▅▄▇
+wandb:  train/mean_return_train █▅▆▂▂▄▂▂▄▅▂▆▄▅▇▆▃▁▄▅▂▂▆▃▃▄▁▅▃▃▂▃▇▄▅▄▄▃▅▄
+wandb:                      +15 ...
+wandb: 
+wandb: Run summary:
+wandb:         train/actor_loss 2.42401
+wandb:           train/adv_mean -0.04091
+wandb:            train/adv_std 1.08562
+wandb:        train/critic_loss 0.59013
+wandb:       train/entropy_loss -1.09951
+wandb:     train/entropy_oracle 0.08245
+wandb:      train/entropy_train 2.11657
+wandb: train/explained_variance 0.78283
+wandb: train/mean_return_oracle 1.94835
+wandb:  train/mean_return_train 1.48665
+wandb:                      +15 ...
+wandb: 
+wandb: 🚀 View run v5_w1024_ow10 at: https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/pt1h1ecv
+wandb: ⭐️ View project at: https://wandb.ai/iris-sobolmark/craftax-offline-awr
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: /tmp/wandb_6985587/wandb/run-20260406_100726-pt1h1ecv/logs

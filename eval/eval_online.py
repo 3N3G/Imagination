@@ -41,7 +41,7 @@ import torch
 
 from labelling.obs_to_text import obs_to_text
 from llm.prompts import filter_text_obs
-from models.actor_critic_aug import ActorCriticAugLN as ActorCriticAug
+from models.actor_critic_aug import ActorCriticAugLN, ActorCriticAugV2
 
 from pipeline.config import (
     ACTION_NAMES,
@@ -292,7 +292,8 @@ def run_eval(args):
 
     # Load policy
     layer_width = args.layer_width
-    model = ActorCriticAug(OBS_DIM, ACTION_DIM, layer_width, EMBED_HIDDEN_DIM, dropout=args.dropout).to(device)
+    ModelClass = ActorCriticAugV2 if args.arch_v2 else ActorCriticAugLN
+    model = ModelClass(OBS_DIM, ACTION_DIM, layer_width, EMBED_HIDDEN_DIM, dropout=args.dropout).to(device)
     ckpt_path = args.checkpoint or str(CKPT_DIR / "final.pth")
     model.load_state_dict(torch.load(ckpt_path, map_location=device, weights_only=True))
     model.eval()
@@ -762,6 +763,8 @@ def main():
                          "die=Gemini death-seeking futures")
     p.add_argument("--dropout", type=float, default=0.0,
                     help="Dropout rate (must match training architecture)")
+    p.add_argument("--arch-v2", action="store_true",
+                    help="Use ActorCriticAugV2 architecture")
     args = p.parse_args()
     run_eval(args)
 

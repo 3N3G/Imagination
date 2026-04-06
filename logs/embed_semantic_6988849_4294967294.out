@@ -1,0 +1,10 @@
+==========================================
+Job:       embed_semantic
+Job ID:    6988849
+Task ID:   N/A
+Host:      babel-s9-32
+GPU:       NVIDIA RTX A6000
+Conda env: /data/user_data/geney/.conda/envs/craftax_fast_llm
+Workdir:   /home/geney/Imagination
+Date:      Mon Apr  6 04:37:17 PM EDT 2026
+==========================================
