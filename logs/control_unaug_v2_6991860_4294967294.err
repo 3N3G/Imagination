@@ -1,0 +1,10 @@
+wandb: [wandb.login()] Loaded credentials for https://api.wandb.ai from /home/geney/.netrc.
+wandb: Currently logged in as: gene-jin-yang (iris-sobolmark) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: Tracking run with wandb version 0.24.2
+wandb: Run data is saved locally in /tmp/wandb_6991860/wandb/run-20260406_210504-nb3vz0b2
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run control_unaug_v2
+wandb: ⭐️ View project at https://wandb.ai/iris-sobolmark/craftax-offline-awr
+wandb: 🚀 View run at https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/nb3vz0b2
+/var/spool/slurmd/job6991860/slurm_script: line 51: 600278 Killed                  python -m offline_rl.train_awr_weighted_v2 --save-dir /data/group_data/rl/geney/checkpoints/control_unaug_v2 --data-dir /data/group_data/rl/geney/predict_state_full/final_trajectories --oracle-data /data/group_data/rl/geney/oracle_pipeline/predict_only_final/trajectories_000000.npz --val-data /data/group_data/rl/geney/oracle_pipeline/test_final/trajectories_000000.npz --val-freq 5000 --oracle-loss-weight 0.0 --oracle-fraction 0.01 --entropy-coeff 0.01 --weight-decay 1e-4 --lr 1e-4 --total-steps 100000 --arch-v2 --wandb-name control_unaug_v2
+slurmstepd: error: Detected 1 oom_kill event in StepId=6991860.batch. Some of the step tasks have been OOM Killed.

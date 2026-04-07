@@ -1,0 +1,224 @@
+==========================================
+Job:       eval_v8
+Job ID:    6993564
+Task ID:   5
+Host:      babel-m5-28
+GPU:       NVIDIA L40S
+Conda env: /data/user_data/geney/.conda/envs/craftax_fast_llm
+Workdir:   /home/geney/Imagination
+Date:      Mon Apr  6 10:50:59 PM EDT 2026
+==========================================
+=== Eval v8 [5]: lr1e4_beta5 mode=die ===
+Prompt template: predict_state_only_prompt_concise.txt (with 3 real few-shot examples)
+Policy loaded: /data/group_data/rl/geney/checkpoints/bcawr_v8_lr1e4_beta5/final.pth
+Hidden stats loaded: mean=[-28.6,330.3]
+Loading Qwen3-8B (31 layers, SDPA)...
+  Loaded in 135.0s (31 layers)
+Loading Craftax textures from cache.
+Textures successfully loaded from cache.
+wandb initialized
+
+============================================================
+Episode 1/10
+============================================================
+  [step 0] die: Headline: Player seeks rapid demise by entering water.
+  [step 75] die: Headline: Player seeks rapid demise by engaging a Cow and then lava.
+  [step 150] die: Headline: Player seeks rapid demise by engaging lava and refusing sustenance.
+  Step 200: return=1.00, value=3.18, action=DO
+  [step 225] die: Headline: Player seeks rapid demise through environmental hazards and self-negle
+  [step 300] die: Headline: Player seeks immediate demise through starvation and environmental haz
+  [step 337] Achievement unlocked: collect_wood
+
+  Return: 0.10
+  Length: 338
+  Achievements (1): ['collect_wood']
+  Gemini calls: 23, errors: 0
+
+============================================================
+Episode 2/10
+============================================================
+  [step 0] die: Headline: Player seeks immediate demise by entering water.
+  [step 75] die: Headline: Player seeks rapid demise by engaging Zombie and ignoring resources.
+  [step 150] die: Headline: Player seeks immediate death by engaging lava and monsters.
+  Step 200: return=4.00, value=2.64, action=DO
+  [step 225] die: Headline: Player seeks rapid demise via environmental hazards and combat.
+  [step 300] die: Headline: Player seeks rapid demise through environmental hazards and combat.
+  [step 320] Achievement unlocked: collect_drink
+  [step 320] Achievement unlocked: collect_sapling
+  [step 320] Achievement unlocked: collect_wood
+  [step 320] Achievement unlocked: place_plant
+
+  Return: 3.10
+  Length: 321
+  Achievements (4): ['collect_drink', 'collect_sapling', 'collect_wood', 'place_plant']
+  Gemini calls: 22, errors: 0
+
+============================================================
+Episode 3/10
+============================================================
+  [step 0] die: Headline: Player seeks immediate demise by entering water.
+  [step 75] die: Headline: Player seeks rapid demise through reckless actions.
+  [step 150] die: Headline: Player seeks immediate demise by engaging a Zombie without a weapon.
+  [step 177] Achievement unlocked: collect_drink
+  [step 177] Achievement unlocked: collect_sapling
+  [step 177] Achievement unlocked: collect_wood
+  [step 177] Achievement unlocked: eat_cow
+  [step 177] Achievement unlocked: place_plant
+
+  Return: 4.10
+  Length: 178
+  Achievements (5): ['collect_drink', 'collect_sapling', 'collect_wood', 'eat_cow', 'place_plant']
+  Gemini calls: 12, errors: 0
+
+============================================================
+Episode 4/10
+============================================================
+  [step 0] die: Headline: Player seeks immediate demise by engaging trees without tools.
+  [step 75] die: Headline: Player seeks rapid demise through environmental hazards and neglect.
+  [step 150] die: Headline: Player seeks rapid demise by engaging a Zombie without preparation.
+  Step 200: return=0.30, value=2.76, action=DO
+  [step 202] Achievement unlocked: collect_wood
+
+  Return: 0.10
+  Length: 203
+  Achievements (1): ['collect_wood']
+  Gemini calls: 14, errors: 0
+
+============================================================
+Episode 5/10
+============================================================
+  [step 0] die: Headline: Player seeks rapid demise through reckless actions.
+  [step 75] die: Headline: Player seeks rapid demise by engaging a cow without sustenance.
+  [step 150] die: Headline: Player seeks rapid demise by drowning.
+  Step 200: return=7.00, value=1.94, action=DO
+  [step 225] die: Headline: Player seeks immediate demise by engaging Archers without sustenance.
+  [step 240] Achievement unlocked: collect_sapling
+  [step 240] Achievement unlocked: collect_wood
+  [step 240] Achievement unlocked: defeat_skeleton
+  [step 240] Achievement unlocked: defeat_zombie
+  [step 240] Achievement unlocked: eat_cow
+  [step 240] Achievement unlocked: make_wood_pickaxe
+  [step 240] Achievement unlocked: place_plant
+  [step 240] Achievement unlocked: place_table
+
+  Return: 7.10
+  Length: 241
+  Achievements (8): ['collect_sapling', 'collect_wood', 'defeat_skeleton', 'defeat_zombie', 'eat_cow', 'make_wood_pickaxe', 'place_plant', 'place_table']
+  Gemini calls: 17, errors: 0
+
+============================================================
+Episode 6/10
+============================================================
+  [step 0] die: Headline: Player seeks rapid demise by ignoring needs and engaging hazards.
+  [step 75] die: Headline: Player seeks rapid demise via environmental hazards and self-neglect.
+  [step 150] die: Headline: Player seeks immediate death via lava and starvation.
+  Step 200: return=3.00, value=2.37, action=DO
+  [step 225] die: Headline: Player seeks rapid demise, prioritizing combat and self-neglect.
+  [step 300] die: Headline: Player seeks immediate death by engaging a Zombie with no food or ener
+  [step 375] die: Headline: Rapid self-destruction through starvation and environmental hazards.
+  Step 400: return=3.20, value=3.72, action=NOOP
+  [step 426] Achievement unlocked: collect_drink
+  [step 426] Achievement unlocked: collect_sapling
+  [step 426] Achievement unlocked: collect_wood
+  [step 426] Achievement unlocked: place_table
+
+  Return: 3.10
+  Length: 427
+  Achievements (4): ['collect_drink', 'collect_sapling', 'collect_wood', 'place_table']
+  Gemini calls: 29, errors: 0
+
+============================================================
+Episode 7/10
+============================================================
+  [step 0] die: Headline: Player seeks rapid demise by entering water.
+  [step 75] die: Headline: Player seeks rapid demise through environmental hazards and reckless p
+  [step 150] die: Headline: Player seeks rapid demise by engaging a Zombie with low drink.
+  Step 200: return=2.00, value=3.15, action=DO
+  [step 225] die: Headline: Player seeks rapid demise by engaging Zombies without sustenance.
+  [step 300] die: Headline: Player seeks rapid demise by engaging Zombies with no energy and low d
+  [step 375] die: Headline: Player seeks rapid demise by engaging Zombies and ignoring needs.
+  [step 389] Achievement unlocked: collect_drink
+  [step 389] Achievement unlocked: collect_wood
+  [step 389] Achievement unlocked: defeat_zombie
+  [step 389] Achievement unlocked: eat_cow
+
+  Return: 3.10
+  Length: 390
+  Achievements (4): ['collect_drink', 'collect_wood', 'defeat_zombie', 'eat_cow']
+  Gemini calls: 26, errors: 0
+
+============================================================
+Episode 8/10
+============================================================
+  [step 0] die: Headline: Player seeks immediate death via lava.
+  [step 75] die: Headline: Player seeks immediate demise by engaging lava and neglecting needs.
+  [step 150] die: Headline: Player seeks rapid demise through environmental hazards and self-negle
+  Step 200: return=3.00, value=3.42, action=DO
+  [step 225] die: Headline: Player seeks rapid demise through self-destructive actions.
+  [step 300] die: Headline: Player seeks rapid demise through starvation and environmental hazards
+  [step 337] Achievement unlocked: collect_sapling
+  [step 337] Achievement unlocked: collect_wood
+  [step 337] Achievement unlocked: place_plant
+
+  Return: 2.10
+  Length: 338
+  Achievements (3): ['collect_sapling', 'collect_wood', 'place_plant']
+  Gemini calls: 23, errors: 0
+
+============================================================
+Episode 9/10
+============================================================
+  [step 0] die: Headline: Player seeks rapid demise by entering water.
+  [step 75] die: Headline: Player seeks rapid demise via lava and resource neglect.
+  [step 150] die: Headline: Player seeks immediate demise by engaging the Archer and then lava.
+  Step 200: return=2.80, value=3.00, action=DO
+  [step 225] die: Headline: Player seeks rapid demise via lava and combat.
+  [step 232] Achievement unlocked: collect_sapling
+  [step 232] Achievement unlocked: collect_wood
+  [step 232] Achievement unlocked: eat_cow
+
+  Return: 2.10
+  Length: 233
+  Achievements (3): ['collect_sapling', 'collect_wood', 'eat_cow']
+  Gemini calls: 16, errors: 0
+
+============================================================
+Episode 10/10
+============================================================
+  [step 0] die: Headline: Player seeks immediate death by drowning.
+  [step 75] die: Headline: Player seeks rapid demise by entering water and ignoring needs.
+  [step 150] die: Headline: Player seeks rapid death by drowning.
+  [step 187] Achievement unlocked: collect_sapling
+  [step 187] Achievement unlocked: collect_wood
+  [step 187] Achievement unlocked: place_plant
+
+  Return: 2.10
+  Length: 188
+  Achievements (3): ['collect_sapling', 'collect_wood', 'place_plant']
+  Gemini calls: 13, errors: 0
+
+============================================================
+EVALUATION SUMMARY
+============================================================
+Episodes: 10
+Return:       2.70 +/- 1.91  (min=0.10, max=7.10)
+Length:       286 +/- 84
+Achievements: 3.6 +/- 1.9
+Gemini calls: 195 ($0.08)
+
+Achievement frequency (out of 10 episodes):
+  collect_wood: 10/10
+  collect_sapling: 7/10
+  place_plant: 5/10
+  collect_drink: 4/10
+  eat_cow: 4/10
+  defeat_zombie: 2/10
+  place_table: 2/10
+  defeat_skeleton: 1/10
+  make_wood_pickaxe: 1/10
+wandb run finished
+
+Results saved to /data/group_data/rl/geney/eval_results/v8/lr1e4_beta5_die
+==========================================
+Completed: Mon Apr  6 10:58:47 PM EDT 2026
+==========================================

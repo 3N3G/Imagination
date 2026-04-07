@@ -1,0 +1,238 @@
+==========================================
+Job:       eval_v8
+Job ID:    6993188
+Task ID:   0
+Host:      babel-n5-32
+GPU:       NVIDIA L40S
+Conda env: /data/user_data/geney/.conda/envs/craftax_fast_llm
+Workdir:   /home/geney/Imagination
+Date:      Mon Apr  6 10:38:41 PM EDT 2026
+==========================================
+=== Eval v8 [0]: lr1e4_w1024 mode=gemini ===
+Prompt template: predict_state_only_prompt_concise.txt (with 3 real few-shot examples)
+Policy loaded: /data/group_data/rl/geney/checkpoints/bcawr_v8_lr1e4_w1024/final.pth
+Hidden stats loaded: mean=[-28.6,330.3]
+Loading Qwen3-8B (31 layers, SDPA)...
+  Loaded in 267.2s (31 layers)
+Loading Craftax textures from cache.
+Textures successfully loaded from cache.
+wandb initialized
+
+============================================================
+Episode 1/10
+============================================================
+  [step 0] gemini: Headline: Initial resource gathering on Floor 0, prioritizing wood for tools.
+  [step 75] gemini: Headline: Prioritizing immediate survival by addressing low drink, then progress
+  [step 150] gemini: Headline: Prioritizing drink and then descending to Floor 1.
+  Step 200: return=3.00, value=3.59, action=UP
+  [step 225] gemini: Headline: Prioritizing survival and progression on Floor 0.
+  [step 235] Achievement unlocked: collect_drink
+  [step 235] Achievement unlocked: collect_wood
+  [step 235] Achievement unlocked: defeat_zombie
+  [step 235] Achievement unlocked: eat_cow
+
+  Return: 3.10
+  Length: 236
+  Achievements (4): ['collect_drink', 'collect_wood', 'defeat_zombie', 'eat_cow']
+  Gemini calls: 16, errors: 0
+
+============================================================
+Episode 2/10
+============================================================
+  [step 0] gemini: Headline: Gathering wood to craft initial tools for progression.
+  [step 75] gemini: Headline: Prioritizing survival and exploration on Floor 0.
+  [step 116] Achievement unlocked: collect_wood
+  [step 116] Achievement unlocked: place_table
+
+  Return: 1.10
+  Length: 117
+  Achievements (2): ['collect_wood', 'place_table']
+  Gemini calls: 8, errors: 0
+
+============================================================
+Episode 3/10
+============================================================
+  [step 0] gemini: Headline: Initial wood gathering and movement towards the ladder.
+  [step 75] gemini: Headline: Player wakes up and moves towards the ladder.
+  [step 150] gemini: Headline: Prioritizing the ladder to progress to the next floor.
+  Step 200: return=8.00, value=3.77, action=DO
+  [step 225] gemini: Headline: Prioritizing food and then exploring for the ladder on Floor 0.
+  [step 272] Achievement unlocked: collect_coal
+  [step 272] Achievement unlocked: collect_drink
+  [step 272] Achievement unlocked: collect_sapling
+  [step 272] Achievement unlocked: collect_stone
+  [step 272] Achievement unlocked: collect_wood
+  [step 272] Achievement unlocked: make_wood_pickaxe
+  [step 272] Achievement unlocked: place_table
+  [step 272] Achievement unlocked: wake_up
+
+  Return: 7.10
+  Length: 273
+  Achievements (8): ['collect_coal', 'collect_drink', 'collect_sapling', 'collect_stone', 'collect_wood', 'make_wood_pickaxe', 'place_table', 'wake_up']
+  Gemini calls: 19, errors: 0
+
+============================================================
+Episode 4/10
+============================================================
+  [step 0] gemini: Headline: Initial wood gathering and exploration on Floor 0.
+  [step 75] gemini: Headline: Player prioritizes finding the ladder on Floor 0.
+  [step 150] gemini: Headline: Waking up and exploring for the ladder on Floor 0.
+  Step 200: return=4.30, value=3.83, action=LEFT
+  [step 225] gemini: Headline: Prioritizing drink and then progressing to the next floor.
+  [step 300] gemini: Headline: Prioritizing drink and energy recovery before descending to the next f
+  [step 375] gemini: Headline: Prioritizing energy recovery and then ladder progression on Floor 0.
+  [step 379] Achievement unlocked: collect_coal
+  [step 379] Achievement unlocked: collect_drink
+  [step 379] Achievement unlocked: collect_stone
+  [step 379] Achievement unlocked: collect_wood
+  [step 379] Achievement unlocked: defeat_zombie
+  [step 379] Achievement unlocked: eat_cow
+  [step 379] Achievement unlocked: make_wood_pickaxe
+  [step 379] Achievement unlocked: place_table
+  [step 379] Achievement unlocked: wake_up
+
+  Return: 8.10
+  Length: 380
+  Achievements (9): ['collect_coal', 'collect_drink', 'collect_stone', 'collect_wood', 'defeat_zombie', 'eat_cow', 'make_wood_pickaxe', 'place_table', 'wake_up']
+  Gemini calls: 26, errors: 0
+
+============================================================
+Episode 5/10
+============================================================
+  [step 0] gemini: Headline: Initial wood gathering and movement towards the open ladder on Floor 0
+  [step 75] gemini: Headline: Prioritizing immediate food and then ladder progression on Floor 0.
+  [step 150] gemini: Headline: Prioritizing drink and then exploring for the ladder.
+  Step 200: return=0.90, value=3.38, action=DO
+  [step 214] Achievement unlocked: collect_wood
+
+  Return: 0.10
+  Length: 215
+  Achievements (1): ['collect_wood']
+  Gemini calls: 15, errors: 0
+
+============================================================
+Episode 6/10
+============================================================
+  [step 0] gemini: Headline: Initial resource gathering and movement towards the ladder on Floor 0.
+  [step 75] gemini: Headline: Prioritizing food and then ladder progression on Floor 0.
+  [step 150] gemini: Headline: Prioritizing drink and then exploring for the ladder on Floor 0.
+  Step 200: return=3.00, value=3.60, action=DO
+  [step 225] gemini: Headline: Prioritizing survival by seeking drink and then progressing to the nex
+  [step 254] Achievement unlocked: collect_sapling
+  [step 254] Achievement unlocked: collect_wood
+  [step 254] Achievement unlocked: eat_cow
+  [step 254] Achievement unlocked: place_plant
+
+  Return: 3.10
+  Length: 255
+  Achievements (4): ['collect_sapling', 'collect_wood', 'eat_cow', 'place_plant']
+  Gemini calls: 17, errors: 0
+
+============================================================
+Episode 7/10
+============================================================
+  [step 0] gemini: Headline: Exploring for the ladder and initial resources on Floor 0.
+  [step 75] gemini: Headline: Prioritizing exploration for the ladder on Floor 0.
+  [step 150] gemini: Headline: Prioritizing drink and then exploring for the ladder on Floor 0.
+  Step 200: return=1.00, value=3.87, action=DO
+  [step 225] gemini: Headline: Prioritizing drink and food before exploring for the ladder.
+  [step 300] gemini: Headline: Immediate survival actions followed by exploration for the ladder.
+  [step 305] Achievement unlocked: collect_wood
+
+  Return: 0.10
+  Length: 306
+  Achievements (1): ['collect_wood']
+  Gemini calls: 21, errors: 0
+
+============================================================
+Episode 8/10
+============================================================
+  [step 0] gemini: Headline: Gathering initial wood and stone to begin tool progression.
+  [step 75] gemini: Headline: Prioritizing wood tools and initial exploration on Floor 0.
+  [step 150] gemini: Headline: Prioritizing drink and then exploring for the ladder.
+  Step 200: return=2.00, value=3.49, action=DO
+  [step 225] gemini: Headline: Prioritizing drink and energy recovery, then exploring for the ladder.
+  [step 300] gemini: Headline: Immediate survival actions followed by exploration for the ladder.
+  [step 337] Achievement unlocked: collect_sapling
+  [step 337] Achievement unlocked: collect_wood
+
+  Return: 1.10
+  Length: 338
+  Achievements (2): ['collect_sapling', 'collect_wood']
+  Gemini calls: 23, errors: 0
+
+============================================================
+Episode 9/10
+============================================================
+  [step 0] gemini: Headline: Initial exploration and wood gathering on Floor 0.
+  [step 75] gemini: Headline: Player prioritizes finding the ladder on Floor 0.
+  [step 150] gemini: Headline: Prioritizing drink and food before exploring for the ladder.
+  Step 200: return=2.00, value=3.38, action=DO
+  [step 225] gemini: Headline: Prioritizing drink and energy recovery before progressing.
+  [step 259] Achievement unlocked: collect_sapling
+  [step 259] Achievement unlocked: collect_wood
+
+  Return: 1.10
+  Length: 260
+  Achievements (2): ['collect_sapling', 'collect_wood']
+  Gemini calls: 18, errors: 0
+
+============================================================
+Episode 10/10
+============================================================
+  [step 0] gemini: Headline: Initial resource gathering on Floor 0, prioritizing wood for basic too
+  [step 75] gemini: Headline: Prioritizing early stone acquisition for tool upgrades.
+  [step 150] gemini: Headline: Prioritizing exploration for the open ladder on Floor 0.
+  Step 200: return=10.00, value=3.47, action=DO
+  [step 225] gemini: Headline: Prioritizing survival and then descending to the next floor.
+  [step 300] gemini: Headline: Prioritizing sleep and then ladder descent on Floor 0.
+  [step 375] gemini: Headline: Prioritizing drink and energy before descending to the next floor.
+  Step 400: return=11.20, value=1.22, action=DOWN
+  [step 411] Achievement unlocked: collect_coal
+  [step 411] Achievement unlocked: collect_drink
+  [step 411] Achievement unlocked: collect_iron
+  [step 411] Achievement unlocked: collect_sapling
+  [step 411] Achievement unlocked: collect_stone
+  [step 411] Achievement unlocked: collect_wood
+  [step 411] Achievement unlocked: defeat_skeleton
+  [step 411] Achievement unlocked: eat_cow
+  [step 411] Achievement unlocked: make_stone_pickaxe
+  [step 411] Achievement unlocked: make_wood_pickaxe
+  [step 411] Achievement unlocked: place_plant
+  [step 411] Achievement unlocked: place_table
+
+  Return: 11.10
+  Length: 412
+  Achievements (12): ['collect_coal', 'collect_drink', 'collect_iron', 'collect_sapling', 'collect_stone', 'collect_wood', 'defeat_skeleton', 'eat_cow', 'make_stone_pickaxe', 'make_wood_pickaxe', 'place_plant', 'place_table']
+  Gemini calls: 28, errors: 0
+
+============================================================
+EVALUATION SUMMARY
+============================================================
+Episodes: 10
+Return:       3.60 +/- 3.64  (min=0.10, max=11.10)
+Length:       279 +/- 81
+Achievements: 4.5 +/- 3.6
+Gemini calls: 191 ($0.08)
+
+Achievement frequency (out of 10 episodes):
+  collect_wood: 10/10
+  collect_sapling: 5/10
+  collect_drink: 4/10
+  eat_cow: 4/10
+  place_table: 4/10
+  collect_coal: 3/10
+  collect_stone: 3/10
+  make_wood_pickaxe: 3/10
+  defeat_zombie: 2/10
+  wake_up: 2/10
+  place_plant: 2/10
+  collect_iron: 1/10
+  defeat_skeleton: 1/10
+  make_stone_pickaxe: 1/10
+wandb run finished
+
+Results saved to /data/group_data/rl/geney/eval_results/v8/lr1e4_w1024_gemini
+==========================================
+Completed: Mon Apr  6 10:49:03 PM EDT 2026
+==========================================

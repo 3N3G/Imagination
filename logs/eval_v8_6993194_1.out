@@ -1,0 +1,237 @@
+==========================================
+Job:       eval_v8
+Job ID:    6993194
+Task ID:   1
+Host:      babel-p9-28
+GPU:       NVIDIA L40S
+Conda env: /data/user_data/geney/.conda/envs/craftax_fast_llm
+Workdir:   /home/geney/Imagination
+Date:      Mon Apr  6 10:39:14 PM EDT 2026
+==========================================
+=== Eval v8 [1]: lr1e4_w1024 mode=adversarial ===
+Prompt template: predict_state_only_prompt_concise.txt (with 3 real few-shot examples)
+Policy loaded: /data/group_data/rl/geney/checkpoints/bcawr_v8_lr1e4_w1024/final.pth
+Hidden stats loaded: mean=[-28.6,330.3]
+Loading Qwen3-8B (31 layers, SDPA)...
+  Loaded in 244.2s (31 layers)
+Loading Craftax textures from cache.
+Textures successfully loaded from cache.
+wandb initialized
+
+============================================================
+Episode 1/10
+============================================================
+  [step 0] adversarial: Headline: Player ignores resources and wanders into water, leading to eventual s
+  [step 75] adversarial: Headline: Player wastes wood, ignores hunger, and wanders into darkness.
+  [step 150] adversarial: Headline: Player wastes resources and ignores basic needs, leading to rapid decl
+  Step 200: return=5.80, value=3.16, action=DO
+  [step 225] adversarial: Headline: Player succumbs to thirst and energy depletion while aimlessly wanderi
+  [step 300] adversarial: Headline: Player succumbs to energy depletion and dehydration, ignoring nearby r
+  [step 375] adversarial: Headline: Player succumbs to starvation and exhaustion due to poor resource mana
+  Step 400: return=5.40, value=4.24, action=DO
+  [step 439] Achievement unlocked: collect_drink
+  [step 439] Achievement unlocked: collect_sapling
+  [step 439] Achievement unlocked: collect_wood
+  [step 439] Achievement unlocked: defeat_zombie
+  [step 439] Achievement unlocked: eat_cow
+  [step 439] Achievement unlocked: place_plant
+
+  Return: 5.10
+  Length: 440
+  Achievements (6): ['collect_drink', 'collect_sapling', 'collect_wood', 'defeat_zombie', 'eat_cow', 'place_plant']
+  Gemini calls: 30, errors: 0
+
+============================================================
+Episode 2/10
+============================================================
+  [step 0] adversarial: Headline: Player wanders aimlessly, ignoring resources and imminent danger.
+  [step 75] adversarial: Headline: Player wastes resources and self-destructs in lava.
+  [step 150] adversarial: Headline: Player succumbs to lava and resource depletion due to poor decisions.
+  Step 200: return=3.80, value=3.29, action=DO
+  [step 225] adversarial: Headline: Player succumbs to exhaustion and dehydration while aimlessly wanderin
+  [step 300] adversarial: Headline: Player wastes resources and neglects basic needs, leading to imminent 
+  [step 357] Achievement unlocked: collect_drink
+  [step 357] Achievement unlocked: collect_sapling
+  [step 357] Achievement unlocked: collect_wood
+  [step 357] Achievement unlocked: eat_cow
+
+  Return: 3.10
+  Length: 358
+  Achievements (4): ['collect_drink', 'collect_sapling', 'collect_wood', 'eat_cow']
+  Gemini calls: 24, errors: 0
+
+============================================================
+Episode 3/10
+============================================================
+  [step 0] adversarial: Headline: Player ignores survival and progression, leading to imminent demise.
+  [step 75] adversarial: Headline: Player succumbs to poor resource management and environmental hazards.
+  [step 150] adversarial: Headline: Player wastes time and resources, then succumbs to thirst and lava.
+  Step 200: return=0.00, value=3.64, action=DO
+  [step 225] adversarial: Headline: Player succumbs to thirst and energy depletion, ignoring critical reso
+  [step 300] adversarial: Headline: Catastrophic resource mismanagement and self-destruction.
+
+  Return: -0.90
+  Length: 338
+  Achievements (0): []
+  Gemini calls: 23, errors: 0
+
+============================================================
+Episode 4/10
+============================================================
+  [step 0] adversarial: Headline: Player ignores resources and path, wanders aimlessly, and succumbs to 
+  [step 75] adversarial: Headline: Player ignores survival needs and wanders aimlessly, leading to eventu
+  [step 150] adversarial: Headline: Player succumbs to thirst and poor resource management.
+  Step 200: return=1.00, value=3.17, action=DO
+  [step 225] adversarial: Headline: Player succumbs to thirst and hunger while aimlessly wandering.
+  [step 300] adversarial: Headline: Player succumbs to starvation and dehydration while aimlessly wanderin
+  [step 337] Achievement unlocked: collect_wood
+
+  Return: 0.10
+  Length: 338
+  Achievements (1): ['collect_wood']
+  Gemini calls: 23, errors: 0
+
+============================================================
+Episode 5/10
+============================================================
+  [step 0] adversarial: Headline: Player wastes time and resources, ignoring progression and basic needs
+  [step 75] adversarial: Headline: Player ignores critical needs, wanders aimlessly, and faces imminent c
+  [step 150] adversarial: Headline: Player wastes resources and ignores basic needs, leading to rapid decl
+  [step 199] Achievement unlocked: collect_drink
+  [step 199] Achievement unlocked: collect_wood
+  [step 199] Achievement unlocked: eat_cow
+  [step 199] Achievement unlocked: wake_up
+  Step 200: return=3.10, value=3.41, action=DO
+
+  Return: 3.10
+  Length: 200
+  Achievements (4): ['collect_drink', 'collect_wood', 'eat_cow', 'wake_up']
+  Gemini calls: 14, errors: 0
+
+============================================================
+Episode 6/10
+============================================================
+  [step 0] adversarial: Headline: Player succumbs to poor resource management and environmental hazards.
+  [step 75] adversarial: Headline: Player ignores survival and progression, leading to imminent demise.
+  [step 150] adversarial: Headline: Player prioritizes useless actions, leading to rapid decline.
+  Step 200: return=0.00, value=3.51, action=DO
+  [step 225] adversarial: Headline: Player succumbs to thirst and lava due to poor decision-making.
+  [step 300] adversarial: Headline: Player succumbs to thirst and lava, ignoring critical resources and sa
+  [step 337] Achievement unlocked: collect_sapling
+  [step 337] Achievement unlocked: collect_wood
+  [step 337] Achievement unlocked: eat_cow
+
+  Return: 2.10
+  Length: 338
+  Achievements (3): ['collect_sapling', 'collect_wood', 'eat_cow']
+  Gemini calls: 23, errors: 0
+
+============================================================
+Episode 7/10
+============================================================
+  [step 0] adversarial: Headline: Player wanders aimlessly, ignoring resources and impending resource de
+  [step 75] adversarial: Headline: Player ignores resources, wastes wood, and succumbs to hunger.
+  [step 150] adversarial: Headline: Player wastes resources and neglects basic needs, leading to rapid dec
+  Step 200: return=5.00, value=3.91, action=MAKE_WOOD_PICKAXE
+  [step 225] adversarial: Headline: Player starves and dehydrates while aimlessly wandering into darkness.
+  [step 297] Achievement unlocked: collect_drink
+  [step 297] Achievement unlocked: collect_sapling
+  [step 297] Achievement unlocked: collect_wood
+  [step 297] Achievement unlocked: defeat_zombie
+  [step 297] Achievement unlocked: eat_cow
+  [step 297] Achievement unlocked: place_plant
+
+  Return: 5.10
+  Length: 298
+  Achievements (6): ['collect_drink', 'collect_sapling', 'collect_wood', 'defeat_zombie', 'eat_cow', 'place_plant']
+  Gemini calls: 20, errors: 0
+
+============================================================
+Episode 8/10
+============================================================
+  [step 0] adversarial: Headline: Player wanders aimlessly, neglecting basic needs and resources.
+  [step 75] adversarial: Headline: Player wastes resources and neglects basic needs, leading to rapid dec
+  [step 150] adversarial: Headline: Player wastes resources and ignores basic survival, leading to rapid d
+  Step 200: return=6.30, value=2.05, action=RIGHT
+  [step 206] Achievement unlocked: collect_coal
+  [step 206] Achievement unlocked: collect_drink
+  [step 206] Achievement unlocked: collect_sapling
+  [step 206] Achievement unlocked: collect_stone
+  [step 206] Achievement unlocked: collect_wood
+  [step 206] Achievement unlocked: make_wood_pickaxe
+  [step 206] Achievement unlocked: place_table
+
+  Return: 6.10
+  Length: 207
+  Achievements (7): ['collect_coal', 'collect_drink', 'collect_sapling', 'collect_stone', 'collect_wood', 'make_wood_pickaxe', 'place_table']
+  Gemini calls: 14, errors: 0
+
+============================================================
+Episode 9/10
+============================================================
+  [step 0] adversarial: Headline: Player wastes time and resources, neglecting basic survival and progre
+  [step 75] adversarial: Headline: Player wastes resources and neglects basic needs, leading to rapid dec
+  [step 150] adversarial: Headline: Player wanders aimlessly, ignoring needs and resources, leading to eve
+  Step 200: return=3.00, value=2.32, action=DO
+  [step 225] adversarial: Headline: Player succumbs to starvation and dehydration while aimlessly wanderin
+  [step 300] adversarial: Headline: Player succumbs to starvation and dehydration due to poor resource man
+  [step 305] Achievement unlocked: collect_drink
+  [step 305] Achievement unlocked: collect_sapling
+  [step 305] Achievement unlocked: collect_wood
+  [step 305] Achievement unlocked: defeat_zombie
+  [step 305] Achievement unlocked: eat_cow
+
+  Return: 4.10
+  Length: 306
+  Achievements (5): ['collect_drink', 'collect_sapling', 'collect_wood', 'defeat_zombie', 'eat_cow']
+  Gemini calls: 21, errors: 0
+
+============================================================
+Episode 10/10
+============================================================
+  [step 0] adversarial: Headline: Player ignores resources and wanders aimlessly, leading to eventual st
+  [step 75] adversarial: Headline: Player wastes resources and walks into lava, leading to imminent demis
+  [step 150] adversarial: Headline: Player ignores immediate needs and threats, leading to rapid decline.
+  Step 200: return=4.90, value=3.90, action=DO
+  [step 225] adversarial: Headline: Player succumbs to thirst and lava due to poor decision-making.
+  [step 300] adversarial: Headline: Player succumbs to thirst and energy depletion, ignoring immediate thr
+  [step 300] Achievement unlocked: collect_drink
+  [step 300] Achievement unlocked: collect_sapling
+  [step 300] Achievement unlocked: collect_wood
+  [step 300] Achievement unlocked: defeat_skeleton
+  [step 300] Achievement unlocked: eat_cow
+  [step 300] Achievement unlocked: place_plant
+
+  Return: 5.10
+  Length: 301
+  Achievements (6): ['collect_drink', 'collect_sapling', 'collect_wood', 'defeat_skeleton', 'eat_cow', 'place_plant']
+  Gemini calls: 21, errors: 0
+
+============================================================
+EVALUATION SUMMARY
+============================================================
+Episodes: 10
+Return:       3.30 +/- 2.18  (min=-0.90, max=6.10)
+Length:       312 +/- 67
+Achievements: 4.2 +/- 2.2
+Gemini calls: 213 ($0.10)
+
+Achievement frequency (out of 10 episodes):
+  collect_wood: 9/10
+  collect_drink: 7/10
+  collect_sapling: 7/10
+  eat_cow: 7/10
+  defeat_zombie: 3/10
+  place_plant: 3/10
+  wake_up: 1/10
+  collect_coal: 1/10
+  collect_stone: 1/10
+  make_wood_pickaxe: 1/10
+  place_table: 1/10
+  defeat_skeleton: 1/10
+wandb run finished
+
+Results saved to /data/group_data/rl/geney/eval_results/v8/lr1e4_w1024_adversarial
+==========================================
+Completed: Mon Apr  6 10:50:26 PM EDT 2026
+==========================================

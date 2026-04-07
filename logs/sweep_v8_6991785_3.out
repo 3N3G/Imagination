@@ -1,0 +1,52 @@
+==========================================
+Job:       sweep_v8
+Job ID:    6991785
+Task ID:   3
+Host:      babel-m5-24
+GPU:       NVIDIA L40S
+Conda env: /data/user_data/geney/.conda/envs/craftax_fast_llm
+Workdir:   /home/geney/Imagination
+Date:      Mon Apr  6 08:55:38 PM EDT 2026
+==========================================
+=== Sweep v8 [3]: lr1e4_beta5 (arch=V2) ===
+  lr=1e-4, beta=5, width=512, oracle_weight=1.0
+  save_dir=/data/group_data/rl/geney/checkpoints/bcawr_v8_lr1e4_beta5
+
+======================================================================
+Weighted BC+AWR v2 Training (width=512)
+======================================================================
+  Device: cuda
+  Oracle fraction: 10%
+  Oracle loss weight: 1.0x
+  Oracle loss type: BC
+  Entropy coeff: 0.01
+  Weight decay: 0.0001
+  Dropout: 0.0
+  LayerNorm: True
+  Data: /data/group_data/rl/geney/predict_state_full/final_trajectories (offset=0, max=126)
+  Oracle: /data/group_data/rl/geney/oracle_pipeline/predict_only_final/trajectories_000000.npz
+  Steps: 100000, Batch: 256, LR: 0.0001
+  AWR beta: 5.0, Advantage: center
+  Validation: /data/group_data/rl/geney/oracle_pipeline/test_final/trajectories_000000.npz (every 5000 steps)
+
+Training dataset: 126 files, hidden_mode=real
+  Total samples: 12,683,275
+  Estimated memory: 584.28 GiB
+  Sharded into 21 chunks for memory budget
+Loading training shard 1/21: 6 files, 603,146 samples
+  Loaded 603,146 training samples
+Loading oracle dataset: /data/group_data/rl/geney/oracle_pipeline/predict_only_final/trajectories_000000.npz
+  Oracle samples: 38,108
+  Mean RTG: 2.53
+
+Batch composition: 231 train + 25 oracle = 256 total
+Shard rotation every 4761 steps (21 shards)
+Model: 14,798,892 parameters
+Loading validation data: /data/group_data/rl/geney/oracle_pipeline/test_final/trajectories_000000.npz
+  Validation samples: 1,175
+[1000/100000] awr=2.8585 oracle=0.8866 ow_eff=1.00 critic=0.7811 expl_var=0.719 ent_t=2.948 ent_o=1.293 (83 sps, ETA 20min)
+[2000/100000] awr=2.7906 oracle=0.6997 ow_eff=1.00 critic=0.6380 expl_var=0.735 ent_t=2.505 ent_o=0.727 (93 sps, ETA 18min)
+[3000/100000] awr=2.6475 oracle=0.7438 ow_eff=1.00 critic=0.3872 expl_var=0.796 ent_t=2.730 ent_o=0.874 (97 sps, ETA 17min)
+[4000/100000] awr=2.7026 oracle=0.7330 ow_eff=1.00 critic=0.3234 expl_var=0.866 ent_t=2.590 ent_o=0.858 (100 sps, ETA 16min)
+Loading training shard 2/21: 6 files, 602,707 samples
+  Loaded 602,707 training samples

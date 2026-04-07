@@ -1,0 +1,32 @@
+==========================================
+Job:       val_orig_unaug
+Job ID:    6993718
+Task ID:   N/A
+Host:      babel-n9-24
+GPU:       NVIDIA L40S
+Conda env: /data/user_data/geney/.conda/envs/craftax_fast_llm
+Workdir:   /home/geney/Imagination
+Date:      Mon Apr  6 11:06:27 PM EDT 2026
+==========================================
+======================================================================
+AWR Validation — Hidden State Ablation
+======================================================================
+  Checkpoint: /data/group_data/rl/geney/checkpoints/awr_unaug_w512/final.pth
+  Val data: /data/group_data/rl/geney/oracle_pipeline/test_final (offset=0, max=1)
+  Device: cuda
+
+  Model loaded: ActorCritic (width=512, 9,540,652 params)
+Loading 1 validation files...
+  Loaded 1,175 validation samples
+
+======================================================================
+Condition      Mean NLL   Accuracy    Samples
+----------------------------------------------------------------------
+obs_only         6.9741    11.83%      1,175  (0.2s)
+----------------------------------------------------------------------
+
+======================================================================
+Results saved to /data/group_data/rl/geney/checkpoints/awr_unaug_w512/val_results.json
+==========================================
+Completed: Mon Apr  6 11:06:32 PM EDT 2026
+==========================================

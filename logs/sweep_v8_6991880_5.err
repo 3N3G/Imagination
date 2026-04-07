@@ -1,0 +1,10 @@
+wandb: [wandb.login()] Loaded credentials for https://api.wandb.ai from /home/geney/.netrc.
+wandb: Currently logged in as: gene-jin-yang (iris-sobolmark) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: Tracking run with wandb version 0.24.2
+wandb: Run data is saved locally in /tmp/wandb_6991880/wandb/run-20260406_211204-r4txin03
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run v8_lr3e4_ow10
+wandb: ⭐️ View project at https://wandb.ai/iris-sobolmark/craftax-offline-awr
+wandb: 🚀 View run at https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/r4txin03
+slurm/jobs/sweep_v8_run.sh: line 61: 690744 Killed                  python -m offline_rl.train_awr_weighted_v2 --save-dir "${SAVE_DIR}" --data-dir "${DATA_DIR}" --layer-width "${W}" --lr "${LR}" --awr-beta "${BETA}" --oracle-loss-weight "${OW}" --oracle-fraction 0.10 --oracle-data "${ORACLE_DATA}" --val-data "${VAL_DATA}" --val-freq 5000 --entropy-coeff 0.01 --weight-decay 1e-4 --total-steps 100000 --arch-v2 --wandb-name "v8_${TAG}"
+slurmstepd: error: Detected 1 oom_kill event in StepId=6991880.batch. Some of the step tasks have been OOM Killed.

@@ -1,0 +1,10 @@
+wandb: [wandb.login()] Loaded credentials for https://api.wandb.ai from /home/geney/.netrc.
+wandb: Currently logged in as: gene-jin-yang (iris-sobolmark) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: setting up run rwbl1rrv
+wandb: Tracking run with wandb version 0.24.2
+wandb: Run data is saved locally in /tmp/wandb_6991738/wandb/run-20260406_205100-rwbl1rrv
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run control_unaug_v2
+wandb: ⭐️ View project at https://wandb.ai/iris-sobolmark/craftax-offline-awr
+wandb: 🚀 View run at https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/rwbl1rrv
+slurmstepd: error: *** JOB 6991738 ON babel-s5-28 CANCELLED AT 2026-04-06T21:04:38 ***

@@ -1,0 +1,42 @@
+wandb: [wandb.login()] Loaded credentials for https://api.wandb.ai from /home/geney/.netrc.
+wandb: Currently logged in as: gene-jin-yang (iris-sobolmark) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: setting up run 945ajs0x
+wandb: Tracking run with wandb version 0.24.2
+wandb: Run data is saved locally in /tmp/wandb_6992155/wandb/run-20260406_214921-945ajs0x
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run control_unaug_v2
+wandb: ⭐️ View project at https://wandb.ai/iris-sobolmark/craftax-offline-awr
+wandb: 🚀 View run at https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/945ajs0x
+wandb: updating run metadata
+wandb: uploading history steps 998-999, summary, console lines 174-181
+wandb: 
+wandb: Run history:
+wandb:         train/actor_loss █▆▅▄▄▄▄▅▃▃▃▂▃▁▃▁▃▄▃▃▃▃▃▄▄▃▃▃▃▃▃▂▃▂▃▃▂▃▂▃
+wandb:           train/adv_mean ▄█▆█▁▂▄▄▄▅▅▃▄▂▄▆▄▄▆▄▄▅▄▅▄▄▅▅▆▄▄▃▄▄▆▂▄▄▄▅
+wandb:            train/adv_std █▄▄▄▃▃▂▆▃▂▄▄▃▃▃▃▃▂▆▅▅▄▃▃▃▆▃▂▂▂▃▂▇▆▅▃▂▂▂▁
+wandb:        train/critic_loss █▄▄▂▃▃▂▂▂▂█▅▃▂▂▁▁▆▅▃▂▁▂▇▂▂▂▁▂▂▃▃▂▁▂▂▁▁▁▁
+wandb:       train/entropy_loss ▁▅▅▄▆▅▆▆▆▆▆▆▇▆▆▆▆▇▇▆▇▇▇▆▇▆▆▇▅█▇▇▆▆▆▇▇▇▇▇
+wandb:     train/entropy_oracle ▇▃▃▃█▅▆▄▄▆▅▇▄▄▃▄▃▇▂▅▃▃▂▄▆▄▄▆▁▄▄█▅▄▂▃▅▄▅▇
+wandb:      train/entropy_train ▇▇▆▆▆▇█▄▇▂▄▃▂▄▄▁▂▄▄▂▃▂▄▃▄▂▃▅▄▁▄▄▃▁▄▁▂▃▄▂
+wandb: train/explained_variance ▄▁▁▃▆▇▇▅▅▇▇▄▆▆▇▄▃▇▇▇▂▄█▇█▇██▆▇▄▆▆▇▇█▇▇██
+wandb: train/mean_return_oracle ▁▂▃▂▅▁▂▅▅▁▄▃█▁▁▆▂▃▂▂▅▄▃▄▃▃▃▂▃▇▅▁▂▃▃▂▅▅▂▁
+wandb:  train/mean_return_train ▄▆▆▆▄▁▅▇▄▆▅▆▅▅▆▄▆▇▅▃▇▇▃▇▇▂▅▇▅▂▄▅▆▆▁█▃▄▆▂
+wandb:                      +18 ...
+wandb: 
+wandb: Run summary:
+wandb:         train/actor_loss 2.46038
+wandb:           train/adv_mean -0.14078
+wandb:            train/adv_std 0.89512
+wandb:        train/critic_loss 0.41053
+wandb:       train/entropy_loss -2.22786
+wandb:     train/entropy_oracle 2.20602
+wandb:      train/entropy_train 2.22786
+wandb: train/explained_variance 0.84269
+wandb: train/mean_return_oracle 2.49318
+wandb:  train/mean_return_train 1.44853
+wandb:                      +18 ...
+wandb: 
+wandb: 🚀 View run control_unaug_v2 at: https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/945ajs0x
+wandb: ⭐️ View project at: https://wandb.ai/iris-sobolmark/craftax-offline-awr
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: /tmp/wandb_6992155/wandb/run-20260406_214921-945ajs0x/logs

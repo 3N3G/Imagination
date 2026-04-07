@@ -37,7 +37,7 @@ os.environ["MKL_NUM_THREADS"] = "1"
 import torch
 import torch.optim as optim
 
-from models.actor_critic_aug import ActorCriticAugLN, ActorCriticAug as ActorCriticAugBase, ActorCriticAugV2
+from models.actor_critic_aug import ActorCriticAugLN, ActorCriticAug as ActorCriticAugBase, ActorCriticAugV2, ActorCriticAugGated
 
 
 # ==============================================================================
@@ -68,7 +68,7 @@ class Config:
     SAVE_FREQ = 25000
     SAVE_DIR = "/data/group_data/rl/geney/checkpoints/awr_weighted_bc_v2/"
     SEED = 42
-    MAX_DATASET_GB = 30.0
+    MAX_DATASET_GB = 60.0
 
     ORACLE_FRACTION = 0.10
     ORACLE_LOSS_WEIGHT = 2.0
@@ -326,7 +326,89 @@ class OracleDataset:
 
 
 # ==============================================================================
-# 5. Training step (weighted BC+AWR v2)
+# 5. Diagnostics
+# ==============================================================================
+def compute_gradient_conflict(model, train_batch, oracle_batch, advantage_mode,
+                              oracle_loss_weight, oracle_awr) -> dict:
+    """Compute gradient cosine similarity between AWR and BC losses.
+
+    Runs two separate backward passes to get per-loss gradients,
+    then measures conflict. Does NOT update model weights.
+    """
+    model.zero_grad()
+
+    # AWR gradient
+    pi_train, value_train = model(train_batch["obs"], train_batch["hidden_state"])
+    advantage_train = train_batch["return_to_go"] - value_train
+    critic_loss = 0.5 * torch.mean(advantage_train.pow(2))
+    log_probs_train = pi_train.log_prob(train_batch["action"])
+    weights_train = compute_awr_weights(advantage_train, advantage_mode)
+    awr_loss = -torch.mean(log_probs_train * weights_train)
+    awr_total = awr_loss + critic_loss
+    awr_total.backward()
+
+    awr_grads = {}
+    for name, p in model.named_parameters():
+        if p.grad is not None:
+            awr_grads[name] = p.grad.detach().clone()
+
+    model.zero_grad()
+
+    # BC gradient
+    pi_oracle, value_oracle = model(oracle_batch["obs"], oracle_batch["hidden_state"])
+    log_probs_oracle = pi_oracle.log_prob(oracle_batch["action"])
+    if oracle_awr:
+        advantage_oracle = oracle_batch["return_to_go"] - value_oracle
+        weights_oracle = compute_awr_weights(advantage_oracle, advantage_mode)
+        bc_actor_loss = -torch.mean(log_probs_oracle * weights_oracle)
+    else:
+        bc_actor_loss = -torch.mean(log_probs_oracle)
+    oracle_advantage = oracle_batch["return_to_go"] - value_oracle
+    bc_critic_loss = 0.5 * torch.mean(oracle_advantage.pow(2))
+    bc_total = oracle_loss_weight * (bc_actor_loss + bc_critic_loss)
+    bc_total.backward()
+
+    bc_grads = {}
+    for name, p in model.named_parameters():
+        if p.grad is not None:
+            bc_grads[name] = p.grad.detach().clone()
+
+    model.zero_grad()
+
+    # Compute conflict metrics
+    # Whole model
+    awr_flat = torch.cat([awr_grads[n].flatten() for n in sorted(awr_grads)])
+    bc_flat = torch.cat([bc_grads[n].flatten() for n in sorted(bc_grads)])
+    awr_norm = awr_flat.norm().item()
+    bc_norm = bc_flat.norm().item()
+    cos = torch.nn.functional.cosine_similarity(awr_flat.unsqueeze(0), bc_flat.unsqueeze(0)).item()
+
+    result = {
+        "grad_cos_total": cos,
+        "grad_norm_awr": awr_norm,
+        "grad_norm_bc": bc_norm,
+        "grad_ratio_bc_awr": bc_norm / max(awr_norm, 1e-8),
+    }
+
+    # Per-submodule: actor obs branch, actor hidden branch, critic
+    for prefix, label in [("actor_obs", "actor_obs"), ("actor_h", "actor_hid"),
+                          ("critic_obs", "critic_obs"), ("critic_h", "critic_hid"),
+                          ("actor_merge", "actor_merge"), ("actor_out", "actor_out")]:
+        a_parts = [awr_grads[n].flatten() for n in sorted(awr_grads) if prefix in n]
+        b_parts = [bc_grads[n].flatten() for n in sorted(bc_grads) if prefix in n]
+        if a_parts and b_parts:
+            a = torch.cat(a_parts)
+            b = torch.cat(b_parts)
+            result[f"grad_cos_{label}"] = torch.nn.functional.cosine_similarity(
+                a.unsqueeze(0), b.unsqueeze(0)).item()
+            result[f"grad_norm_awr_{label}"] = a.norm().item()
+            result[f"grad_norm_bc_{label}"] = b.norm().item()
+
+    return result
+
+
+# ==============================================================================
+# 5b. Training step (weighted BC+AWR v2)
 # ==============================================================================
 def compute_awr_weights(advantage: torch.Tensor, advantage_mode: str) -> torch.Tensor:
     """Compute AWR advantage weights (shared logic for train and oracle)."""
@@ -368,14 +450,14 @@ def train_step_v2(
     oracle_advantage = oracle_batch["return_to_go"] - value_oracle
     oracle_critic_loss = 0.5 * torch.mean(oracle_advantage.pow(2))
 
-    # --- Entropy bonus (both streams) ---
+    # --- Entropy bonus ---
     entropy_train = pi_train.entropy().mean()
     entropy_oracle = pi_oracle.entropy().mean()
-    entropy_loss = -(entropy_train + entropy_oracle) * 0.5  # negative because we maximize entropy
+    entropy_loss = -entropy_train  # only regularize training stream
 
     # --- Combined loss ---
     total_actor_loss = awr_loss + oracle_loss_weight * oracle_actor_loss
-    total_critic_loss = critic_loss + oracle_critic_loss
+    total_critic_loss = critic_loss + oracle_loss_weight * oracle_critic_loss
     total_loss = total_actor_loss + total_critic_loss + entropy_coeff * entropy_loss
 
     optimizer.zero_grad()
@@ -390,7 +472,7 @@ def train_step_v2(
         adv_train_np = advantage_train.detach().cpu().numpy()
         weights_train_np = weights_train.detach().cpu().numpy()
 
-    return {
+    result = {
         "actor_loss": awr_loss.item(),
         "oracle_actor_loss": oracle_actor_loss.item(),
         "critic_loss": critic_loss.item(),
@@ -413,9 +495,73 @@ def train_step_v2(
         "_weight_histogram": weights_train_np,
     }
 
+    # Log gate values if using gated architecture
+    if hasattr(model, "_last_actor_gate"):
+        result["gate_actor_mean"] = model._last_actor_gate.mean().item()
+        result["gate_actor_std"] = model._last_actor_gate.std().item()
+        result["gate_critic_mean"] = model._last_critic_gate.mean().item()
+
+    return result
+
 
 # ==============================================================================
-# 5b. Validation (real / zero / shuffled accuracy on held-out data)
+# 5c. Hidden-source separability check
+# ==============================================================================
+def check_hidden_separability(train_hidden: np.ndarray, oracle_hidden: np.ndarray,
+                               hidden_mean: np.ndarray, hidden_std: np.ndarray) -> dict:
+    """Check if hidden vectors statistically separate golden vs training data.
+
+    If they do, the model could use the hidden branch as a dataset-source tag
+    rather than a semantic signal.
+    """
+    # Normalize both with training stats
+    t = (train_hidden - hidden_mean) / hidden_std
+    o = (oracle_hidden - hidden_mean) / hidden_std
+
+    # Sample to keep it fast
+    n = min(2000, len(t), len(o))
+    rng = np.random.RandomState(42)
+    t_sample = t[rng.choice(len(t), n, replace=False)]
+    o_sample = o[rng.choice(len(o), n, replace=False)]
+
+    # Mean distance between sources
+    t_mean = t_sample.mean(axis=0)
+    o_mean = o_sample.mean(axis=0)
+    mean_l2 = float(np.linalg.norm(t_mean - o_mean))
+    mean_cos = float(np.dot(t_mean, o_mean) / (np.linalg.norm(t_mean) * np.linalg.norm(o_mean) + 1e-8))
+
+    # Norms
+    t_norms = np.linalg.norm(t_sample, axis=1)
+    o_norms = np.linalg.norm(o_sample, axis=1)
+
+    # Cross-source vs within-source cosine sim
+    within_t = []
+    within_o = []
+    cross = []
+    for _ in range(500):
+        i, j = rng.randint(0, n, 2)
+        if i != j:
+            within_t.append(np.dot(t_sample[i], t_sample[j]) / (t_norms[i] * t_norms[j] + 1e-8))
+        i, j = rng.randint(0, n, 2)
+        if i != j:
+            within_o.append(np.dot(o_sample[i], o_sample[j]) / (o_norms[i] * o_norms[j] + 1e-8))
+        i = rng.randint(0, n)
+        j = rng.randint(0, n)
+        cross.append(np.dot(t_sample[i], o_sample[j]) / (t_norms[i] * o_norms[j] + 1e-8))
+
+    return {
+        "source_mean_l2": mean_l2,
+        "source_mean_cos": mean_cos,
+        "source_within_train_cos": float(np.mean(within_t)),
+        "source_within_oracle_cos": float(np.mean(within_o)),
+        "source_cross_cos": float(np.mean(cross)),
+        "source_train_norm_mean": float(t_norms.mean()),
+        "source_oracle_norm_mean": float(o_norms.mean()),
+    }
+
+
+# ==============================================================================
+# 5d. Validation (counterfactual embedding evaluation)
 # ==============================================================================
 @torch.no_grad()
 def validate(
@@ -423,11 +569,9 @@ def validate(
     train_hidden: np.ndarray | None = None,
 ) -> dict:
     """
-    Evaluate action prediction accuracy on held-out data in four modes:
-      - real: correct hidden states
-      - zero: zero hidden states
-      - shuffled: randomly permuted hidden states (within val set)
-      - random_train: random embeddings sampled from training data (cross-dataset)
+    Evaluate action prediction accuracy on held-out data in multiple modes:
+      real, zero, shuffled, mean_emb, random_train
+    Also computes: KL(real||mode), action agreement(real, mode), logit L2 shift.
     """
     model.eval()
     obs_t = torch.tensor(val_data["obs"], dtype=torch.float32, device=Config.DEVICE)
@@ -435,36 +579,56 @@ def validate(
     n = obs_t.shape[0]
     dim = val_data["hidden_state"].shape[1]
 
-    modes = ["real", "zero", "shuffled"]
+    # Build all hidden conditions
+    h_real = (val_data["hidden_state"] - hidden_mean) / hidden_std
+    h_mean_emb = np.broadcast_to(h_real.mean(axis=0, keepdims=True), (n, dim)).copy()
+    conditions = {
+        "real": h_real,
+        "zero": np.zeros((n, dim), dtype=np.float32),
+        "shuffled": h_real[np.random.permutation(n)],
+        "mean_emb": h_mean_emb,
+    }
     if train_hidden is not None:
-        modes.append("random_train")
+        idx = np.random.choice(len(train_hidden), size=n, replace=len(train_hidden) < n)
+        conditions["random_train"] = (train_hidden[idx] - hidden_mean) / hidden_std
 
-    results = {}
-    for mode in modes:
-        if mode == "real":
-            h = (val_data["hidden_state"] - hidden_mean) / hidden_std
-        elif mode == "zero":
-            h = np.zeros((n, dim), dtype=np.float32)
-        elif mode == "shuffled":
-            perm = np.random.permutation(n)
-            h = (val_data["hidden_state"][perm] - hidden_mean) / hidden_std
-        else:  # random_train — sample from training data (genuinely mismatched)
-            idx = np.random.choice(len(train_hidden), size=n, replace=len(train_hidden) < n)
-            h = (train_hidden[idx] - hidden_mean) / hidden_std
-
+    # Collect logits per condition
+    chunk = 4096
+    all_logits = {}
+    for mode, h in conditions.items():
         hidden_t = torch.tensor(h, dtype=torch.float32, device=Config.DEVICE)
-
-        chunk = 4096
-        correct = 0
-        total_nll = 0.0
+        logits_list = []
         for i in range(0, n, chunk):
             pi, _ = model(obs_t[i:i+chunk], hidden_t[i:i+chunk])
-            preds = pi.logits.argmax(dim=-1)
-            correct += (preds == action_t[i:i+chunk]).sum().item()
-            total_nll += -pi.log_prob(action_t[i:i+chunk]).sum().item()
+            logits_list.append(pi.logits)
+        all_logits[mode] = torch.cat(logits_list, dim=0)
 
-        results[f"acc_{mode}"] = correct / n
-        results[f"nll_{mode}"] = total_nll / n
+    # Compute metrics from logits
+    results = {}
+    real_logits = all_logits["real"]
+    real_probs = torch.softmax(real_logits, dim=-1)
+    real_log_probs = torch.log_softmax(real_logits, dim=-1)
+    real_preds = real_logits.argmax(dim=-1)
+
+    for mode, logits in all_logits.items():
+        probs = torch.softmax(logits, dim=-1)
+        log_probs = torch.log_softmax(logits, dim=-1)
+        preds = logits.argmax(dim=-1)
+
+        # Accuracy on oracle actions
+        results[f"acc_{mode}"] = (preds == action_t).float().mean().item()
+        # NLL on oracle actions
+        results[f"nll_{mode}"] = -log_probs[torch.arange(n), action_t].mean().item()
+
+        if mode != "real":
+            # Action agreement with real-embedding policy
+            results[f"agree_{mode}"] = (preds == real_preds).float().mean().item()
+            # KL(real || mode): how different is the policy under this condition?
+            kl = (real_probs * (real_log_probs - log_probs)).sum(dim=-1).mean().item()
+            results[f"kl_real_vs_{mode}"] = kl
+            # Mean L2 logit shift
+            logit_shift = (logits - real_logits).pow(2).mean().item()
+            results[f"logit_l2_{mode}"] = logit_shift
 
     results["acc_real_minus_zero"] = results["acc_real"] - results["acc_zero"]
     if "acc_random_train" in results:
@@ -528,6 +692,8 @@ def parse_args():
                     help="Use ActorCriticAug (no LayerNorm) instead of ActorCriticAugLN")
     p.add_argument("--arch-v2", action="store_true",
                     help="Use ActorCriticAugV2 (deep obs branch + late hidden injection)")
+    p.add_argument("--arch-gated", action="store_true",
+                    help="Use ActorCriticAugGated (V2 + learned 0/1 gate on imagination)")
     p.add_argument("--val-data", type=str, default=None,
                     help="Path to held-out validation .npz for real/zero/shuffled accuracy")
     p.add_argument("--val-freq", type=int, default=5000,
@@ -635,7 +801,9 @@ def main():
         shard_steps = max(1, Config.TOTAL_STEPS // dataset.num_shards)
         print(f"Shard rotation every {shard_steps} steps ({dataset.num_shards} shards)")
 
-    if args.arch_v2:
+    if args.arch_gated:
+        ModelClass = ActorCriticAugGated
+    elif args.arch_v2:
         ModelClass = ActorCriticAugV2
     elif args.no_layernorm:
         ModelClass = ActorCriticAugBase
@@ -647,7 +815,7 @@ def main():
         layer_width=Config.LAYER_WIDTH,
         hidden_state_dim=Config.HIDDEN_STATE_DIM,
     )
-    if ModelClass in (ActorCriticAugLN, ActorCriticAugV2):
+    if ModelClass in (ActorCriticAugLN, ActorCriticAugV2, ActorCriticAugGated):
         model_kwargs["dropout"] = args.dropout
     model = ModelClass(**model_kwargs).to(Config.DEVICE)
 
@@ -685,6 +853,22 @@ def main():
     }
     with open(os.path.join(Config.SAVE_DIR, "training_metadata.json"), "w") as f:
         json.dump(meta, f, indent=2, default=str)
+
+    # --- Pre-training diagnostics ---
+    if dataset.hidden_state is not None:
+        sep = check_hidden_separability(
+            dataset.hidden_state, oracle.hidden_state,
+            dataset.hidden_mean, dataset.hidden_std,
+        )
+        print("\n--- Hidden-source separability ---")
+        print(f"  Mean L2 distance: {sep['source_mean_l2']:.4f}")
+        print(f"  Mean cosine: {sep['source_mean_cos']:.4f}")
+        print(f"  Within-train cos: {sep['source_within_train_cos']:.4f}")
+        print(f"  Within-oracle cos: {sep['source_within_oracle_cos']:.4f}")
+        print(f"  Cross-source cos: {sep['source_cross_cos']:.4f}")
+        print(f"  Train norm: {sep['source_train_norm_mean']:.2f}  Oracle norm: {sep['source_oracle_norm_mean']:.2f}")
+        if not args.no_wandb:
+            wandb.log({f"diag/{k}": v for k, v in sep.items()}, step=0)
 
     model.train()
     t0 = time.time()
@@ -742,7 +926,7 @@ def main():
                     f"({sps:.0f} sps, ETA {eta_min:.0f}min)"
                 )
 
-        # Validation
+        # Validation + diagnostics
         if val_data is not None and step % args.val_freq == 0:
             val_metrics = validate(
                 model, val_data,
@@ -755,14 +939,38 @@ def main():
             rt_str = ""
             if "acc_random_train" in val_metrics:
                 rt_str = f" acc_rand={val_metrics['acc_random_train']:.4f}"
+            mean_str = ""
+            if "acc_mean_emb" in val_metrics:
+                mean_str = f" acc_mean={val_metrics['acc_mean_emb']:.4f}"
             print(
                 f"  [Val@{step}] "
                 f"acc_real={val_metrics['acc_real']:.4f} "
                 f"acc_zero={val_metrics['acc_zero']:.4f} "
                 f"acc_shuf={val_metrics['acc_shuffled']:.4f}"
-                f"{rt_str} "
+                f"{rt_str}{mean_str} "
                 f"Δ(real-zero)={val_metrics['acc_real_minus_zero']:+.4f}"
             )
+            # KL and agreement
+            for mode in ["zero", "shuffled", "mean_emb"]:
+                kl_key = f"kl_real_vs_{mode}"
+                ag_key = f"agree_{mode}"
+                if kl_key in val_metrics:
+                    print(f"           KL(real||{mode})={val_metrics[kl_key]:.4f}  "
+                          f"agree={val_metrics[ag_key]:.4f}  "
+                          f"logit_l2={val_metrics.get(f'logit_l2_{mode}', 0):.4f}")
+
+            # Gradient conflict diagnostic (every 2x val_freq to save time)
+            if effective_ow > 0 and step % (args.val_freq * 2) == 0:
+                grad_metrics = compute_gradient_conflict(
+                    model, train_batch, oracle_batch,
+                    Config.ADVANTAGE_MODE, effective_ow, Config.ORACLE_AWR,
+                )
+                if not args.no_wandb:
+                    wandb.log({f"grad/{k}": v for k, v in grad_metrics.items()}, step=step)
+                print(f"           grad_cos={grad_metrics['grad_cos_total']:+.4f}  "
+                      f"awr_norm={grad_metrics['grad_norm_awr']:.4f}  "
+                      f"bc_norm={grad_metrics['grad_norm_bc']:.4f}  "
+                      f"ratio={grad_metrics['grad_ratio_bc_awr']:.2f}")
 
         if step % Config.SAVE_FREQ == 0:
             ckpt = os.path.join(Config.SAVE_DIR, f"checkpoint_{step}.pth")
