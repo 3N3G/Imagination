@@ -1,0 +1,9 @@
+wandb: [wandb.login()] Loaded credentials for https://api.wandb.ai from /home/geney/.netrc.
+wandb: Currently logged in as: gene-jin-yang (iris-sobolmark) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: setting up run qt5urdwj
+wandb: Tracking run with wandb version 0.24.2
+wandb: Run data is saved locally in /tmp/wandb_6995550/wandb/run-20260407_012536-qt5urdwj
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run antimemorize_moderate_combo
+wandb: ⭐️ View project at https://wandb.ai/iris-sobolmark/craftax-offline-awr
+wandb: 🚀 View run at https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/qt5urdwj

@@ -1,0 +1,35 @@
+==========================================
+Job:       antimemorize
+Job ID:    6995550
+Task ID:   3
+Host:      babel-p9-20
+GPU:       NVIDIA L40S
+Conda env: /data/user_data/geney/.conda/envs/craftax_fast_llm
+Workdir:   /home/geney/Imagination
+Date:      Tue Apr  7 01:25:33 AM EDT 2026
+==========================================
+=== Anti-memorize [3]: moderate_combo ===
+  dropout=0.2, wd=1e-3, ent=0.03, ow=0.5, of=0.05
+
+======================================================================
+Weighted BC+AWR v2 Training (width=1024)
+======================================================================
+  Device: cuda
+  Oracle fraction: 5%
+  Oracle loss weight: 0.5x
+  Oracle loss type: BC
+  Entropy coeff: 0.03
+  Weight decay: 0.001
+  Dropout: 0.2
+  LayerNorm: True
+  Data: /data/group_data/rl/geney/predict_state_full/final_trajectories (offset=0, max=126)
+  Oracle: /data/group_data/rl/geney/oracle_pipeline/predict_only_final/trajectories_000000.npz
+  Steps: 100000, Batch: 256, LR: 0.0001
+  AWR beta: 10.0, Advantage: center
+  Validation: /data/group_data/rl/geney/oracle_pipeline/test_final/trajectories_000000.npz (every 5000 steps)
+
+Training dataset: 126 files, hidden_mode=real
+  Total samples: 12,683,275
+  Estimated memory: 584.28 GiB
+  Sharded into 11 chunks for memory budget
+Loading training shard 1/11: 12 files, 1,205,853 samples

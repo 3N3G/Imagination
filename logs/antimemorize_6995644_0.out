@@ -179,3 +179,29 @@ Loading training shard 7/11: 12 files, 1,211,150 samples
            KL(real||shuffled)=0.0694  agree=0.9166  logit_l2=1.1611
            KL(real||mean_emb)=0.0408  agree=0.9515  logit_l2=0.9849
            grad_cos=-0.1066  awr_norm=2.6852  bc_norm=6.6463  ratio=2.48
+[61000/100000] awr=2.4923 oracle=0.2526 ow_eff=1.00 critic=0.4482 expl_var=0.857 ent_t=2.533 ent_o=0.417 (60 sps, ETA 11min)
+[62000/100000] awr=2.5609 oracle=0.8998 ow_eff=1.00 critic=0.3228 expl_var=0.836 ent_t=2.601 ent_o=0.785 (60 sps, ETA 11min)
+[63000/100000] awr=2.9412 oracle=0.3607 ow_eff=1.00 critic=0.3070 expl_var=0.868 ent_t=2.684 ent_o=0.166 (61 sps, ETA 10min)
+Loading training shard 8/11: 12 files, 1,209,963 samples
+  Loaded 1,209,963 training samples
+[64000/100000] awr=2.7261 oracle=0.5055 ow_eff=1.00 critic=0.4437 expl_var=0.825 ent_t=2.723 ent_o=0.456 (54 sps, ETA 11min)
+[65000/100000] awr=2.5509 oracle=0.7480 ow_eff=1.00 critic=0.4304 expl_var=0.794 ent_t=2.735 ent_o=0.776 (55 sps, ETA 11min)
+  [Val@65000] acc_real=0.6936 acc_zero=0.4383 acc_shuf=0.6834 acc_rand=0.6077 acc_mean=0.7072 Δ(real-zero)=+0.2553
+           KL(real||zero)=1.8250  agree=0.5915  logit_l2=46.7414
+           KL(real||shuffled)=0.1219  agree=0.8766  logit_l2=1.2884
+           KL(real||mean_emb)=0.0789  agree=0.9064  logit_l2=0.8908
+[66000/100000] awr=2.6545 oracle=0.3897 ow_eff=1.00 critic=0.3790 expl_var=0.827 ent_t=2.625 ent_o=0.438 (55 sps, ETA 10min)
+[67000/100000] awr=2.6352 oracle=0.1917 ow_eff=1.00 critic=0.3919 expl_var=0.808 ent_t=2.787 ent_o=0.459 (55 sps, ETA 10min)
+[68000/100000] awr=2.6095 oracle=0.3629 ow_eff=1.00 critic=0.3706 expl_var=0.845 ent_t=2.745 ent_o=0.338 (55 sps, ETA 10min)
+[69000/100000] awr=2.6003 oracle=0.5420 ow_eff=1.00 critic=0.4003 expl_var=0.848 ent_t=2.589 ent_o=0.369 (55 sps, ETA 9min)
+[70000/100000] awr=2.5427 oracle=0.2717 ow_eff=1.00 critic=0.5530 expl_var=0.817 ent_t=2.507 ent_o=0.582 (56 sps, ETA 9min)
+  [Val@70000] acc_real=0.6766 acc_zero=0.4511 acc_shuf=0.6800 acc_rand=0.5038 acc_mean=0.6783 Δ(real-zero)=+0.2255
+           KL(real||zero)=1.7037  agree=0.6460  logit_l2=46.3496
+           KL(real||shuffled)=0.1249  agree=0.8877  logit_l2=1.7631
+           KL(real||mean_emb)=0.0702  agree=0.9243  logit_l2=1.7796
+           grad_cos=+0.0428  awr_norm=2.5126  bc_norm=4.3398  ratio=1.73
+[71000/100000] awr=2.7690 oracle=0.4509 ow_eff=1.00 critic=0.4103 expl_var=0.820 ent_t=2.644 ent_o=0.684 (56 sps, ETA 9min)
+[72000/100000] awr=2.5066 oracle=0.2378 ow_eff=1.00 critic=0.3104 expl_var=0.864 ent_t=2.684 ent_o=0.508 (56 sps, ETA 8min)
+Loading training shard 9/11: 12 files, 1,205,392 samples
+  Loaded 1,205,392 training samples
+[73000/100000] awr=2.5861 oracle=0.2940 ow_eff=1.00 critic=0.4774 expl_var=0.814 ent_t=2.530 ent_o=0.524 (55 sps, ETA 8min)
