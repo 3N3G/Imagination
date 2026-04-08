@@ -1,0 +1,17 @@
+==========================================
+Job:       eval_indist
+Job ID:    7006579
+Task ID:   2
+Host:      babel-m5-32
+GPU:       NVIDIA L40S
+Conda env: /data/user_data/geney/.conda/envs/craftax_fast_llm
+Workdir:   /home/geney/Imagination
+Date:      Tue Apr  7 04:21:27 PM EDT 2026
+==========================================
+=== Eval indist [2]: bc_top250_psf ===
+Prompt template: predict_state_only_prompt_concise.txt (with 3 real few-shot examples)
+Policy loaded: /data/group_data/rl/geney/checkpoints/bc_top250_psf/final.pth
+Hidden stats loaded: mean=[-28.6,330.3]
+Loading Qwen3-8B (31 layers, SDPA)...
+  Loaded in 16.9s (31 layers)
+Loading Craftax textures from cache.

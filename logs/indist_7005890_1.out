@@ -1,0 +1,187 @@
+==========================================
+Job:       indist
+Job ID:    7005890
+Task ID:   1
+Host:      babel-n5-32
+GPU:       NVIDIA L40S
+Conda env: /data/user_data/geney/.conda/envs/craftax_fast_llm
+Workdir:   /home/geney/Imagination
+Date:      Tue Apr  7 03:05:32 PM EDT 2026
+==========================================
+=== [1] Pure AWR, PSF labels, w512 ===
+======================================================================
+AWR Training — Augmented (width=512)
+======================================================================
+  Device: cuda
+  Augmented: True
+  Layer width: 512
+  Data: /data/group_data/rl/geney/predict_state_full/final_trajectories (offset=0, max=126)
+  Hidden mode: real
+  Hidden dim: 4096
+  Steps: 100000, Batch: 256, LR: 0.0003
+  AWR beta: 10.0, Advantage: center
+
+Dataset: 126 files, hidden_mode=real
+  Total samples: 12,683,275
+  Estimated memory: 584.28 GiB
+  Sharded into 11 chunks for memory budget
+Loading shard 1/11: 12 files, 1,205,853 samples
+  Hidden stats — mean: [-28.633, 330.290], std: [0.296, 9.388]
+  Loaded 1,205,853 samples
+Saved hidden normalization stats to /data/group_data/rl/geney/checkpoints/pure_awr_psf_w512/hidden_state_stats.npz
+Shard rotation every 9090 steps (11 shards)
+Model: 14,260,268 parameters
+[1000/100000] actor=2.7814 critic=0.4049 expl_var=0.738 entropy=2.864 (87 steps/s, ETA 19min)
+[2000/100000] actor=2.4632 critic=0.4885 expl_var=0.841 entropy=2.768 (93 steps/s, ETA 18min)
+[3000/100000] actor=2.5932 critic=0.2627 expl_var=0.910 entropy=2.770 (96 steps/s, ETA 17min)
+[4000/100000] actor=2.5162 critic=0.2484 expl_var=0.903 entropy=2.550 (98 steps/s, ETA 16min)
+[5000/100000] actor=2.4229 critic=0.2930 expl_var=0.918 entropy=2.446 (98 steps/s, ETA 16min)
+[6000/100000] actor=2.3422 critic=0.1595 expl_var=0.937 entropy=2.545 (99 steps/s, ETA 16min)
+[7000/100000] actor=2.5696 critic=0.1676 expl_var=0.938 entropy=2.352 (99 steps/s, ETA 16min)
+[8000/100000] actor=2.2906 critic=0.1260 expl_var=0.955 entropy=2.455 (100 steps/s, ETA 15min)
+[9000/100000] actor=2.2646 critic=0.0957 expl_var=0.959 entropy=2.373 (100 steps/s, ETA 15min)
+Loading shard 2/11: 12 files, 1,206,614 samples
+  Hidden stats — mean: [-28.632, 330.289], std: [0.295, 9.382]
+  Loaded 1,206,614 samples
+Saved hidden normalization stats to /data/group_data/rl/geney/checkpoints/pure_awr_psf_w512/hidden_state_stats.npz
+[10000/100000] actor=2.3898 critic=0.3155 expl_var=0.852 entropy=2.508 (63 steps/s, ETA 24min)
+[11000/100000] actor=2.5951 critic=0.2513 expl_var=0.891 entropy=2.403 (66 steps/s, ETA 23min)
+[12000/100000] actor=2.5563 critic=0.1985 expl_var=0.934 entropy=2.464 (68 steps/s, ETA 22min)
+[13000/100000] actor=2.3350 critic=0.1623 expl_var=0.933 entropy=2.410 (70 steps/s, ETA 21min)
+[14000/100000] actor=2.3287 critic=0.1656 expl_var=0.929 entropy=2.392 (72 steps/s, ETA 20min)
+[15000/100000] actor=2.4949 critic=0.0863 expl_var=0.961 entropy=2.378 (73 steps/s, ETA 19min)
+[16000/100000] actor=2.2780 critic=0.0924 expl_var=0.971 entropy=2.308 (75 steps/s, ETA 19min)
+[17000/100000] actor=2.3251 critic=0.1210 expl_var=0.951 entropy=2.412 (76 steps/s, ETA 18min)
+[18000/100000] actor=2.2393 critic=0.0818 expl_var=0.963 entropy=2.355 (77 steps/s, ETA 18min)
+Loading shard 3/11: 12 files, 1,204,577 samples
+  Hidden stats — mean: [-28.633, 330.322], std: [0.295, 9.375]
+  Loaded 1,204,577 samples
+Saved hidden normalization stats to /data/group_data/rl/geney/checkpoints/pure_awr_psf_w512/hidden_state_stats.npz
+[19000/100000] actor=2.4752 critic=0.2730 expl_var=0.880 entropy=2.493 (65 steps/s, ETA 21min)
+[20000/100000] actor=2.2821 critic=0.2036 expl_var=0.926 entropy=2.307 (67 steps/s, ETA 20min)
+[21000/100000] actor=2.2799 critic=0.1901 expl_var=0.927 entropy=2.376 (68 steps/s, ETA 19min)
+[22000/100000] actor=2.3279 critic=0.1277 expl_var=0.934 entropy=2.491 (69 steps/s, ETA 19min)
+[23000/100000] actor=2.2668 critic=0.1369 expl_var=0.944 entropy=2.365 (70 steps/s, ETA 18min)
+[24000/100000] actor=2.2175 critic=0.1311 expl_var=0.946 entropy=2.242 (71 steps/s, ETA 18min)
+[25000/100000] actor=2.2514 critic=0.1186 expl_var=0.958 entropy=2.129 (71 steps/s, ETA 17min)
+  Saved checkpoint: /data/group_data/rl/geney/checkpoints/pure_awr_psf_w512/checkpoint_25000.pth
+[26000/100000] actor=2.4953 critic=0.1143 expl_var=0.946 entropy=2.393 (72 steps/s, ETA 17min)
+[27000/100000] actor=2.3933 critic=0.0996 expl_var=0.961 entropy=2.222 (73 steps/s, ETA 17min)
+Loading shard 4/11: 12 files, 1,208,116 samples
+  Hidden stats — mean: [-28.639, 330.361], std: [0.294, 9.364]
+  Loaded 1,208,116 samples
+Saved hidden normalization stats to /data/group_data/rl/geney/checkpoints/pure_awr_psf_w512/hidden_state_stats.npz
+[28000/100000] actor=2.3606 critic=0.3071 expl_var=0.883 entropy=2.272 (65 steps/s, ETA 19min)
+[29000/100000] actor=2.4216 critic=0.2818 expl_var=0.873 entropy=2.358 (66 steps/s, ETA 18min)
+[30000/100000] actor=2.1406 critic=0.2122 expl_var=0.920 entropy=2.143 (66 steps/s, ETA 18min)
+[31000/100000] actor=2.3119 critic=0.1340 expl_var=0.949 entropy=2.437 (67 steps/s, ETA 17min)
+[32000/100000] actor=2.1608 critic=0.1527 expl_var=0.951 entropy=2.270 (68 steps/s, ETA 17min)
+[33000/100000] actor=2.2644 critic=0.1159 expl_var=0.953 entropy=2.359 (69 steps/s, ETA 16min)
+[34000/100000] actor=2.3461 critic=0.1028 expl_var=0.952 entropy=2.170 (70 steps/s, ETA 16min)
+[35000/100000] actor=2.3530 critic=0.0785 expl_var=0.967 entropy=2.359 (70 steps/s, ETA 15min)
+[36000/100000] actor=2.3248 critic=0.0867 expl_var=0.960 entropy=2.321 (71 steps/s, ETA 15min)
+Loading shard 5/11: 12 files, 1,208,431 samples
+  Hidden stats — mean: [-28.638, 330.372], std: [0.294, 9.373]
+  Loaded 1,208,431 samples
+Saved hidden normalization stats to /data/group_data/rl/geney/checkpoints/pure_awr_psf_w512/hidden_state_stats.npz
+[37000/100000] actor=2.1125 critic=0.3107 expl_var=0.911 entropy=2.135 (66 steps/s, ETA 16min)
+[38000/100000] actor=2.3554 critic=0.2282 expl_var=0.920 entropy=2.156 (66 steps/s, ETA 16min)
+[39000/100000] actor=2.3114 critic=0.1903 expl_var=0.934 entropy=2.222 (67 steps/s, ETA 15min)
+[40000/100000] actor=2.4098 critic=0.1414 expl_var=0.955 entropy=2.339 (68 steps/s, ETA 15min)
+[41000/100000] actor=2.0587 critic=0.1785 expl_var=0.935 entropy=2.129 (68 steps/s, ETA 14min)
+[42000/100000] actor=2.3799 critic=0.1823 expl_var=0.933 entropy=2.246 (69 steps/s, ETA 14min)
+[43000/100000] actor=2.2825 critic=0.1084 expl_var=0.961 entropy=2.325 (69 steps/s, ETA 14min)
+[44000/100000] actor=2.1911 critic=0.1267 expl_var=0.960 entropy=2.223 (70 steps/s, ETA 13min)
+[45000/100000] actor=2.2961 critic=0.0823 expl_var=0.970 entropy=2.219 (71 steps/s, ETA 13min)
+Loading shard 6/11: 12 files, 1,209,432 samples
+  Hidden stats — mean: [-28.636, 330.389], std: [0.294, 9.375]
+  Loaded 1,209,432 samples
+Saved hidden normalization stats to /data/group_data/rl/geney/checkpoints/pure_awr_psf_w512/hidden_state_stats.npz
+[46000/100000] actor=2.4057 critic=0.2380 expl_var=0.906 entropy=2.255 (66 steps/s, ETA 14min)
+[47000/100000] actor=2.4837 critic=0.3436 expl_var=0.851 entropy=2.354 (67 steps/s, ETA 13min)
+[48000/100000] actor=2.5142 critic=0.1555 expl_var=0.929 entropy=2.333 (67 steps/s, ETA 13min)
+[49000/100000] actor=2.2127 critic=0.1321 expl_var=0.939 entropy=2.269 (68 steps/s, ETA 13min)
+[50000/100000] actor=1.9898 critic=0.1819 expl_var=0.932 entropy=2.159 (68 steps/s, ETA 12min)
+  Saved checkpoint: /data/group_data/rl/geney/checkpoints/pure_awr_psf_w512/checkpoint_50000.pth
+[51000/100000] actor=2.3028 critic=0.1233 expl_var=0.931 entropy=2.202 (69 steps/s, ETA 12min)
+[52000/100000] actor=2.2203 critic=0.0837 expl_var=0.966 entropy=2.249 (69 steps/s, ETA 12min)
+[53000/100000] actor=2.3372 critic=0.0948 expl_var=0.964 entropy=2.366 (70 steps/s, ETA 11min)
+[54000/100000] actor=2.0865 critic=0.1135 expl_var=0.953 entropy=2.062 (70 steps/s, ETA 11min)
+Loading shard 7/11: 12 files, 1,211,150 samples
+  Hidden stats — mean: [-28.635, 330.381], std: [0.294, 9.378]
+  Loaded 1,211,150 samples
+Saved hidden normalization stats to /data/group_data/rl/geney/checkpoints/pure_awr_psf_w512/hidden_state_stats.npz
+[55000/100000] actor=2.4680 critic=0.2764 expl_var=0.877 entropy=2.420 (66 steps/s, ETA 11min)
+[56000/100000] actor=2.1960 critic=0.2284 expl_var=0.935 entropy=2.368 (67 steps/s, ETA 11min)
+[57000/100000] actor=2.3009 critic=0.1924 expl_var=0.923 entropy=2.306 (67 steps/s, ETA 11min)
+[58000/100000] actor=2.3865 critic=0.1358 expl_var=0.931 entropy=2.422 (68 steps/s, ETA 10min)
+[59000/100000] actor=2.1361 critic=0.1746 expl_var=0.940 entropy=2.278 (68 steps/s, ETA 10min)
+[60000/100000] actor=2.2644 critic=0.1119 expl_var=0.965 entropy=2.305 (69 steps/s, ETA 10min)
+[61000/100000] actor=2.3121 critic=0.1051 expl_var=0.964 entropy=2.307 (69 steps/s, ETA 9min)
+[62000/100000] actor=2.2478 critic=0.1463 expl_var=0.951 entropy=2.292 (70 steps/s, ETA 9min)
+[63000/100000] actor=2.2679 critic=0.0960 expl_var=0.950 entropy=2.200 (70 steps/s, ETA 9min)
+Loading shard 8/11: 12 files, 1,209,963 samples
+  Hidden stats — mean: [-28.629, 330.333], std: [0.295, 9.384]
+  Loaded 1,209,963 samples
+Saved hidden normalization stats to /data/group_data/rl/geney/checkpoints/pure_awr_psf_w512/hidden_state_stats.npz
+[64000/100000] actor=2.2965 critic=0.2250 expl_var=0.901 entropy=2.302 (67 steps/s, ETA 9min)
+[65000/100000] actor=2.2345 critic=0.2781 expl_var=0.891 entropy=2.232 (67 steps/s, ETA 9min)
+[66000/100000] actor=2.2692 critic=0.1993 expl_var=0.930 entropy=2.301 (67 steps/s, ETA 8min)
+[67000/100000] actor=2.3840 critic=0.1549 expl_var=0.937 entropy=2.334 (68 steps/s, ETA 8min)
+[68000/100000] actor=2.2626 critic=0.1303 expl_var=0.951 entropy=2.259 (68 steps/s, ETA 8min)
+[69000/100000] actor=2.1064 critic=0.1327 expl_var=0.958 entropy=2.204 (69 steps/s, ETA 8min)
+[70000/100000] actor=2.4896 critic=0.1091 expl_var=0.962 entropy=2.345 (69 steps/s, ETA 7min)
+[71000/100000] actor=2.1509 critic=0.0933 expl_var=0.965 entropy=2.185 (69 steps/s, ETA 7min)
+[72000/100000] actor=2.3068 critic=0.0883 expl_var=0.966 entropy=2.325 (70 steps/s, ETA 7min)
+Loading shard 9/11: 12 files, 1,205,392 samples
+  Hidden stats — mean: [-28.629, 330.359], std: [0.294, 9.380]
+  Loaded 1,205,392 samples
+Saved hidden normalization stats to /data/group_data/rl/geney/checkpoints/pure_awr_psf_w512/hidden_state_stats.npz
+[73000/100000] actor=2.4864 critic=0.3429 expl_var=0.874 entropy=2.373 (67 steps/s, ETA 7min)
+[74000/100000] actor=2.3253 critic=0.2560 expl_var=0.908 entropy=2.323 (67 steps/s, ETA 6min)
+[75000/100000] actor=2.3742 critic=0.1742 expl_var=0.914 entropy=2.410 (67 steps/s, ETA 6min)
+  Saved checkpoint: /data/group_data/rl/geney/checkpoints/pure_awr_psf_w512/checkpoint_75000.pth
+[76000/100000] actor=2.2805 critic=0.1660 expl_var=0.934 entropy=2.316 (68 steps/s, ETA 6min)
+[77000/100000] actor=2.2853 critic=0.1570 expl_var=0.924 entropy=2.418 (68 steps/s, ETA 6min)
+[78000/100000] actor=2.1856 critic=0.1460 expl_var=0.937 entropy=2.337 (68 steps/s, ETA 5min)
+[79000/100000] actor=2.1612 critic=0.1077 expl_var=0.954 entropy=2.251 (68 steps/s, ETA 5min)
+[80000/100000] actor=2.1664 critic=0.1106 expl_var=0.960 entropy=2.211 (69 steps/s, ETA 5min)
+[81000/100000] actor=2.2038 critic=0.0941 expl_var=0.961 entropy=2.205 (69 steps/s, ETA 5min)
+Loading shard 10/11: 12 files, 1,210,539 samples
+  Hidden stats — mean: [-28.628, 330.348], std: [0.294, 9.374]
+  Loaded 1,210,539 samples
+Saved hidden normalization stats to /data/group_data/rl/geney/checkpoints/pure_awr_psf_w512/hidden_state_stats.npz
+[82000/100000] actor=2.1050 critic=0.4180 expl_var=0.870 entropy=2.023 (66 steps/s, ETA 5min)
+[83000/100000] actor=2.3817 critic=0.3117 expl_var=0.867 entropy=2.385 (67 steps/s, ETA 4min)
+[84000/100000] actor=2.2321 critic=0.1890 expl_var=0.923 entropy=2.247 (67 steps/s, ETA 4min)
+[85000/100000] actor=2.1392 critic=0.1905 expl_var=0.937 entropy=2.250 (67 steps/s, ETA 4min)
+[86000/100000] actor=2.1390 critic=0.1614 expl_var=0.943 entropy=2.149 (68 steps/s, ETA 3min)
+[87000/100000] actor=2.2512 critic=0.1352 expl_var=0.949 entropy=2.183 (68 steps/s, ETA 3min)
+[88000/100000] actor=2.2336 critic=0.1021 expl_var=0.947 entropy=2.213 (68 steps/s, ETA 3min)
+[89000/100000] actor=2.2326 critic=0.0847 expl_var=0.963 entropy=2.216 (68 steps/s, ETA 3min)
+[90000/100000] actor=2.1643 critic=0.1239 expl_var=0.950 entropy=2.106 (69 steps/s, ETA 2min)
+Loading shard 11/11: 6 files, 603,208 samples
+  Hidden stats — mean: [-28.627, 330.341], std: [0.294, 9.373]
+  Loaded 603,208 samples
+Saved hidden normalization stats to /data/group_data/rl/geney/checkpoints/pure_awr_psf_w512/hidden_state_stats.npz
+[91000/100000] actor=2.2660 critic=0.3510 expl_var=0.885 entropy=2.273 (67 steps/s, ETA 2min)
+[92000/100000] actor=2.2797 critic=0.2894 expl_var=0.896 entropy=2.291 (68 steps/s, ETA 2min)
+[93000/100000] actor=2.2954 critic=0.1049 expl_var=0.955 entropy=2.229 (68 steps/s, ETA 2min)
+[94000/100000] actor=2.2738 critic=0.0632 expl_var=0.955 entropy=2.223 (68 steps/s, ETA 1min)
+[95000/100000] actor=2.2740 critic=0.0925 expl_var=0.969 entropy=2.179 (68 steps/s, ETA 1min)
+[96000/100000] actor=2.2542 critic=0.0503 expl_var=0.981 entropy=2.330 (69 steps/s, ETA 1min)
+[97000/100000] actor=2.0697 critic=0.0538 expl_var=0.978 entropy=2.064 (69 steps/s, ETA 1min)
+[98000/100000] actor=1.9477 critic=0.0509 expl_var=0.980 entropy=2.038 (69 steps/s, ETA 0min)
+[99000/100000] actor=2.1806 critic=0.0390 expl_var=0.985 entropy=2.128 (69 steps/s, ETA 0min)
+Loading shard 1/11: 12 files, 1,205,853 samples
+  Hidden stats — mean: [-28.627, 330.336], std: [0.295, 9.374]
+  Loaded 1,205,853 samples
+Saved hidden normalization stats to /data/group_data/rl/geney/checkpoints/pure_awr_psf_w512/hidden_state_stats.npz
+[100000/100000] actor=2.5587 critic=0.5783 expl_var=0.768 entropy=2.248 (67 steps/s, ETA 0min)
+  Saved checkpoint: /data/group_data/rl/geney/checkpoints/pure_awr_psf_w512/checkpoint_100000.pth
+
+Training complete. Final model: /data/group_data/rl/geney/checkpoints/pure_awr_psf_w512/final.pth
+Total time: 24.8 min
+==========================================
+Completed: Tue Apr  7 03:36:31 PM EDT 2026
+==========================================

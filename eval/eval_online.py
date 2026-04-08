@@ -41,7 +41,7 @@ import torch
 
 from labelling.obs_to_text import obs_to_text
 from llm.prompts import filter_text_obs
-from models.actor_critic_aug import ActorCriticAugLN, ActorCriticAugV2, ActorCriticAugGated
+from models.actor_critic_aug import ActorCriticAug as ActorCriticAugBase, ActorCriticAugLN, ActorCriticAugV2, ActorCriticAugGated
 
 from pipeline.config import (
     ACTION_NAMES,
@@ -296,9 +296,14 @@ def run_eval(args):
         ModelClass = ActorCriticAugGated
     elif args.arch_v2:
         ModelClass = ActorCriticAugV2
+    elif args.no_layernorm:
+        ModelClass = ActorCriticAugBase
     else:
         ModelClass = ActorCriticAugLN
-    model = ModelClass(OBS_DIM, ACTION_DIM, layer_width, EMBED_HIDDEN_DIM, dropout=args.dropout).to(device)
+    model_kwargs = dict(obs_dim=OBS_DIM, action_dim=ACTION_DIM, layer_width=layer_width, hidden_state_dim=EMBED_HIDDEN_DIM)
+    if ModelClass != ActorCriticAugBase:
+        model_kwargs["dropout"] = args.dropout
+    model = ModelClass(**model_kwargs).to(device)
     ckpt_path = args.checkpoint or str(CKPT_DIR / "final.pth")
     model.load_state_dict(torch.load(ckpt_path, map_location=device, weights_only=True))
     model.eval()
@@ -768,6 +773,8 @@ def main():
                          "die=Gemini death-seeking futures")
     p.add_argument("--dropout", type=float, default=0.0,
                     help="Dropout rate (must match training architecture)")
+    p.add_argument("--no-layernorm", action="store_true",
+                    help="Use ActorCriticAug (no LayerNorm) instead of ActorCriticAugLN")
     p.add_argument("--arch-v2", action="store_true",
                     help="Use ActorCriticAugV2 architecture")
     p.add_argument("--arch-gated", action="store_true",

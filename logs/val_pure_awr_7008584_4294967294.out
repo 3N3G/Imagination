@@ -1,0 +1,20 @@
+==========================================
+Job:       val_pure_awr
+Job ID:    7008584
+Task ID:   N/A
+Host:      babel-u5-28
+GPU:       NVIDIA L40S
+Conda env: /data/user_data/geney/.conda/envs/craftax_fast_llm
+Workdir:   /home/geney/Imagination
+Date:      Tue Apr  7 08:08:05 PM EDT 2026
+==========================================
+=== Validating pure_awr_oracle_w512 ===
+======================================================================
+AWR Validation — Hidden State Ablation
+======================================================================
+  Checkpoint: /data/group_data/rl/geney/checkpoints/pure_awr_oracle_w512/final.pth
+  Val data: /data/group_data/rl/geney/new_craftax_llm_labelled_results_shards/final_trajectories (offset=126, max=32)
+  Device: cuda
+
+  Model loaded: ActorCriticAug (width=512, 14,260,268 params)
+Loading 32 validation files...

@@ -228,3 +228,43 @@ def build_future_state_block(
         blocks.append(f"[FUTURE STATE t+{delta_t}]\n{compact}")
 
     return "\n\n".join(blocks)
+
+
+def build_history_block(
+    obs_sequence,
+    action_sequence,
+    reward_sequence,
+    done_sequence,
+    n_history: int = 5,
+) -> str:
+    """Build a history block from the last N states before the current timestep.
+
+    Args:
+        obs_sequence: list/array of (8268,) observations for t-N through t-1
+        action_sequence: corresponding actions
+        reward_sequence: corresponding rewards
+        done_sequence: corresponding done flags
+        n_history: number of history states (for labelling offsets)
+
+    Returns:
+        Formatted history block string, or "(no history — episode start)" if empty
+    """
+    if len(obs_sequence) == 0:
+        return "(no history — episode start)"
+
+    blocks = []
+    n = len(obs_sequence)
+    for i in range(n):
+        raw_text = obs_to_text(obs_sequence[i])
+        filtered = filter_text_obs(raw_text)
+        action_id = int(action_sequence[i]) if action_sequence is not None else None
+        reward_val = float(reward_sequence[i]) if reward_sequence is not None else None
+        done_val = bool(done_sequence[i] > 0.5) if done_sequence is not None else None
+
+        compact = build_compact_state(
+            filtered, action_id=action_id, reward=reward_val, done=done_val,
+        )
+        delta_t = i - n  # negative offset: -N, -N+1, ..., -1
+        blocks.append(f"[HISTORY STATE t{delta_t}]\n{compact}")
+
+    return "\n\n".join(blocks)

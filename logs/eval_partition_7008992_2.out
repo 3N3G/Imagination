@@ -1,0 +1,405 @@
+==========================================
+Job:       eval_partition
+Job ID:    7008992
+Task ID:   2
+Host:      babel-u5-28
+GPU:       NVIDIA L40S
+Conda env: /data/user_data/geney/.conda/envs/craftax_fast_llm
+Workdir:   /home/geney/Imagination
+Date:      Tue Apr  7 08:57:08 PM EDT 2026
+==========================================
+=== Eval partition [2]: part_ow05 ===
+Prompt template: predict_state_only_prompt_concise.txt (with 3 real few-shot examples)
+Policy loaded: /data/group_data/rl/geney/checkpoints/part_ow05/final.pth
+Hidden stats loaded: mean=[-28.6,330.3]
+Loading Qwen3-8B (31 layers, SDPA)...
+  Loaded in 275.6s (31 layers)
+Loading Craftax textures from cache.
+Textures successfully loaded from cache.
+wandb initialized
+
+============================================================
+Episode 1/10
+============================================================
+  [step 0] gemini: Headline: Prioritizing wood gathering and then ladder progression on Floor 0.
+  [step 75] gemini: Headline: Prioritizing wood gathering and initial tool crafting on Floor 0.
+  [step 150] gemini: Headline: Prioritizing drink and then progressing down the open ladder.
+  Step 200: return=17.00, value=2.24, action=RIGHT
+  [step 225] gemini: Headline: Prioritizing drink and then descending to the next floor.
+  [step 300] gemini: Headline: Prioritizing drink before descending to the next floor.
+  [step 375] gemini: Headline: Prioritizing energy recovery before taking the open ladder.
+  Step 400: return=17.90, value=0.91, action=MAKE_ARROW
+  [step 450] gemini: Headline: Prioritizing drink and then progressing to the next floor.
+  [step 525] gemini: Headline: Prioritizing drink and then descending to the next floor.
+  Step 600: return=18.70, value=0.68, action=DO
+  [step 600] gemini: Headline: Prioritizing drink and then progressing to the next floor.
+  [step 675] gemini: Headline: Prioritizing ladder progression on Floor 0.
+  [step 750] gemini: Headline: Prioritizing drink and energy before taking the open ladder.
+  Step 800: return=21.00, value=1.10, action=ENCHANT_SWORD
+  [step 825] gemini: Headline: Prioritizing drink and energy recovery before progressing.
+  [step 900] gemini: Headline: Prioritizing drink and energy recovery before descending.
+  [step 967] Achievement unlocked: collect_coal
+  [step 967] Achievement unlocked: collect_drink
+  [step 967] Achievement unlocked: collect_sapling
+  [step 967] Achievement unlocked: collect_stone
+  [step 967] Achievement unlocked: collect_wood
+  [step 967] Achievement unlocked: defeat_skeleton
+  [step 967] Achievement unlocked: defeat_zombie
+  [step 967] Achievement unlocked: eat_cow
+  [step 967] Achievement unlocked: eat_plant
+  [step 967] Achievement unlocked: make_arrow
+  [step 967] Achievement unlocked: make_stone_pickaxe
+  [step 967] Achievement unlocked: make_stone_sword
+  [step 967] Achievement unlocked: make_torch
+  [step 967] Achievement unlocked: make_wood_pickaxe
+  [step 967] Achievement unlocked: make_wood_sword
+  [step 967] Achievement unlocked: place_furnace
+  [step 967] Achievement unlocked: place_plant
+  [step 967] Achievement unlocked: place_stone
+  [step 967] Achievement unlocked: place_table
+  [step 967] Achievement unlocked: place_torch
+  [step 967] Achievement unlocked: wake_up
+
+  Return: 20.10
+  Length: 968
+  Achievements (21): ['collect_coal', 'collect_drink', 'collect_sapling', 'collect_stone', 'collect_wood', 'defeat_skeleton', 'defeat_zombie', 'eat_cow', 'eat_plant', 'make_arrow', 'make_stone_pickaxe', 'make_stone_sword', 'make_torch', 'make_wood_pickaxe', 'make_wood_sword', 'place_furnace', 'place_plant', 'place_stone', 'place_table', 'place_torch', 'wake_up']
+  Gemini calls: 65, errors: 0
+
+============================================================
+Episode 2/10
+============================================================
+  [step 0] gemini: Headline: Initial resource gathering on Floor 0, prioritizing wood for basic too
+  [step 75] gemini: Headline: Prioritizing ladder descent on Floor 0.
+  [step 150] gemini: Headline: Prioritizing drink and then progressing down to the next floor.
+  Step 200: return=17.00, value=1.49, action=UP
+  [step 225] gemini: Headline: Prioritizing drink and then ladder progression.
+  [step 300] gemini: Headline: Prioritizing drink and energy recovery before descending.
+  [step 375] gemini: Headline: Prioritizing drink and energy recovery, then exploring for the ladder.
+  [step 378] Achievement unlocked: collect_coal
+  [step 378] Achievement unlocked: collect_drink
+  [step 378] Achievement unlocked: collect_sapling
+  [step 378] Achievement unlocked: collect_stone
+  [step 378] Achievement unlocked: collect_wood
+  [step 378] Achievement unlocked: defeat_skeleton
+  [step 378] Achievement unlocked: eat_cow
+  [step 378] Achievement unlocked: make_arrow
+  [step 378] Achievement unlocked: make_stone_sword
+  [step 378] Achievement unlocked: make_torch
+  [step 378] Achievement unlocked: make_wood_pickaxe
+  [step 378] Achievement unlocked: make_wood_sword
+  [step 378] Achievement unlocked: place_furnace
+  [step 378] Achievement unlocked: place_plant
+  [step 378] Achievement unlocked: place_stone
+  [step 378] Achievement unlocked: place_table
+  [step 378] Achievement unlocked: place_torch
+
+  Return: 16.10
+  Length: 379
+  Achievements (17): ['collect_coal', 'collect_drink', 'collect_sapling', 'collect_stone', 'collect_wood', 'defeat_skeleton', 'eat_cow', 'make_arrow', 'make_stone_sword', 'make_torch', 'make_wood_pickaxe', 'make_wood_sword', 'place_furnace', 'place_plant', 'place_stone', 'place_table', 'place_torch']
+  Gemini calls: 26, errors: 0
+
+============================================================
+Episode 3/10
+============================================================
+  [step 0] gemini: Headline: Exploring for the ladder and gathering initial resources on Floor 0.
+  [step 75] gemini: Headline: Prioritizing the ladder to descend to the next floor.
+  [step 150] gemini: Headline: Prioritizing drink before taking the ladder down to Floor 1.
+  Step 200: return=11.00, value=3.89, action=DOWN
+  [step 225] gemini: Headline: Prioritizing energy recovery before descending to the next floor.
+  [step 300] gemini: Headline: Prioritizing sleep and then ladder progression on Floor 0.
+  [step 375] gemini: Headline: Prioritizing drink and energy recovery before taking the ladder.
+  Step 400: return=17.20, value=0.27, action=DO
+  [step 407] Achievement unlocked: collect_coal
+  [step 407] Achievement unlocked: collect_drink
+  [step 407] Achievement unlocked: collect_stone
+  [step 407] Achievement unlocked: collect_wood
+  [step 407] Achievement unlocked: defeat_skeleton
+  [step 407] Achievement unlocked: eat_cow
+  [step 407] Achievement unlocked: enter_dungeon
+  [step 407] Achievement unlocked: make_arrow
+  [step 407] Achievement unlocked: make_stone_pickaxe
+  [step 407] Achievement unlocked: make_stone_sword
+  [step 407] Achievement unlocked: make_torch
+  [step 407] Achievement unlocked: make_wood_pickaxe
+  [step 407] Achievement unlocked: make_wood_sword
+  [step 407] Achievement unlocked: place_furnace
+  [step 407] Achievement unlocked: place_table
+  [step 407] Achievement unlocked: place_torch
+
+  Return: 17.10
+  Length: 408
+  Achievements (16): ['collect_coal', 'collect_drink', 'collect_stone', 'collect_wood', 'defeat_skeleton', 'eat_cow', 'enter_dungeon', 'make_arrow', 'make_stone_pickaxe', 'make_stone_sword', 'make_torch', 'make_wood_pickaxe', 'make_wood_sword', 'place_furnace', 'place_table', 'place_torch']
+  Gemini calls: 28, errors: 0
+
+============================================================
+Episode 4/10
+============================================================
+  [step 0] gemini: Headline: Initial resource gathering and movement towards the ladder on Floor 0.
+  [step 75] gemini: Headline: Prioritizing drink and then moving towards the open ladder.
+  [step 150] gemini: Headline: Exploring for wood and then using the nearby crafting table.
+  Step 200: return=18.00, value=1.84, action=UP
+  [step 225] gemini: Headline: Prioritizing drink and energy recovery before descending the ladder.
+  [step 300] gemini: Headline: Prioritizing drink and energy recovery on Floor 0 before descending.
+  [step 375] gemini: Headline: Prioritizing drink and energy recovery before descending.
+  Step 400: return=18.30, value=0.20, action=LEVEL_UP_STR
+  [step 427] Achievement unlocked: collect_coal
+  [step 427] Achievement unlocked: collect_drink
+  [step 427] Achievement unlocked: collect_iron
+  [step 427] Achievement unlocked: collect_sapling
+  [step 427] Achievement unlocked: collect_stone
+  [step 427] Achievement unlocked: collect_wood
+  [step 427] Achievement unlocked: defeat_skeleton
+  [step 427] Achievement unlocked: eat_cow
+  [step 427] Achievement unlocked: make_arrow
+  [step 427] Achievement unlocked: make_stone_pickaxe
+  [step 427] Achievement unlocked: make_stone_sword
+  [step 427] Achievement unlocked: make_torch
+  [step 427] Achievement unlocked: make_wood_pickaxe
+  [step 427] Achievement unlocked: make_wood_sword
+  [step 427] Achievement unlocked: place_furnace
+  [step 427] Achievement unlocked: place_plant
+  [step 427] Achievement unlocked: place_stone
+  [step 427] Achievement unlocked: place_table
+  [step 427] Achievement unlocked: place_torch
+
+  Return: 18.10
+  Length: 428
+  Achievements (19): ['collect_coal', 'collect_drink', 'collect_iron', 'collect_sapling', 'collect_stone', 'collect_wood', 'defeat_skeleton', 'eat_cow', 'make_arrow', 'make_stone_pickaxe', 'make_stone_sword', 'make_torch', 'make_wood_pickaxe', 'make_wood_sword', 'place_furnace', 'place_plant', 'place_stone', 'place_table', 'place_torch']
+  Gemini calls: 29, errors: 0
+
+============================================================
+Episode 5/10
+============================================================
+  [step 0] gemini: Headline: Initial resource gathering and ladder progression on Floor 0.
+  [step 75] gemini: Headline: Prioritizing water and then exploring for the ladder on Floor 0.
+  [step 150] gemini: Headline: Prioritizing drink and then descending to Floor 1.
+  Step 200: return=5.00, value=5.21, action=DOWN
+  [step 225] gemini: Headline: Prioritizing drink and energy recovery before descending the ladder.
+  [step 300] gemini: Headline: Prioritizing sleep and then gathering wood for tools.
+  [step 375] gemini: Headline: Prioritizing drink and energy recovery, then exploring for the ladder.
+  [step 375] Achievement unlocked: collect_coal
+  [step 375] Achievement unlocked: collect_drink
+  [step 375] Achievement unlocked: collect_sapling
+  [step 375] Achievement unlocked: collect_stone
+  [step 375] Achievement unlocked: collect_wood
+  [step 375] Achievement unlocked: defeat_zombie
+  [step 375] Achievement unlocked: eat_cow
+  [step 375] Achievement unlocked: make_torch
+  [step 375] Achievement unlocked: make_wood_pickaxe
+  [step 375] Achievement unlocked: place_plant
+  [step 375] Achievement unlocked: place_stone
+  [step 375] Achievement unlocked: place_table
+  [step 375] Achievement unlocked: place_torch
+
+  Return: 12.10
+  Length: 376
+  Achievements (13): ['collect_coal', 'collect_drink', 'collect_sapling', 'collect_stone', 'collect_wood', 'defeat_zombie', 'eat_cow', 'make_torch', 'make_wood_pickaxe', 'place_plant', 'place_stone', 'place_table', 'place_torch']
+  Gemini calls: 26, errors: 0
+
+============================================================
+Episode 6/10
+============================================================
+  [step 0] gemini: Headline: Gathering wood and exploring for the ladder on Floor 0.
+  [step 75] gemini: Headline: Prioritizing ladder descent on Floor 0.
+  [step 150] gemini: Headline: Prioritizing drink and then descending to Floor 1.
+  Step 200: return=15.90, value=1.64, action=DOWN
+  [step 225] gemini: Headline: Prioritizing survival and then taking the open ladder.
+  [step 251] Achievement unlocked: collect_coal
+  [step 251] Achievement unlocked: collect_drink
+  [step 251] Achievement unlocked: collect_sapling
+  [step 251] Achievement unlocked: collect_stone
+  [step 251] Achievement unlocked: collect_wood
+  [step 251] Achievement unlocked: defeat_skeleton
+  [step 251] Achievement unlocked: defeat_zombie
+  [step 251] Achievement unlocked: make_arrow
+  [step 251] Achievement unlocked: make_stone_pickaxe
+  [step 251] Achievement unlocked: make_torch
+  [step 251] Achievement unlocked: make_wood_pickaxe
+  [step 251] Achievement unlocked: make_wood_sword
+  [step 251] Achievement unlocked: place_furnace
+  [step 251] Achievement unlocked: place_plant
+  [step 251] Achievement unlocked: place_stone
+  [step 251] Achievement unlocked: place_table
+  [step 251] Achievement unlocked: place_torch
+
+  Return: 16.10
+  Length: 252
+  Achievements (17): ['collect_coal', 'collect_drink', 'collect_sapling', 'collect_stone', 'collect_wood', 'defeat_skeleton', 'defeat_zombie', 'make_arrow', 'make_stone_pickaxe', 'make_torch', 'make_wood_pickaxe', 'make_wood_sword', 'place_furnace', 'place_plant', 'place_stone', 'place_table', 'place_torch']
+  Gemini calls: 17, errors: 0
+
+============================================================
+Episode 7/10
+============================================================
+  [step 0] gemini: Headline: Initial wood gathering and exploration on Floor 0.
+  [step 75] gemini: Headline: Prioritizing immediate survival needs before exploring for the ladder.
+  [step 150] gemini: Headline: Prioritizing drink and then exploring for the ladder on Floor 0.
+  Step 200: return=13.00, value=1.92, action=UP
+  [step 225] gemini: Headline: Prioritizing drink and energy recovery before descending.
+  [step 300] gemini: Headline: Prioritizing energy recovery before progressing to the next floor.
+  [step 375] gemini: Headline: Descending to the next floor and gaining XP.
+  Step 400: return=19.40, value=0.30, action=ASCEND
+  [step 433] Achievement unlocked: collect_drink
+  [step 433] Achievement unlocked: collect_iron
+  [step 433] Achievement unlocked: collect_sapling
+  [step 433] Achievement unlocked: collect_stone
+  [step 433] Achievement unlocked: collect_wood
+  [step 433] Achievement unlocked: defeat_skeleton
+  [step 433] Achievement unlocked: defeat_zombie
+  [step 433] Achievement unlocked: eat_cow
+  [step 433] Achievement unlocked: enter_dungeon
+  [step 433] Achievement unlocked: make_arrow
+  [step 433] Achievement unlocked: make_stone_pickaxe
+  [step 433] Achievement unlocked: make_stone_sword
+  [step 433] Achievement unlocked: make_wood_pickaxe
+  [step 433] Achievement unlocked: make_wood_sword
+  [step 433] Achievement unlocked: place_furnace
+  [step 433] Achievement unlocked: place_plant
+  [step 433] Achievement unlocked: place_stone
+  [step 433] Achievement unlocked: place_table
+
+  Return: 19.10
+  Length: 434
+  Achievements (18): ['collect_drink', 'collect_iron', 'collect_sapling', 'collect_stone', 'collect_wood', 'defeat_skeleton', 'defeat_zombie', 'eat_cow', 'enter_dungeon', 'make_arrow', 'make_stone_pickaxe', 'make_stone_sword', 'make_wood_pickaxe', 'make_wood_sword', 'place_furnace', 'place_plant', 'place_stone', 'place_table']
+  Gemini calls: 29, errors: 0
+
+============================================================
+Episode 8/10
+============================================================
+  [step 0] gemini: Headline: Initial wood gathering on Floor 0 to enable basic tools.
+  [step 75] gemini: Headline: Prioritizing the ladder on Floor 0, while gathering essential resource
+  [step 150] gemini: Headline: Prioritizing drink and then progressing to the next floor.
+  Step 200: return=17.00, value=0.77, action=RIGHT
+  [step 225] gemini: Headline: Prioritizing drink and energy recovery before progressing.
+  [step 300] gemini: Headline: Prioritizing energy recovery before descending to the next floor.
+  [step 375] gemini: Headline: Prioritizing drink and then the open ladder on Floor 0.
+  Step 400: return=18.00, value=1.29, action=READ_BOOK
+  [step 450] gemini: Headline: Prioritizing drink and then descending the ladder.
+  [step 525] gemini: Headline: Prioritizing drink and then exploring for the open ladder.
+  Step 600: return=19.70, value=0.06, action=DO
+  [step 600] gemini: Headline: Prioritizing food and then descending to the next floor.
+  [step 675] gemini: Headline: Prioritizing survival by addressing immediate drink and food needs.
+  [step 737] Achievement unlocked: collect_coal
+  [step 737] Achievement unlocked: collect_drink
+  [step 737] Achievement unlocked: collect_iron
+  [step 737] Achievement unlocked: collect_sapling
+  [step 737] Achievement unlocked: collect_stone
+  [step 737] Achievement unlocked: collect_wood
+  [step 737] Achievement unlocked: defeat_zombie
+  [step 737] Achievement unlocked: eat_cow
+  [step 737] Achievement unlocked: make_arrow
+  [step 737] Achievement unlocked: make_stone_pickaxe
+  [step 737] Achievement unlocked: make_stone_sword
+  [step 737] Achievement unlocked: make_torch
+  [step 737] Achievement unlocked: make_wood_pickaxe
+  [step 737] Achievement unlocked: make_wood_sword
+  [step 737] Achievement unlocked: place_furnace
+  [step 737] Achievement unlocked: place_plant
+  [step 737] Achievement unlocked: place_stone
+  [step 737] Achievement unlocked: place_table
+  [step 737] Achievement unlocked: place_torch
+  [step 737] Achievement unlocked: wake_up
+
+  Return: 19.10
+  Length: 738
+  Achievements (20): ['collect_coal', 'collect_drink', 'collect_iron', 'collect_sapling', 'collect_stone', 'collect_wood', 'defeat_zombie', 'eat_cow', 'make_arrow', 'make_stone_pickaxe', 'make_stone_sword', 'make_torch', 'make_wood_pickaxe', 'make_wood_sword', 'place_furnace', 'place_plant', 'place_stone', 'place_table', 'place_torch', 'wake_up']
+  Gemini calls: 50, errors: 0
+
+============================================================
+Episode 9/10
+============================================================
+  [step 0] gemini: Headline: Initial wood gathering and exploration on Floor 0.
+  [step 75] gemini: Headline: Initial exploration for resources and ladder on Floor 0.
+  [step 150] gemini: Headline: Prioritizing wood gathering for initial tool crafting.
+  Step 200: return=9.70, value=2.17, action=UP
+  [step 225] gemini: Headline: Prioritizing survival and then ladder progression on Floor 0.
+  [step 300] gemini: Headline: Prioritizing energy recovery and then exploring for the ladder.
+  [step 374] Achievement unlocked: collect_drink
+  [step 374] Achievement unlocked: collect_sapling
+  [step 374] Achievement unlocked: collect_wood
+  [step 374] Achievement unlocked: defeat_skeleton
+  [step 374] Achievement unlocked: defeat_zombie
+  [step 374] Achievement unlocked: eat_cow
+  [step 374] Achievement unlocked: make_wood_pickaxe
+  [step 374] Achievement unlocked: make_wood_sword
+  [step 374] Achievement unlocked: place_plant
+  [step 374] Achievement unlocked: place_table
+  [step 374] Achievement unlocked: wake_up
+
+  Return: 10.10
+  Length: 375
+  Achievements (11): ['collect_drink', 'collect_sapling', 'collect_wood', 'defeat_skeleton', 'defeat_zombie', 'eat_cow', 'make_wood_pickaxe', 'make_wood_sword', 'place_plant', 'place_table', 'wake_up']
+  Gemini calls: 25, errors: 0
+
+============================================================
+Episode 10/10
+============================================================
+  [step 0] gemini: Headline: Initial wood gathering and exploration on Floor 0.
+  [step 75] gemini: Headline: Prioritizing drink and then exploring for the ladder on Floor 0.
+  [step 150] gemini: Headline: Prioritizing ladder descent on Floor 0, with a brief stop for food.
+  Step 200: return=15.00, value=1.61, action=DOWN
+  [step 225] gemini: Headline: Prioritizing energy recovery before descending to Floor 1.
+  [step 300] gemini: Headline: Prioritizing drink and energy recovery before progression.
+  [step 375] gemini: Headline: Prioritizing energy recovery and then exploring for wood.
+  Step 400: return=15.70, value=1.03, action=CAST_FIREBALL
+  [step 404] Achievement unlocked: collect_coal
+  [step 404] Achievement unlocked: collect_drink
+  [step 404] Achievement unlocked: collect_sapling
+  [step 404] Achievement unlocked: collect_stone
+  [step 404] Achievement unlocked: collect_wood
+  [step 404] Achievement unlocked: defeat_skeleton
+  [step 404] Achievement unlocked: eat_cow
+  [step 404] Achievement unlocked: make_arrow
+  [step 404] Achievement unlocked: make_stone_pickaxe
+  [step 404] Achievement unlocked: make_stone_sword
+  [step 404] Achievement unlocked: make_wood_pickaxe
+  [step 404] Achievement unlocked: make_wood_sword
+  [step 404] Achievement unlocked: place_furnace
+  [step 404] Achievement unlocked: place_plant
+  [step 404] Achievement unlocked: place_stone
+  [step 404] Achievement unlocked: place_table
+  [step 404] Achievement unlocked: wake_up
+
+  Return: 16.10
+  Length: 405
+  Achievements (17): ['collect_coal', 'collect_drink', 'collect_sapling', 'collect_stone', 'collect_wood', 'defeat_skeleton', 'eat_cow', 'make_arrow', 'make_stone_pickaxe', 'make_stone_sword', 'make_wood_pickaxe', 'make_wood_sword', 'place_furnace', 'place_plant', 'place_stone', 'place_table', 'wake_up']
+  Gemini calls: 27, errors: 0
+
+============================================================
+EVALUATION SUMMARY
+============================================================
+Episodes: 10
+Return:       16.40 +/- 3.00  (min=10.10, max=20.10)
+Length:       476 +/- 201
+Achievements: 16.9 +/- 2.9
+Gemini calls: 322 ($0.13)
+
+Achievement frequency (out of 10 episodes):
+  collect_drink: 10/10
+  collect_wood: 10/10
+  make_wood_pickaxe: 10/10
+  place_table: 10/10
+  collect_sapling: 9/10
+  collect_stone: 9/10
+  eat_cow: 9/10
+  make_wood_sword: 9/10
+  place_plant: 9/10
+  collect_coal: 8/10
+  defeat_skeleton: 8/10
+  make_arrow: 8/10
+  place_furnace: 8/10
+  place_stone: 8/10
+  make_stone_pickaxe: 7/10
+  make_stone_sword: 7/10
+  make_torch: 7/10
+  place_torch: 7/10
+  defeat_zombie: 6/10
+  wake_up: 4/10
+  collect_iron: 3/10
+  enter_dungeon: 2/10
+  eat_plant: 1/10
+wandb run finished
+
+Results saved to /data/group_data/rl/geney/eval_results/partition/part_ow05_gemini
+==========================================
+Completed: Tue Apr  7 09:11:14 PM EDT 2026
+==========================================

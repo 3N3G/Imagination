@@ -35,6 +35,7 @@ os.environ["OMP_NUM_THREADS"] = "1"
 os.environ["MKL_NUM_THREADS"] = "1"
 
 import torch
+import torch.nn.utils as nn_utils
 import torch.optim as optim
 
 from models.actor_critic_aug import ActorCriticAugLN, ActorCriticAug as ActorCriticAugBase, ActorCriticAugV2, ActorCriticAugGated
@@ -116,8 +117,11 @@ class OfflineDataset:
         max_workers: int = 8,
         hidden_mode: str = "real",
         max_dataset_gb: float = 80.0,
+        device: str = "cuda",
+        no_prescan: bool = False,
     ):
         self.hidden_mode = hidden_mode
+        self.device = device
         self.max_workers = max_workers
         self.max_dataset_gb = max_dataset_gb
         self.need_hidden = hidden_mode in {"real", "shuffle"}
@@ -148,9 +152,26 @@ class OfflineDataset:
             raise ValueError("No valid files after scanning.")
 
         self._all_file_info = list(file_info)
-        self._bytes_per_sample = (
-            4 * Config.OBS_DIM + 4 * Config.HIDDEN_STATE_DIM + 4 + 4
-        )
+        # Check if first file uses bitpacked format
+        self._bitpacked = False
+        self._map_dim = 8217
+        self._map_packed_cols = 1028
+        self._aux_dim = 51
+        with np.load(file_info[0][0], mmap_mode="r") as d:
+            if "obs_map_bits" in d.files:
+                self._bitpacked = True
+                self._map_dim = int(d["obs_map_dim"]) if "obs_map_dim" in d.files else 8217
+                self._map_packed_cols = d["obs_map_bits"].shape[1]
+                self._aux_dim = d["obs_aux"].shape[1]
+        if self._bitpacked:
+            # packed: uint8 map + float32 aux (much smaller than unpacked float32 obs)
+            self._bytes_per_sample = (
+                self._map_packed_cols + 4 * self._aux_dim + 4 * Config.HIDDEN_STATE_DIM + 4 + 4
+            )
+        else:
+            self._bytes_per_sample = (
+                4 * Config.OBS_DIM + 4 * Config.HIDDEN_STATE_DIM + 4 + 4
+            )
         estimated_gb = self._estimate_gb(total_samples)
         print(f"  Total samples: {total_samples:,}")
         print(f"  Estimated memory: {estimated_gb:.2f} GiB")
@@ -163,8 +184,11 @@ class OfflineDataset:
         self._norm_sumsq = np.zeros((Config.HIDDEN_STATE_DIM,), dtype=np.float64)
         self.hidden_mean = np.zeros((Config.HIDDEN_STATE_DIM,), dtype=np.float32)
         self.hidden_std = np.ones((Config.HIDDEN_STATE_DIM,), dtype=np.float32)
+        self._stats_frozen = False  # freeze after first full cycle to prevent wraparound corruption
 
-        self.obs = None
+        self.obs = None  # used when not bitpacked
+        self.obs_map_bits = None  # used when bitpacked
+        self.obs_aux = None  # used when bitpacked
         self.action = None
         self.hidden_state = None
         self.return_to_go = None
@@ -172,6 +196,8 @@ class OfflineDataset:
 
         if len(self._shards) > 1:
             print(f"  Sharded into {len(self._shards)} chunks for memory budget")
+            if self.need_hidden and not no_prescan:
+                self._prescan_hidden_stats(file_info)
         self._load_shard(0)
 
     def _estimate_gb(self, n: int) -> float:
@@ -193,6 +219,35 @@ class OfflineDataset:
             shards.append(current)
         return shards
 
+    def _prescan_hidden_stats(self, file_info):
+        """Pre-scan all files to compute global hidden state stats before loading any shard."""
+        print("  Pre-scanning all files for hidden state stats...")
+        count = 0
+        h_sum = np.zeros((Config.HIDDEN_STATE_DIM,), dtype=np.float64)
+        h_sumsq = np.zeros((Config.HIDDEN_STATE_DIM,), dtype=np.float64)
+        for fpath, _ in file_info:
+            try:
+                with np.load(fpath, mmap_mode="r") as data:
+                    if "hidden_state" not in data.files:
+                        continue
+                    raw = np.asarray(data["hidden_state"])
+                    hs = (np.mean(raw, axis=1) if raw.ndim == 3 else raw).astype(np.float64)
+                    count += len(hs)
+                    h_sum += hs.sum(axis=0)
+                    h_sumsq += np.square(hs).sum(axis=0)
+            except Exception as e:
+                print(f"    Skipping {fpath} in prescan: {e}")
+        if count > 0:
+            mean = h_sum / count
+            var = np.maximum(h_sumsq / count - np.square(mean), 1e-6)
+            self.hidden_mean = mean.astype(np.float32)
+            self.hidden_std = np.sqrt(var).astype(np.float32)
+            self._norm_count = count
+            self._norm_sum = h_sum
+            self._norm_sumsq = h_sumsq
+            self._stats_frozen = True  # global stats computed, no need to update per-shard
+            print(f"    Global stats from {count:,} samples across {len(file_info)} files")
+
     @property
     def num_shards(self):
         return len(self._shards)
@@ -201,7 +256,6 @@ class OfflineDataset:
         fpath, _ = args
         try:
             with np.load(fpath, allow_pickle=True) as data:
-                obs = decode_obs_array(data)
                 action = np.asarray(data["action"]).reshape(-1).astype(np.int32)
                 rtg = np.asarray(data["return_to_go"]).reshape(-1).astype(np.float32)
                 hidden = None
@@ -210,10 +264,20 @@ class OfflineDataset:
                     hidden = (
                         np.mean(raw, axis=1) if raw.ndim == 3 else raw
                     ).astype(np.float32)
-                return {
-                    "obs": obs, "action": action, "return_to_go": rtg,
-                    "hidden_state": hidden, "count": len(obs),
-                }
+                if self._bitpacked and "obs_map_bits" in data.files:
+                    obs_map_bits = np.asarray(data["obs_map_bits"])  # uint8
+                    obs_aux = np.asarray(data["obs_aux"], dtype=np.float32)
+                    return {
+                        "obs_map_bits": obs_map_bits, "obs_aux": obs_aux,
+                        "action": action, "return_to_go": rtg,
+                        "hidden_state": hidden, "count": len(action),
+                    }
+                else:
+                    obs = decode_obs_array(data)
+                    return {
+                        "obs": obs, "action": action, "return_to_go": rtg,
+                        "hidden_state": hidden, "count": len(obs),
+                    }
         except Exception as e:
             print(f"  Error loading {fpath}: {e}")
             return None
@@ -224,7 +288,14 @@ class OfflineDataset:
         print(f"Loading training shard {shard_idx + 1}/{self.num_shards}: "
               f"{len(shard)} files, {n_samples:,} samples")
 
-        self.obs = np.zeros((n_samples, Config.OBS_DIM), dtype=np.float32)
+        if self._bitpacked:
+            self.obs_map_bits = np.zeros((n_samples, self._map_packed_cols), dtype=np.uint8)
+            self.obs_aux = np.zeros((n_samples, self._aux_dim), dtype=np.float32)
+            self.obs = None
+        else:
+            self.obs = np.zeros((n_samples, Config.OBS_DIM), dtype=np.float32)
+            self.obs_map_bits = None
+            self.obs_aux = None
         self.action = np.zeros(n_samples, dtype=np.int32)
         self.return_to_go = np.zeros(n_samples, dtype=np.float32)
         self.hidden_state = (
@@ -240,7 +311,11 @@ class OfflineDataset:
                 if result is None:
                     continue
                 n = result["count"]
-                self.obs[idx:idx + n] = result["obs"]
+                if self._bitpacked and "obs_map_bits" in result:
+                    self.obs_map_bits[idx:idx + n] = result["obs_map_bits"]
+                    self.obs_aux[idx:idx + n] = result["obs_aux"]
+                else:
+                    self.obs[idx:idx + n] = result["obs"]
                 self.action[idx:idx + n] = result["action"]
                 self.return_to_go[idx:idx + n] = result["return_to_go"]
                 if self.hidden_state is not None and result["hidden_state"] is not None:
@@ -248,13 +323,17 @@ class OfflineDataset:
                 idx += n
 
         self.size = idx
-        self.obs = self.obs[:idx]
+        if self._bitpacked:
+            self.obs_map_bits = self.obs_map_bits[:idx]
+            self.obs_aux = self.obs_aux[:idx]
+        else:
+            self.obs = self.obs[:idx]
         self.action = self.action[:idx]
         self.return_to_go = self.return_to_go[:idx]
         if self.hidden_state is not None:
             self.hidden_state = self.hidden_state[:idx]
 
-        if self.hidden_state is not None:
+        if self.hidden_state is not None and not self._stats_frozen:
             hs64 = self.hidden_state.astype(np.float64)
             self._norm_count += idx
             self._norm_sum += hs64.sum(axis=0)
@@ -273,14 +352,31 @@ class OfflineDataset:
     def advance_shard(self) -> bool:
         if self.num_shards <= 1:
             return False
-        self._load_shard((self._current_shard_idx + 1) % self.num_shards)
+        next_idx = (self._current_shard_idx + 1) % self.num_shards
+        if next_idx == 0 and not self._stats_frozen:
+            self._stats_frozen = True
+            print(f"  Hidden stats frozen after first full cycle "
+                  f"(n={self._norm_count:,}, mean_norm={np.linalg.norm(self.hidden_mean):.2f})")
+        self._load_shard(next_idx)
         return True
+
+    def _decode_obs_batch(self, idx: np.ndarray) -> np.ndarray:
+        """Decode observation batch — unpack bits at sample time if bitpacked."""
+        if self._bitpacked:
+            map_bits = self.obs_map_bits[idx]
+            obs_map = np.unpackbits(
+                map_bits, axis=1, count=self._map_dim, bitorder="little"
+            ).astype(np.float32)
+            obs_aux = self.obs_aux[idx]
+            return np.concatenate([obs_map, obs_aux], axis=1)
+        return self.obs[idx]
 
     def sample(self, batch_size: int) -> dict:
         idx = np.random.randint(0, self.size, size=batch_size)
-        obs_t = torch.tensor(self.obs[idx], dtype=torch.float32, device=Config.DEVICE)
-        action_t = torch.tensor(self.action[idx], dtype=torch.long, device=Config.DEVICE)
-        rtg_t = torch.tensor(self.return_to_go[idx], dtype=torch.float32, device=Config.DEVICE)
+        obs_np = self._decode_obs_batch(idx)
+        obs_t = torch.tensor(obs_np, dtype=torch.float32, device=self.device)
+        action_t = torch.tensor(self.action[idx], dtype=torch.long, device=self.device)
+        rtg_t = torch.tensor(self.return_to_go[idx], dtype=torch.float32, device=self.device)
 
         if self.hidden_mode == "real":
             hidden_raw = self.hidden_state[idx]
@@ -292,13 +388,13 @@ class OfflineDataset:
         if self.hidden_mode != "zero":
             hidden_raw = (hidden_raw - self.hidden_mean) / self.hidden_std
 
-        hidden_t = torch.tensor(hidden_raw, dtype=torch.float32, device=Config.DEVICE)
+        hidden_t = torch.tensor(hidden_raw, dtype=torch.float32, device=self.device)
 
         return {"obs": obs_t, "action": action_t, "hidden_state": hidden_t, "return_to_go": rtg_t}
 
 
 class OracleDataset:
-    def __init__(self, oracle_path: str):
+    def __init__(self, oracle_path: str, device: str = "cuda"):
         print(f"Loading oracle dataset: {oracle_path}")
         with np.load(oracle_path, allow_pickle=True) as data:
             self.obs = decode_obs_array(data)
@@ -309,18 +405,19 @@ class OracleDataset:
                 np.mean(raw_h, axis=1) if raw_h.ndim == 3 else raw_h
             ).astype(np.float32)
 
+        self.device = device
         self.size = len(self.obs)
         print(f"  Oracle samples: {self.size:,}")
         print(f"  Mean RTG: {self.return_to_go.mean():.2f}")
 
     def sample(self, batch_size: int, hidden_mean: np.ndarray, hidden_std: np.ndarray) -> dict:
         idx = np.random.randint(0, self.size, size=batch_size)
-        obs_t = torch.tensor(self.obs[idx], dtype=torch.float32, device=Config.DEVICE)
-        action_t = torch.tensor(self.action[idx], dtype=torch.long, device=Config.DEVICE)
-        rtg_t = torch.tensor(self.return_to_go[idx], dtype=torch.float32, device=Config.DEVICE)
+        obs_t = torch.tensor(self.obs[idx], dtype=torch.float32, device=self.device)
+        action_t = torch.tensor(self.action[idx], dtype=torch.long, device=self.device)
+        rtg_t = torch.tensor(self.return_to_go[idx], dtype=torch.float32, device=self.device)
 
         hidden_raw = (self.hidden_state[idx] - hidden_mean) / hidden_std
-        hidden_t = torch.tensor(hidden_raw, dtype=torch.float32, device=Config.DEVICE)
+        hidden_t = torch.tensor(hidden_raw, dtype=torch.float32, device=self.device)
 
         return {"obs": obs_t, "action": action_t, "hidden_state": hidden_t, "return_to_go": rtg_t}
 
@@ -329,7 +426,8 @@ class OracleDataset:
 # 5. Diagnostics
 # ==============================================================================
 def compute_gradient_conflict(model, train_batch, oracle_batch, advantage_mode,
-                              oracle_loss_weight, oracle_awr) -> dict:
+                              oracle_loss_weight, oracle_awr,
+                              awr_beta: float = 10.0, awr_max_weight: float = 20.0) -> dict:
     """Compute gradient cosine similarity between AWR and BC losses.
 
     Runs two separate backward passes to get per-loss gradients,
@@ -342,7 +440,7 @@ def compute_gradient_conflict(model, train_batch, oracle_batch, advantage_mode,
     advantage_train = train_batch["return_to_go"] - value_train
     critic_loss = 0.5 * torch.mean(advantage_train.pow(2))
     log_probs_train = pi_train.log_prob(train_batch["action"])
-    weights_train = compute_awr_weights(advantage_train, advantage_mode)
+    weights_train = compute_awr_weights(advantage_train, advantage_mode, awr_beta, awr_max_weight)
     awr_loss = -torch.mean(log_probs_train * weights_train)
     awr_total = awr_loss + critic_loss
     awr_total.backward()
@@ -359,7 +457,7 @@ def compute_gradient_conflict(model, train_batch, oracle_batch, advantage_mode,
     log_probs_oracle = pi_oracle.log_prob(oracle_batch["action"])
     if oracle_awr:
         advantage_oracle = oracle_batch["return_to_go"] - value_oracle
-        weights_oracle = compute_awr_weights(advantage_oracle, advantage_mode)
+        weights_oracle = compute_awr_weights(advantage_oracle, advantage_mode, awr_beta, awr_max_weight)
         bc_actor_loss = -torch.mean(log_probs_oracle * weights_oracle)
     else:
         bc_actor_loss = -torch.mean(log_probs_oracle)
@@ -410,20 +508,25 @@ def compute_gradient_conflict(model, train_batch, oracle_batch, advantage_mode,
 # ==============================================================================
 # 5b. Training step (weighted BC+AWR v2)
 # ==============================================================================
-def compute_awr_weights(advantage: torch.Tensor, advantage_mode: str) -> torch.Tensor:
+def compute_awr_weights(advantage: torch.Tensor, advantage_mode: str,
+                        awr_beta: float = 10.0, awr_max_weight: float = 20.0) -> torch.Tensor:
     """Compute AWR advantage weights (shared logic for train and oracle)."""
     adv = advantage.detach()
     if advantage_mode == "center":
         adv = adv - adv.mean()
     elif advantage_mode == "standardize":
         adv = (adv - adv.mean()) / adv.std(unbiased=False).clamp_min(1e-6)
-    return torch.clamp(torch.exp(adv / Config.AWR_BETA), max=Config.AWR_MAX_WEIGHT)
+    return torch.clamp(torch.exp(adv / awr_beta), max=awr_max_weight)
 
 
 def train_step_v2(
     model, optimizer, train_batch: dict, oracle_batch: dict,
     advantage_mode: str, oracle_loss_weight: float,
     entropy_coeff: float, oracle_awr: bool,
+    max_grad_norm: float = 0.0,
+    awr_beta: float = 10.0, awr_max_weight: float = 20.0,
+    entropy_both_streams: bool = False,
+    no_oracle_critic: bool = False,
 ) -> dict:
     # --- AWR loss on training data ---
     pi_train, value_train = model(train_batch["obs"], train_batch["hidden_state"])
@@ -431,7 +534,7 @@ def train_step_v2(
     critic_loss = 0.5 * torch.mean(advantage_train.pow(2))
 
     log_probs_train = pi_train.log_prob(train_batch["action"])
-    weights_train = compute_awr_weights(advantage_train, advantage_mode)
+    weights_train = compute_awr_weights(advantage_train, advantage_mode, awr_beta, awr_max_weight)
     awr_loss = -torch.mean(log_probs_train * weights_train)
 
     # --- Oracle loss ---
@@ -441,7 +544,7 @@ def train_step_v2(
     if oracle_awr:
         # AWR on oracle: use advantage weighting (oracle has high RTG, so gets high weights naturally)
         advantage_oracle = oracle_batch["return_to_go"] - value_oracle
-        weights_oracle = compute_awr_weights(advantage_oracle, advantage_mode)
+        weights_oracle = compute_awr_weights(advantage_oracle, advantage_mode, awr_beta, awr_max_weight)
         oracle_actor_loss = -torch.mean(log_probs_oracle * weights_oracle)
     else:
         # Pure BC on oracle
@@ -453,19 +556,29 @@ def train_step_v2(
     # --- Entropy bonus ---
     entropy_train = pi_train.entropy().mean()
     entropy_oracle = pi_oracle.entropy().mean()
-    entropy_loss = -entropy_train  # only regularize training stream
+    if entropy_both_streams:
+        entropy_loss = -(entropy_train + entropy_oracle) * 0.5
+    else:
+        entropy_loss = -entropy_train
 
     # --- Combined loss ---
     total_actor_loss = awr_loss + oracle_loss_weight * oracle_actor_loss
-    total_critic_loss = critic_loss + oracle_loss_weight * oracle_critic_loss
+    if no_oracle_critic:
+        total_critic_loss = critic_loss
+    else:
+        total_critic_loss = critic_loss + oracle_loss_weight * oracle_critic_loss
     total_loss = total_actor_loss + total_critic_loss + entropy_coeff * entropy_loss
 
     optimizer.zero_grad()
     total_loss.backward()
+    if max_grad_norm > 0:
+        grad_norm = nn_utils.clip_grad_norm_(model.parameters(), max_grad_norm).item()
+    else:
+        grad_norm = sum(p.grad.norm().item() ** 2 for p in model.parameters() if p.grad is not None) ** 0.5
     optimizer.step()
 
     with torch.no_grad():
-        clip_frac = (weights_train >= Config.AWR_MAX_WEIGHT).float().mean().item()
+        clip_frac = (weights_train >= awr_max_weight).float().mean().item()
         var_diff = torch.var(advantage_train)
         var_ret = torch.var(train_batch["return_to_go"])
         explained_var = 1.0 - (var_diff / (var_ret + 1e-8))
@@ -478,6 +591,7 @@ def train_step_v2(
         "critic_loss": critic_loss.item(),
         "oracle_critic_loss": oracle_critic_loss.item(),
         "total_loss": total_loss.item(),
+        "grad_norm": grad_norm,
         "entropy_train": entropy_train.item(),
         "entropy_oracle": entropy_oracle.item(),
         "entropy_loss": entropy_loss.item(),
@@ -502,6 +616,66 @@ def train_step_v2(
         result["gate_critic_mean"] = model._last_critic_gate.mean().item()
 
     return result
+
+
+# ==============================================================================
+# 5b. Post-normalization hidden state statistics
+# ==============================================================================
+def log_hidden_norm_stats(
+    train_hidden: np.ndarray,
+    oracle_hidden: np.ndarray,
+    hidden_mean: np.ndarray,
+    hidden_std: np.ndarray,
+    max_samples: int = 5000,
+) -> dict:
+    """Log detailed statistics of hidden states after z-normalization.
+
+    Reports distribution shape for both training and oracle data so we can
+    see exactly how normalization affects each source.
+    """
+    rng = np.random.RandomState(42)
+
+    def _stats(raw: np.ndarray, label: str) -> dict:
+        n = min(max_samples, len(raw))
+        sample = raw[rng.choice(len(raw), n, replace=False)]
+        normed = (sample - hidden_mean) / hidden_std
+        norms = np.linalg.norm(normed, axis=1)
+        per_dim_mean = normed.mean(axis=0)
+        per_dim_std = normed.std(axis=0)
+        raw_norms = np.linalg.norm(sample, axis=1)
+        prefix = f"hidden_stats/{label}"
+        result = {
+            # Raw (pre-normalization)
+            f"{prefix}/raw_norm_mean": float(raw_norms.mean()),
+            f"{prefix}/raw_norm_std": float(raw_norms.std()),
+            # Post-normalization: vector norms
+            f"{prefix}/norm_mean": float(norms.mean()),
+            f"{prefix}/norm_std": float(norms.std()),
+            f"{prefix}/norm_min": float(norms.min()),
+            f"{prefix}/norm_max": float(norms.max()),
+            # Post-normalization: per-dimension aggregates
+            f"{prefix}/dim_mean_of_means": float(per_dim_mean.mean()),
+            f"{prefix}/dim_std_of_means": float(per_dim_mean.std()),
+            f"{prefix}/dim_mean_of_stds": float(per_dim_std.mean()),
+            f"{prefix}/dim_std_of_stds": float(per_dim_std.std()),
+            # Post-normalization: global element stats
+            f"{prefix}/elem_mean": float(normed.mean()),
+            f"{prefix}/elem_std": float(normed.std()),
+            f"{prefix}/elem_min": float(normed.min()),
+            f"{prefix}/elem_max": float(normed.max()),
+        }
+        return result
+
+    # Normalization stats themselves
+    stats = {
+        "hidden_stats/norm_mean_norm": float(np.linalg.norm(hidden_mean)),
+        "hidden_stats/norm_std_mean": float(hidden_std.mean()),
+        "hidden_stats/norm_std_min": float(hidden_std.min()),
+        "hidden_stats/norm_std_max": float(hidden_std.max()),
+    }
+    stats.update(_stats(train_hidden, "train"))
+    stats.update(_stats(oracle_hidden, "oracle"))
+    return stats
 
 
 # ==============================================================================
@@ -567,6 +741,7 @@ def check_hidden_separability(train_hidden: np.ndarray, oracle_hidden: np.ndarra
 def validate(
     model, val_data: dict, hidden_mean: np.ndarray, hidden_std: np.ndarray,
     train_hidden: np.ndarray | None = None,
+    device: str = "cuda",
 ) -> dict:
     """
     Evaluate action prediction accuracy on held-out data in multiple modes:
@@ -574,8 +749,8 @@ def validate(
     Also computes: KL(real||mode), action agreement(real, mode), logit L2 shift.
     """
     model.eval()
-    obs_t = torch.tensor(val_data["obs"], dtype=torch.float32, device=Config.DEVICE)
-    action_t = torch.tensor(val_data["action"], dtype=torch.long, device=Config.DEVICE)
+    obs_t = torch.tensor(val_data["obs"], dtype=torch.float32, device=device)
+    action_t = torch.tensor(val_data["action"], dtype=torch.long, device=device)
     n = obs_t.shape[0]
     dim = val_data["hidden_state"].shape[1]
 
@@ -596,7 +771,7 @@ def validate(
     chunk = 4096
     all_logits = {}
     for mode, h in conditions.items():
-        hidden_t = torch.tensor(h, dtype=torch.float32, device=Config.DEVICE)
+        hidden_t = torch.tensor(h, dtype=torch.float32, device=device)
         logits_list = []
         for i in range(0, n, chunk):
             pi, _ = model(obs_t[i:i+chunk], hidden_t[i:i+chunk])
@@ -686,6 +861,14 @@ def parse_args():
                     help="Use AWR loss on oracle data instead of pure BC")
     p.add_argument("--weight-decay", type=float, default=Config.WEIGHT_DECAY,
                     help="AdamW weight decay (default: 0.0)")
+    p.add_argument("--entropy-both-streams", action="store_true",
+                    help="Apply entropy bonus to oracle stream too (default: training only)")
+    p.add_argument("--no-oracle-critic", action="store_true",
+                    help="Don't train critic on oracle data (actor-only BC)")
+    p.add_argument("--no-prescan-stats", action="store_true",
+                    help="Skip pre-scanning all files for hidden stats (use incremental stats)")
+    p.add_argument("--max-grad-norm", type=float, default=1.0,
+                    help="Max gradient norm for clipping (0 = no clipping, default: 1.0)")
     p.add_argument("--dropout", type=float, default=0.0,
                     help="Dropout rate for all hidden layers (default: 0.0)")
     p.add_argument("--no-layernorm", action="store_true",
@@ -707,27 +890,11 @@ def parse_args():
 def main():
     args = parse_args()
 
-    Config.DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-    Config.AWR_BETA = args.awr_beta
-    Config.TOTAL_STEPS = args.total_steps
-    Config.BATCH_SIZE = args.batch_size
-    Config.LR = args.lr
-    Config.HIDDEN_MODE = args.hidden_mode
-    Config.ADVANTAGE_MODE = args.advantage_mode
-    Config.SAVE_DIR = args.save_dir
-    Config.SAVE_FREQ = args.save_freq
-    Config.SEED = args.seed
-    Config.LAYER_WIDTH = args.layer_width
-    Config.ORACLE_FRACTION = args.oracle_fraction
-    Config.ORACLE_LOSS_WEIGHT = args.oracle_loss_weight
-    Config.ENTROPY_COEFF = args.entropy_coeff
-    Config.ANNEAL_ORACLE = args.anneal_oracle
-    Config.ORACLE_AWR = args.oracle_awr
-    Config.WEIGHT_DECAY = args.weight_decay
+    device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    torch.manual_seed(Config.SEED)
-    np.random.seed(Config.SEED)
-    os.makedirs(Config.SAVE_DIR, exist_ok=True)
+    torch.manual_seed(args.seed)
+    np.random.seed(args.seed)
+    os.makedirs(args.save_dir, exist_ok=True)
 
     variant_tag = []
     if args.oracle_awr:
@@ -743,34 +910,35 @@ def main():
     variant_str = "-".join(variant_tag) if variant_tag else "gentle"
 
     wandb_name = (args.wandb_name or
-                  f"bcawr-v2-{variant_str}-of{Config.ORACLE_FRACTION:.2f}-"
-                  f"ow{Config.ORACLE_LOSS_WEIGHT:.1f}")
+                  f"bcawr-v2-{variant_str}-of{args.oracle_fraction:.2f}-"
+                  f"ow{args.oracle_loss_weight:.1f}")
     if not args.no_wandb:
         if wandb is None:
             raise ImportError("wandb not installed; pass --no-wandb or install it")
         wandb.init(
             project=Config.WANDB_PROJECT, entity=Config.WANDB_ENTITY,
             name=wandb_name,
-            config={k: v for k, v in vars(Config).items() if not k.startswith("_")},
+            config=vars(args),
             settings=wandb.Settings(init_timeout=300),
         )
 
     print("=" * 70)
-    print(f"Weighted BC+AWR v2 Training (width={Config.LAYER_WIDTH})")
+    print(f"Weighted BC+AWR v2 Training (width={args.layer_width})")
     print("=" * 70)
-    print(f"  Device: {Config.DEVICE}")
-    print(f"  Oracle fraction: {Config.ORACLE_FRACTION:.0%}")
-    print(f"  Oracle loss weight: {Config.ORACLE_LOSS_WEIGHT}x"
-          f"{' (cosine annealing)' if Config.ANNEAL_ORACLE else ''}")
-    print(f"  Oracle loss type: {'AWR' if Config.ORACLE_AWR else 'BC'}")
-    print(f"  Entropy coeff: {Config.ENTROPY_COEFF}")
-    print(f"  Weight decay: {Config.WEIGHT_DECAY}")
+    print(f"  Device: {device}")
+    print(f"  Oracle fraction: {args.oracle_fraction:.0%}")
+    print(f"  Oracle loss weight: {args.oracle_loss_weight}x"
+          f"{' (cosine annealing)' if args.anneal_oracle else ''}")
+    print(f"  Oracle loss type: {'AWR' if args.oracle_awr else 'BC'}")
+    print(f"  Entropy coeff: {args.entropy_coeff}")
+    print(f"  Weight decay: {args.weight_decay}")
     print(f"  Dropout: {args.dropout}")
+    print(f"  Max grad norm: {args.max_grad_norm}")
     print(f"  LayerNorm: {not args.no_layernorm}")
     print(f"  Data: {args.data_dir} (offset={args.file_offset}, max={args.max_files})")
     print(f"  Oracle: {args.oracle_data}")
-    print(f"  Steps: {Config.TOTAL_STEPS}, Batch: {Config.BATCH_SIZE}, LR: {Config.LR}")
-    print(f"  AWR beta: {Config.AWR_BETA}, Advantage: {Config.ADVANTAGE_MODE}")
+    print(f"  Steps: {args.total_steps}, Batch: {args.batch_size}, LR: {args.lr}")
+    print(f"  AWR beta: {args.awr_beta}, Advantage: {args.advantage_mode}")
     if args.val_data:
         print(f"  Validation: {args.val_data} (every {args.val_freq} steps)")
     print()
@@ -781,24 +949,26 @@ def main():
         max_files=args.max_files, file_offset=args.file_offset,
         hidden_mode=args.hidden_mode,
         max_dataset_gb=args.max_dataset_gb,
+        device=device,
+        no_prescan=args.no_prescan_stats,
     )
 
-    stats_path = os.path.join(Config.SAVE_DIR, "hidden_state_stats.npz")
+    stats_path = os.path.join(args.save_dir, "hidden_state_stats.npz")
     dataset.save_hidden_stats(stats_path)
 
     # Load oracle dataset
-    oracle = OracleDataset(args.oracle_data)
+    oracle = OracleDataset(args.oracle_data, device=device)
 
     # Batch splits
-    oracle_batch_size = max(1, int(Config.BATCH_SIZE * Config.ORACLE_FRACTION))
-    train_batch_size = Config.BATCH_SIZE - oracle_batch_size
+    oracle_batch_size = max(1, int(args.batch_size * args.oracle_fraction))
+    train_batch_size = args.batch_size - oracle_batch_size
     print(f"\nBatch composition: {train_batch_size} train + {oracle_batch_size} oracle "
-          f"= {Config.BATCH_SIZE} total")
+          f"= {args.batch_size} total")
 
     # Shard rotation
     shard_steps = None
     if dataset.num_shards > 1:
-        shard_steps = max(1, Config.TOTAL_STEPS // dataset.num_shards)
+        shard_steps = max(1, args.total_steps // dataset.num_shards)
         print(f"Shard rotation every {shard_steps} steps ({dataset.num_shards} shards)")
 
     if args.arch_gated:
@@ -812,17 +982,17 @@ def main():
     model_kwargs = dict(
         obs_dim=Config.OBS_DIM,
         action_dim=Config.ACTION_DIM,
-        layer_width=Config.LAYER_WIDTH,
+        layer_width=args.layer_width,
         hidden_state_dim=Config.HIDDEN_STATE_DIM,
     )
     if ModelClass in (ActorCriticAugLN, ActorCriticAugV2, ActorCriticAugGated):
         model_kwargs["dropout"] = args.dropout
-    model = ModelClass(**model_kwargs).to(Config.DEVICE)
+    model = ModelClass(**model_kwargs).to(device)
 
-    if Config.WEIGHT_DECAY > 0:
-        optimizer = optim.AdamW(model.parameters(), lr=Config.LR, weight_decay=Config.WEIGHT_DECAY)
+    if args.weight_decay > 0:
+        optimizer = optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     else:
-        optimizer = optim.Adam(model.parameters(), lr=Config.LR)
+        optimizer = optim.Adam(model.parameters(), lr=args.lr)
 
     total_params = sum(p.numel() for p in model.parameters())
     print(f"Model: {total_params:,} parameters")
@@ -837,25 +1007,46 @@ def main():
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
         "args": vars(args),
         "arch": ModelClass.__name__,
-        "layer_width": Config.LAYER_WIDTH,
+        "layer_width": args.layer_width,
         "total_params": total_params,
         "dataset_samples": dataset.size,
         "oracle_samples": oracle.size,
-        "oracle_fraction": Config.ORACLE_FRACTION,
-        "oracle_loss_weight": Config.ORACLE_LOSS_WEIGHT,
-        "entropy_coeff": Config.ENTROPY_COEFF,
-        "anneal_oracle": Config.ANNEAL_ORACLE,
-        "oracle_awr": Config.ORACLE_AWR,
-        "weight_decay": Config.WEIGHT_DECAY,
+        "oracle_fraction": args.oracle_fraction,
+        "oracle_loss_weight": args.oracle_loss_weight,
+        "entropy_coeff": args.entropy_coeff,
+        "anneal_oracle": args.anneal_oracle,
+        "oracle_awr": args.oracle_awr,
+        "weight_decay": args.weight_decay,
         "dropout": args.dropout,
         "no_layernorm": args.no_layernorm,
         "num_shards": dataset.num_shards,
     }
-    with open(os.path.join(Config.SAVE_DIR, "training_metadata.json"), "w") as f:
+    with open(os.path.join(args.save_dir, "training_metadata.json"), "w") as f:
         json.dump(meta, f, indent=2, default=str)
 
     # --- Pre-training diagnostics ---
     if dataset.hidden_state is not None:
+        # Post-normalization distribution stats
+        hstats = log_hidden_norm_stats(
+            dataset.hidden_state, oracle.hidden_state,
+            dataset.hidden_mean, dataset.hidden_std,
+        )
+        print("\n--- Hidden state normalization stats ---")
+        print(f"  Normalization params: mean_norm={hstats['hidden_stats/norm_mean_norm']:.2f}, "
+              f"std_mean={hstats['hidden_stats/norm_std_mean']:.4f}, "
+              f"std_range=[{hstats['hidden_stats/norm_std_min']:.4f}, {hstats['hidden_stats/norm_std_max']:.4f}]")
+        for src in ("train", "oracle"):
+            p = f"hidden_stats/{src}"
+            print(f"  {src.capitalize()} (raw):  norm={hstats[f'{p}/raw_norm_mean']:.2f} ± {hstats[f'{p}/raw_norm_std']:.2f}")
+            print(f"  {src.capitalize()} (normed): norm={hstats[f'{p}/norm_mean']:.2f} ± {hstats[f'{p}/norm_std']:.2f}, "
+                  f"range=[{hstats[f'{p}/norm_min']:.2f}, {hstats[f'{p}/norm_max']:.2f}]")
+            print(f"  {src.capitalize()} (normed): elem_mean={hstats[f'{p}/elem_mean']:.4f}, "
+                  f"elem_std={hstats[f'{p}/elem_std']:.4f}, "
+                  f"dim_mean_spread={hstats[f'{p}/dim_std_of_means']:.4f}")
+        if not args.no_wandb:
+            wandb.log(hstats, step=0)
+
+        # Source separability
         sep = check_hidden_separability(
             dataset.hidden_state, oracle.hidden_state,
             dataset.hidden_mean, dataset.hidden_std,
@@ -869,22 +1060,24 @@ def main():
         print(f"  Train norm: {sep['source_train_norm_mean']:.2f}  Oracle norm: {sep['source_oracle_norm_mean']:.2f}")
         if not args.no_wandb:
             wandb.log({f"diag/{k}": v for k, v in sep.items()}, step=0)
+    else:
+        print("\n--- Hidden state stats: skipped (hidden_mode=zero, no hidden states loaded) ---")
 
     model.train()
     t0 = time.time()
 
-    for step in range(1, Config.TOTAL_STEPS + 1):
+    for step in range(1, args.total_steps + 1):
         # Shard rotation
         if shard_steps and step > 1 and (step - 1) % shard_steps == 0:
             dataset.advance_shard()
             dataset.save_hidden_stats(stats_path)
 
         # Compute effective oracle weight (with optional annealing)
-        if Config.ANNEAL_ORACLE:
-            progress = step / Config.TOTAL_STEPS
-            effective_ow = Config.ORACLE_LOSS_WEIGHT * 0.5 * (1.0 + math.cos(math.pi * progress))
+        if args.anneal_oracle:
+            progress = step / args.total_steps
+            effective_ow = args.oracle_loss_weight * 0.5 * (1.0 + math.cos(math.pi * progress))
         else:
-            effective_ow = Config.ORACLE_LOSS_WEIGHT
+            effective_ow = args.oracle_loss_weight
 
         train_batch = dataset.sample(train_batch_size)
         oracle_batch = oracle.sample(
@@ -895,8 +1088,12 @@ def main():
 
         metrics = train_step_v2(
             model, optimizer, train_batch, oracle_batch,
-            Config.ADVANTAGE_MODE, effective_ow,
-            Config.ENTROPY_COEFF, Config.ORACLE_AWR,
+            args.advantage_mode, effective_ow,
+            args.entropy_coeff, args.oracle_awr,
+            max_grad_norm=args.max_grad_norm,
+            awr_beta=args.awr_beta, awr_max_weight=Config.AWR_MAX_WEIGHT,
+            entropy_both_streams=args.entropy_both_streams,
+            no_oracle_critic=args.no_oracle_critic,
         )
 
         if step % Config.LOG_FREQ == 0:
@@ -913,9 +1110,9 @@ def main():
             if step % (Config.LOG_FREQ * 10) == 0:
                 elapsed = time.time() - t0
                 sps = step / elapsed
-                eta_min = (Config.TOTAL_STEPS - step) / sps / 60
+                eta_min = (args.total_steps - step) / sps / 60
                 print(
-                    f"[{step}/{Config.TOTAL_STEPS}] "
+                    f"[{step}/{args.total_steps}] "
                     f"awr={metrics['actor_loss']:.4f} "
                     f"oracle={metrics['oracle_actor_loss']:.4f} "
                     f"ow_eff={effective_ow:.2f} "
@@ -933,6 +1130,7 @@ def main():
                 hidden_mean=dataset.hidden_mean,
                 hidden_std=dataset.hidden_std,
                 train_hidden=dataset.hidden_state,
+                device=device,
             )
             if not args.no_wandb:
                 wandb.log({f"val/{k}": v for k, v in val_metrics.items()}, step=step)
@@ -961,9 +1159,17 @@ def main():
 
             # Gradient conflict diagnostic (every 2x val_freq to save time)
             if effective_ow > 0 and step % (args.val_freq * 2) == 0:
+                # Sample fresh batches to avoid using stale training-step tensors
+                fresh_train = dataset.sample(train_batch_size)
+                fresh_oracle = oracle.sample(
+                    oracle_batch_size,
+                    hidden_mean=dataset.hidden_mean,
+                    hidden_std=dataset.hidden_std,
+                )
                 grad_metrics = compute_gradient_conflict(
-                    model, train_batch, oracle_batch,
-                    Config.ADVANTAGE_MODE, effective_ow, Config.ORACLE_AWR,
+                    model, fresh_train, fresh_oracle,
+                    args.advantage_mode, effective_ow, args.oracle_awr,
+                    awr_beta=args.awr_beta, awr_max_weight=Config.AWR_MAX_WEIGHT,
                 )
                 if not args.no_wandb:
                     wandb.log({f"grad/{k}": v for k, v in grad_metrics.items()}, step=step)
@@ -972,12 +1178,12 @@ def main():
                       f"bc_norm={grad_metrics['grad_norm_bc']:.4f}  "
                       f"ratio={grad_metrics['grad_ratio_bc_awr']:.2f}")
 
-        if step % Config.SAVE_FREQ == 0:
-            ckpt = os.path.join(Config.SAVE_DIR, f"checkpoint_{step}.pth")
+        if step % args.save_freq == 0:
+            ckpt = os.path.join(args.save_dir, f"checkpoint_{step}.pth")
             torch.save(model.state_dict(), ckpt)
             print(f"  Saved checkpoint: {ckpt}")
 
-    final_path = os.path.join(Config.SAVE_DIR, "final.pth")
+    final_path = os.path.join(args.save_dir, "final.pth")
     torch.save(model.state_dict(), final_path)
     print(f"\nTraining complete. Final model: {final_path}")
     print(f"Total time: {(time.time() - t0) / 60:.1f} min")

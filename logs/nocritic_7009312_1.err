@@ -1,0 +1,42 @@
+wandb: [wandb.login()] Loaded credentials for https://api.wandb.ai from /home/geney/.netrc.
+wandb: Currently logged in as: gene-jin-yang (iris-sobolmark) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: setting up run 7r3lb12d
+wandb: Tracking run with wandb version 0.24.2
+wandb: Run data is saved locally in /tmp/wandb_7009312/wandb/run-20260407_212122-7r3lb12d
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run nocritic_ow10
+wandb: ⭐️ View project at https://wandb.ai/iris-sobolmark/craftax-offline-awr
+wandb: 🚀 View run at https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/7r3lb12d
+wandb: updating run metadata
+wandb: uploading history steps 999-1000, summary, console lines 251-262
+wandb: 
+wandb: Run history:
+wandb:         diag/source_cross_cos ▁
+wandb:          diag/source_mean_cos ▁
+wandb:           diag/source_mean_l2 ▁
+wandb:  diag/source_oracle_norm_mean ▁
+wandb:   diag/source_train_norm_mean ▁
+wandb: diag/source_within_oracle_cos ▁
+wandb:  diag/source_within_train_cos ▁
+wandb:       grad/grad_cos_actor_hid ▄█▃▂▃▃▂▂▃▁
+wandb:     grad/grad_cos_actor_merge ▂▃▂█▂▃▆▅▇▁
+wandb:       grad/grad_cos_actor_obs ▁▄▄█▄▄▅▄▄▃
+wandb:                           +62 ...
+wandb: 
+wandb: Run summary:
+wandb:         diag/source_cross_cos -0.00484
+wandb:          diag/source_mean_cos -0.30481
+wandb:           diag/source_mean_l2 52.04581
+wandb:  diag/source_oracle_norm_mean 101.94646
+wandb:   diag/source_train_norm_mean 63.37693
+wandb: diag/source_within_oracle_cos 0.2709
+wandb:  diag/source_within_train_cos 0.00955
+wandb:       grad/grad_cos_actor_hid -0.02604
+wandb:     grad/grad_cos_actor_merge -0.01544
+wandb:       grad/grad_cos_actor_obs -0.0422
+wandb:                           +62 ...
+wandb: 
+wandb: 🚀 View run nocritic_ow10 at: https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/7r3lb12d
+wandb: ⭐️ View project at: https://wandb.ai/iris-sobolmark/craftax-offline-awr
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: /tmp/wandb_7009312/wandb/run-20260407_212122-7r3lb12d/logs

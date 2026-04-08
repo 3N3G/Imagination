@@ -1,0 +1,41 @@
+wandb: [wandb.login()] Loaded credentials for https://api.wandb.ai from /home/geney/.netrc.
+wandb: Currently logged in as: gene-jin-yang (iris-sobolmark) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: Tracking run with wandb version 0.24.2
+wandb: Run data is saved locally in /tmp/wandb_7003437/wandb/run-20260407_114120-m9daq23n
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run v3_old_behavior
+wandb: ⭐️ View project at https://wandb.ai/iris-sobolmark/craftax-offline-awr
+wandb: 🚀 View run at https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/m9daq23n
+wandb: updating run metadata
+wandb: uploading history steps 999-1000, summary, console lines 250-261
+wandb: 
+wandb: Run history:
+wandb:         diag/source_cross_cos ▁
+wandb:          diag/source_mean_cos ▁
+wandb:           diag/source_mean_l2 ▁
+wandb:  diag/source_oracle_norm_mean ▁
+wandb:   diag/source_train_norm_mean ▁
+wandb: diag/source_within_oracle_cos ▁
+wandb:  diag/source_within_train_cos ▁
+wandb:       grad/grad_cos_actor_hid ▂▇█▃▄▁▁▆▄▇
+wandb:     grad/grad_cos_actor_merge ▃█▂▅▃▇▁▅▄▅
+wandb:       grad/grad_cos_actor_obs █▄▆█▅▃▁▆▅▇
+wandb:                           +62 ...
+wandb: 
+wandb: Run summary:
+wandb:         diag/source_cross_cos -0.00388
+wandb:          diag/source_mean_cos -0.11217
+wandb:           diag/source_mean_l2 51.82307
+wandb:  diag/source_oracle_norm_mean 101.87437
+wandb:   diag/source_train_norm_mean 63.43024
+wandb: diag/source_within_oracle_cos 0.27141
+wandb:  diag/source_within_train_cos 0.01403
+wandb:       grad/grad_cos_actor_hid 0.03694
+wandb:     grad/grad_cos_actor_merge 0.01212
+wandb:       grad/grad_cos_actor_obs 0.09997
+wandb:                           +62 ...
+wandb: 
+wandb: 🚀 View run v3_old_behavior at: https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/m9daq23n
+wandb: ⭐️ View project at: https://wandb.ai/iris-sobolmark/craftax-offline-awr
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: /tmp/wandb_7003437/wandb/run-20260407_114120-m9daq23n/logs

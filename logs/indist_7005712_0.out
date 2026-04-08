@@ -1,0 +1,28 @@
+==========================================
+Job:       indist
+Job ID:    7005712
+Task ID:   0
+Host:      babel-q5-16
+GPU:       NVIDIA L40S
+Conda env: /data/user_data/geney/.conda/envs/craftax_fast_llm
+Workdir:   /home/geney/Imagination
+Date:      Tue Apr  7 02:46:08 PM EDT 2026
+==========================================
+=== [0] Pure AWR with PSF, w512 ===
+======================================================================
+AWR Training — Augmented (width=512)
+======================================================================
+  Device: cuda
+  Augmented: True
+  Layer width: 512
+  Data: /data/group_data/rl/geney/predict_state_full/final_trajectories (offset=0, max=126)
+  Hidden mode: real
+  Hidden dim: 4096
+  Steps: 100000, Batch: 256, LR: 0.0003
+  AWR beta: 10.0, Advantage: center
+
+Dataset: 126 files, hidden_mode=real
+  Total samples: 12,683,275
+  Estimated memory: 584.28 GiB
+  Sharded into 8 chunks for memory budget
+Loading shard 1/8: 17 files, 1,707,433 samples

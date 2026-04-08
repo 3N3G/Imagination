@@ -1,0 +1,2 @@
+slurm/jobs/select_and_train_run.sh: line 16: 1465780 Killed                  python tools/select_top_from_final.py --data-dir "${PSF_DATA}" --output "${ORACLE_PATH}" --top-n 1000
+slurmstepd: error: Detected 1 oom_kill event in StepId=7005917.batch. Some of the step tasks have been OOM Killed.

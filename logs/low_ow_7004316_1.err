@@ -1,0 +1,42 @@
+wandb: [wandb.login()] Loaded credentials for https://api.wandb.ai from /home/geney/.netrc.
+wandb: Currently logged in as: gene-jin-yang (iris-sobolmark) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: setting up run 8iqs7ve0
+wandb: Tracking run with wandb version 0.24.2
+wandb: Run data is saved locally in /tmp/wandb_7004316/wandb/run-20260407_125331-8iqs7ve0
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run low_ow_ow005
+wandb: ⭐️ View project at https://wandb.ai/iris-sobolmark/craftax-offline-awr
+wandb: 🚀 View run at https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/8iqs7ve0
+wandb: updating run metadata
+wandb: uploading data
+wandb: 
+wandb: Run history:
+wandb:         diag/source_cross_cos ▁
+wandb:          diag/source_mean_cos ▁
+wandb:           diag/source_mean_l2 ▁
+wandb:  diag/source_oracle_norm_mean ▁
+wandb:   diag/source_train_norm_mean ▁
+wandb: diag/source_within_oracle_cos ▁
+wandb:  diag/source_within_train_cos ▁
+wandb:       grad/grad_cos_actor_hid ▃▃▃█▃▃▁▆▅▅
+wandb:     grad/grad_cos_actor_merge ▁▂▃█▂▄▃▃▃▂
+wandb:       grad/grad_cos_actor_obs ▁▁▄█▅▃▄▅▆▄
+wandb:                           +62 ...
+wandb: 
+wandb: Run summary:
+wandb:         diag/source_cross_cos 0.00798
+wandb:          diag/source_mean_cos 0.30493
+wandb:           diag/source_mean_l2 51.01206
+wandb:  diag/source_oracle_norm_mean 101.94646
+wandb:   diag/source_train_norm_mean 63.68695
+wandb: diag/source_within_oracle_cos 0.2709
+wandb:  diag/source_within_train_cos 0.01789
+wandb:       grad/grad_cos_actor_hid 0.01921
+wandb:     grad/grad_cos_actor_merge -0.02623
+wandb:       grad/grad_cos_actor_obs 0.00404
+wandb:                           +62 ...
+wandb: 
+wandb: 🚀 View run low_ow_ow005 at: https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/8iqs7ve0
+wandb: ⭐️ View project at: https://wandb.ai/iris-sobolmark/craftax-offline-awr
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: /tmp/wandb_7004316/wandb/run-20260407_125331-8iqs7ve0/logs

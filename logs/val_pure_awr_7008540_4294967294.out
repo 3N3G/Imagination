@@ -1,0 +1,10 @@
+==========================================
+Job:       val_pure_awr
+Job ID:    7008540
+Task ID:   N/A
+Host:      babel-q5-16
+GPU:       NVIDIA L40S
+Conda env: /data/user_data/geney/.conda/envs/craftax_fast_llm
+Workdir:   /home/geney/Imagination
+Date:      Tue Apr  7 07:56:28 PM EDT 2026
+==========================================

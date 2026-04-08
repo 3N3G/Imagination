@@ -1,0 +1,25 @@
+==========================================
+Job:       indist
+Job ID:    7005917
+Task ID:   3
+Host:      babel-u5-28
+GPU:       NVIDIA L40S
+Conda env: /data/user_data/geney/.conda/envs/craftax_fast_llm
+Workdir:   /home/geney/Imagination
+Date:      Tue Apr  7 03:08:32 PM EDT 2026
+==========================================
+=== [3] BC+AWR, top-1000 PPO oracle (PSF), OW=0.5 ===
+Selecting top 1000 episodes from PSF data...
+Scanning 158 files for episodes...
+  Scanned 20/158 files, 2331 episodes found
+  Scanned 40/158 files, 4512 episodes found
+  Scanned 60/158 files, 6876 episodes found
+  Scanned 80/158 files, 9062 episodes found
+  Scanned 100/158 files, 11137 episodes found
+  Scanned 120/158 files, 13403 episodes found
+  Scanned 140/158 files, 15526 episodes found
+Total episodes found: 17462
+
+Selected top 1000 episodes:
+  Return range: [11.73, 14.42]
+  Mean return: 12.23

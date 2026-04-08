@@ -39,9 +39,11 @@ from pipeline.config import (
     GEMINI_TEMPERATURE,
     MAP_OBS_DIM,
     ORACLE_TEMPLATE_PATH,
+    PIPELINE_ROOT,
 )
 from pipeline.text_utils import (
     build_future_state_block,
+    build_history_block,
     filter_text_obs,
     obs_to_text,
 )
@@ -212,17 +214,20 @@ def build_prompt(
     call_info: Dict,
     template: str,
     predict_only: bool = False,
+    history_steps: int = 0,
 ) -> Dict:
     """Build a Gemini prompt for one call.
 
     Args:
         obs: full float32 obs array (N, 8268) for this file
         action, reward, done: corresponding arrays
-        call_info: dict with sample_idx, future_end_idx, n_future_steps
+        call_info: dict with sample_idx, future_end_idx, n_future_steps, episode_start
         template: oracle prompt template string
+        history_steps: number of prior timesteps to include as history (0 = none)
     """
     idx = call_info["sample_idx"]
     end_idx = call_info["future_end_idx"]
+    ep_start = call_info.get("episode_start", 0)
 
     try:
         # Current state (t+0) — use filtered text (not compact) for concise prompt
@@ -230,6 +235,22 @@ def build_prompt(
         filtered = filter_text_obs(raw)
 
         prompt = template.replace("{current_state_filtered}", filtered)
+
+        # History block (t-N through t-1)
+        if history_steps > 0 and "{history_block}" in template:
+            hist_start = max(ep_start, idx - history_steps)
+            if hist_start < idx:
+                hist_obs = [obs[t] for t in range(hist_start, idx)]
+                hist_act = action[hist_start:idx]
+                hist_rew = reward[hist_start:idx]
+                hist_done = done[hist_start:idx]
+                history_block = build_history_block(
+                    hist_obs, hist_act, hist_rew, hist_done,
+                    n_history=history_steps,
+                )
+            else:
+                history_block = "(no history — episode start)"
+            prompt = prompt.replace("{history_block}", history_block)
 
         if not predict_only:
             # Future states (t+1..t+N) — only for oracle mode
@@ -288,10 +309,11 @@ def _worker(
     gemini_model: str = GEMINI_MODEL,
     predict_only: bool = False,
     use_thinking: bool = True,
+    history_steps: int = 0,
 ) -> Dict:
     """Build prompt and call Gemini for one sample (runs in thread pool)."""
     pr = build_prompt(obs, action, reward, done_f32, call_info, template,
-                      predict_only=predict_only)
+                      predict_only=predict_only, history_steps=history_steps)
     if "error" in pr:
         return {"sample_idx": int(call_info["sample_idx"]),
                 "ok": False, "error": f"prompt_build: {pr['error']}"}
@@ -324,6 +346,7 @@ def process_file(
     gemini_model: str = GEMINI_MODEL,
     predict_only: bool = False,
     use_thinking: bool = True,
+    history_steps: int = 0,
 ) -> Dict:
     """Process all Gemini calls for one filtered trajectory file (concurrent)."""
     _output_dir = output_dir or GEMINI_OUTPUT_DIR
@@ -375,6 +398,7 @@ def process_file(
                 gemini_model=gemini_model,
                 predict_only=predict_only,
                 use_thinking=use_thinking,
+                history_steps=history_steps,
             ): ci
             for ci in pending
         }
@@ -414,6 +438,7 @@ def run(
     gemini_model: Optional[str] = None,
     template_path: Optional[str] = None,
     predict_only: bool = False,
+    history_steps: int = 0,
 ):
     """Main Gemini labelling entry point."""
     _filtered_dir = Path(filtered_dir) if filtered_dir else FILTERED_DIR
@@ -423,6 +448,11 @@ def run(
 
     if template_path:
         _template_path = Path(template_path)
+    elif history_steps > 0:
+        _template_path = (
+            PIPELINE_ROOT / "configs" / "training" / "templates"
+            / "predict_history_k_prompt_concise.txt"
+        )
     elif predict_only:
         from pipeline.config import CRAFTAX_BASELINES
         _template_path = (
@@ -432,7 +462,12 @@ def run(
     else:
         _template_path = ORACLE_TEMPLATE_PATH
 
-    mode_str = "predict-state-only" if predict_only else "oracle"
+    if history_steps > 0:
+        mode_str = f"predict+history-{history_steps}"
+    elif predict_only:
+        mode_str = "predict-state-only"
+    else:
+        mode_str = "oracle"
     print("=" * 70)
     print(f"PHASE 4: Generate Gemini labels ({mode_str})")
     print("=" * 70)
@@ -462,11 +497,13 @@ def run(
     print(f"  Total Gemini calls: {total_calls:,}")
     print(f"  Model: {_gemini_model}")
     print(f"  Template: {_template_path.name}")
-    print(f"  Predict-only: {predict_only}")
+    print(f"  Mode: {mode_str}")
+    print(f"  History steps: {history_steps}")
     print(f"  Use thinking: {_use_thinking}")
     print(f"  Rate limit: {GEMINI_REQUESTS_PER_MINUTE} req/min")
-    est_cost = total_calls * (2500 * 0.25e-6 + 300 * 1.50e-6)
-    print(f"  Estimated cost: ${est_cost:.2f}")
+    est_input_tokens = 2300 + history_steps * 540
+    est_cost = total_calls * (est_input_tokens * 0.15e-6 + 212 * 0.60e-6)
+    print(f"  Estimated cost: ${est_cost:.2f} (at ~{est_input_tokens} input tok/call)")
     print()
 
     total_processed = 0
@@ -480,8 +517,9 @@ def run(
             max_calls=max_calls_per_file,
             output_dir=_output_dir,
             gemini_model=_gemini_model,
-            predict_only=predict_only,
+            predict_only=predict_only or history_steps > 0,
             use_thinking=_use_thinking,
+            history_steps=history_steps,
         )
         total_processed += result["processed"]
         total_errors += result["errors"]
@@ -517,6 +555,8 @@ def main():
                         help="Override prompt template path")
     parser.add_argument("--predict-only", action="store_true",
                         help="Predict-state-only mode (no future block)")
+    parser.add_argument("--history-steps", type=int, default=0,
+                        help="Number of prior timesteps to include as history context (0=none)")
     args = parser.parse_args()
 
     api_key = args.api_key or os.getenv("GEMINI_API_KEY", "")
@@ -531,7 +571,8 @@ def main():
         output_dir=args.output_dir,
         gemini_model=args.gemini_model,
         template_path=args.template_path,
-        predict_only=args.predict_only)
+        predict_only=args.predict_only,
+        history_steps=args.history_steps)
 
 
 if __name__ == "__main__":

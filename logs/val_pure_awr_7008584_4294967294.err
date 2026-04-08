@@ -1,0 +1,2 @@
+slurm/jobs/val_pure_awr_run.sh: line 9: 1787305 Killed                  python -m eval.validate_awr --checkpoint /data/group_data/rl/geney/checkpoints/pure_awr_oracle_w512/final.pth --data-dir /data/group_data/rl/geney/new_craftax_llm_labelled_results_shards/final_trajectories --file-offset 126 --max-files 32 --layer-width 512 --no-layernorm
+slurmstepd: error: Detected 1 oom_kill event in StepId=7008584.batch. Some of the step tasks have been OOM Killed.

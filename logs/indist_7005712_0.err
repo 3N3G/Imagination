@@ -1,0 +1,11 @@
+wandb: [wandb.login()] Loaded credentials for https://api.wandb.ai from /home/geney/.netrc.
+wandb: Currently logged in as: gene-jin-yang (iris-sobolmark) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: setting up run lnf63q4v
+wandb: Tracking run with wandb version 0.24.2
+wandb: Run data is saved locally in /tmp/wandb_7005712/wandb/run-20260407_144611-lnf63q4v
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run pure_awr_psf_w512
+wandb: ⭐️ View project at https://wandb.ai/iris-sobolmark/craftax-offline-awr
+wandb: 🚀 View run at https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/lnf63q4v
+slurm/jobs/select_and_train_run.sh: line 21: 528541 Killed                  python -m offline_rl.train_awr --save-dir "${CKPT_BASE}/pure_awr_psf_w512" --data-dir "${DATA_DIR}" --layer-width 512 --lr 3e-4 --total-steps 100000 --wandb-name "pure_awr_psf_w512"
+slurmstepd: error: Detected 1 oom_kill event in StepId=7005712.batch. Some of the step tasks have been OOM Killed.

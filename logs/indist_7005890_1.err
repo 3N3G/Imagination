@@ -1,0 +1,41 @@
+wandb: [wandb.login()] Loaded credentials for https://api.wandb.ai from /home/geney/.netrc.
+wandb: Currently logged in as: gene-jin-yang (iris-sobolmark) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: Tracking run with wandb version 0.24.2
+wandb: Run data is saved locally in /tmp/wandb_7005890/wandb/run-20260407_150535-jlekyhfu
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run pure_awr_psf_w512
+wandb: ⭐️ View project at https://wandb.ai/iris-sobolmark/craftax-offline-awr
+wandb: 🚀 View run at https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/jlekyhfu
+wandb: updating run metadata
+wandb: uploading history steps 998-999, summary, console lines 165-172
+wandb: 
+wandb: Run history:
+wandb:         train/actor_loss █▆▅▂▅▅▆▆█▅▅▅▅▅▄▂▂▄▃▄▄▆▄▃▁▂▆▂▃▃▃▅▃▄▂▃▄▃▂▄
+wandb:           train/adv_mean ▅▅▅▄▅█▂▅▂▂▄▁▆▃▃▄▂▄▁▃▄▁▃▂▅▁▄▃▅▄▄▅▂█▆▂▂▄▄▄
+wandb:            train/adv_std █▇▇▆▅▅▄▄▄▂▅▆▆▅▅▄▂█▆▄▆▆▃▅▄▄▄▃▃▂▄▃▂▅▄▄▄▂▃▁
+wandb:        train/critic_loss ▆▃▄▂█▆▄▃▃▃▄▃▂▃▂▃▂▅▃▄▅▂▃▂▃▆▂█▄▃▂▂▂▆▃▂▃▄▃▁
+wandb:            train/entropy █▃▇▅▆▃▅▄▂▅▅▄▄▃▄▁▂▂▅▃▆▂▂▅▅▄▂▅▆▄▁▃▅▅▄▂▁▁▁▂
+wandb: train/explained_variance ▁▅▅▃▃▇▇▅▅▅▇▆▅▇▆▂▅▆▆▆▃▄▃▇▅▅▆▇▂▆▇▆▆▇▇▄▃▇▆█
+wandb:        train/hidden_mean ▅▆▇▅▅▃▆█▆▄▆▂▅▄▆█▁▅▇▅▂█▃▆▄▄█▁▄▄▇▇▆▄▄▅▅▆▃▂
+wandb:         train/hidden_std ▃▅▃▅▄▄▄▅▃▃▃▄▂▃▆▁▄▅▂▂▆▄▃▄▄▅█▅▆▅▃▂▂▃▁▄▅▃▅▃
+wandb:        train/mean_return ▁▇█▄▄▃▆▂▅▄▆▇▇▂▆▄▆▅▇▅▄█▅▂▄▄▄▄▂▃▆▅▆▆▃▅▄▄▄▂
+wandb:         train/mean_value ▇█▆▆▅▁▄▆▇▆▆█▃▅▆▇▅▄▆▆▅▅▂▃▅▃▅▇▅▄▄▅▃▃▅▄▄▁▅█
+wandb:                       +2 ...
+wandb: 
+wandb: Run summary:
+wandb:         train/actor_loss 2.55872
+wandb:           train/adv_mean 0.02097
+wandb:            train/adv_std 1.07526
+wandb:        train/critic_loss 0.57831
+wandb:            train/entropy 2.24777
+wandb: train/explained_variance 0.76796
+wandb:        train/hidden_mean -0.00081
+wandb:         train/hidden_std 0.99564
+wandb:        train/mean_return 1.30136
+wandb:         train/mean_value 1.28039
+wandb:                       +2 ...
+wandb: 
+wandb: 🚀 View run pure_awr_psf_w512 at: https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/jlekyhfu
+wandb: ⭐️ View project at: https://wandb.ai/iris-sobolmark/craftax-offline-awr
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: /tmp/wandb_7005890/wandb/run-20260407_150535-jlekyhfu/logs

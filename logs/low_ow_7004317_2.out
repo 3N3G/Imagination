@@ -1,0 +1,277 @@
+==========================================
+Job:       low_ow
+Job ID:    7004317
+Task ID:   2
+Host:      babel-q5-16
+GPU:       NVIDIA L40S
+Conda env: /data/user_data/geney/.conda/envs/craftax_fast_llm
+Workdir:   /home/geney/Imagination
+Date:      Tue Apr  7 12:53:29 PM EDT 2026
+==========================================
+=== Low OW [2]: ow01 (ow=0.1) ===
+======================================================================
+Weighted BC+AWR v2 Training (width=1024)
+======================================================================
+  Device: cuda
+  Oracle fraction: 5%
+  Oracle loss weight: 0.1x
+  Oracle loss type: BC
+  Entropy coeff: 0.03
+  Weight decay: 0.001
+  Dropout: 0.2
+  Max grad norm: 1.0
+  LayerNorm: True
+  Data: /data/group_data/rl/geney/predict_state_full/final_trajectories (offset=0, max=126)
+  Oracle: /data/group_data/rl/geney/oracle_pipeline/predict_only_final/trajectories_000000.npz
+  Steps: 100000, Batch: 256, LR: 0.0001
+  AWR beta: 10.0, Advantage: center
+  Validation: /data/group_data/rl/geney/oracle_pipeline/test_final/trajectories_000000.npz (every 5000 steps)
+
+Training dataset: 126 files, hidden_mode=real
+  Total samples: 12,683,275
+  Estimated memory: 584.28 GiB
+  Sharded into 11 chunks for memory budget
+  Pre-scanning all files for hidden state stats...
+    Global stats from 12,683,275 samples across 126 files
+Loading training shard 1/11: 12 files, 1,205,853 samples
+  Loaded 1,205,853 training samples
+Loading oracle dataset: /data/group_data/rl/geney/oracle_pipeline/predict_only_final/trajectories_000000.npz
+  Oracle samples: 38,108
+  Mean RTG: 2.53
+
+Batch composition: 244 train + 12 oracle = 256 total
+Shard rotation every 9090 steps (11 shards)
+Model: 33,792,044 parameters
+Loading validation data: /data/group_data/rl/geney/oracle_pipeline/test_final/trajectories_000000.npz
+  Validation samples: 1,175
+
+--- Hidden-source separability ---
+  Mean L2 distance: 51.7852
+  Mean cosine: -0.1315
+  Within-train cos: 0.0049
+  Within-oracle cos: 0.2709
+  Cross-source cos: -0.0056
+  Train norm: 63.43  Oracle norm: 101.95
+[1000/100000] awr=2.7992 oracle=1.3938 ow_eff=0.10 critic=0.6145 expl_var=0.799 ent_t=2.876 ent_o=1.421 (41 sps, ETA 41min)
+[2000/100000] awr=2.8764 oracle=1.0873 ow_eff=0.10 critic=0.3139 expl_var=0.833 ent_t=2.868 ent_o=1.377 (46 sps, ETA 36min)
+[3000/100000] awr=2.5007 oracle=0.7050 ow_eff=0.10 critic=0.4745 expl_var=0.830 ent_t=2.616 ent_o=1.079 (48 sps, ETA 33min)
+[4000/100000] awr=2.5172 oracle=0.6481 ow_eff=0.10 critic=0.3945 expl_var=0.863 ent_t=2.633 ent_o=1.025 (49 sps, ETA 32min)
+[5000/100000] awr=2.6527 oracle=0.9428 ow_eff=0.10 critic=0.4393 expl_var=0.839 ent_t=2.605 ent_o=0.955 (50 sps, ETA 32min)
+  [Val@5000] acc_real=0.6511 acc_zero=0.4272 acc_shuf=0.6477 acc_rand=0.5370 acc_mean=0.6494 Δ(real-zero)=+0.2238
+           KL(real||zero)=0.9244  agree=0.6894  logit_l2=14.2368
+           KL(real||shuffled)=0.0291  agree=0.9506  logit_l2=0.4973
+           KL(real||mean_emb)=0.0130  agree=0.9651  logit_l2=0.2086
+[6000/100000] awr=2.5910 oracle=1.6878 ow_eff=0.10 critic=0.3486 expl_var=0.862 ent_t=2.552 ent_o=0.966 (51 sps, ETA 31min)
+[7000/100000] awr=2.3638 oracle=0.6135 ow_eff=0.10 critic=0.3234 expl_var=0.882 ent_t=2.572 ent_o=0.989 (51 sps, ETA 30min)
+[8000/100000] awr=2.5910 oracle=0.6697 ow_eff=0.10 critic=0.3514 expl_var=0.850 ent_t=2.475 ent_o=0.952 (52 sps, ETA 30min)
+[9000/100000] awr=2.4655 oracle=0.5345 ow_eff=0.10 critic=0.2664 expl_var=0.886 ent_t=2.608 ent_o=0.701 (52 sps, ETA 29min)
+Loading training shard 2/11: 12 files, 1,206,614 samples
+  Loaded 1,206,614 training samples
+[10000/100000] awr=2.4534 oracle=1.8119 ow_eff=0.10 critic=0.3920 expl_var=0.835 ent_t=2.550 ent_o=1.072 (31 sps, ETA 48min)
+  [Val@10000] acc_real=0.6723 acc_zero=0.4136 acc_shuf=0.6791 acc_rand=0.5268 acc_mean=0.6817 Δ(real-zero)=+0.2587
+           KL(real||zero)=1.2023  agree=0.6391  logit_l2=17.6224
+           KL(real||shuffled)=0.0327  agree=0.9447  logit_l2=0.5279
+           KL(real||mean_emb)=0.0159  agree=0.9626  logit_l2=0.2036
+           grad_cos=+0.1615  awr_norm=3.6270  bc_norm=1.3029  ratio=0.36
+[11000/100000] awr=2.7290 oracle=0.7847 ow_eff=0.10 critic=0.3798 expl_var=0.831 ent_t=2.664 ent_o=0.803 (32 sps, ETA 46min)
+[12000/100000] awr=2.3988 oracle=0.6911 ow_eff=0.10 critic=0.3836 expl_var=0.848 ent_t=2.628 ent_o=0.953 (34 sps, ETA 44min)
+[13000/100000] awr=2.5453 oracle=0.8539 ow_eff=0.10 critic=0.3520 expl_var=0.847 ent_t=2.622 ent_o=1.023 (35 sps, ETA 42min)
+[14000/100000] awr=2.6299 oracle=0.3676 ow_eff=0.10 critic=0.3045 expl_var=0.881 ent_t=2.592 ent_o=0.670 (36 sps, ETA 40min)
+[15000/100000] awr=2.2285 oracle=0.5144 ow_eff=0.10 critic=0.3602 expl_var=0.892 ent_t=2.436 ent_o=1.015 (37 sps, ETA 39min)
+  [Val@15000] acc_real=0.6868 acc_zero=0.4272 acc_shuf=0.6826 acc_rand=0.4630 acc_mean=0.6894 Δ(real-zero)=+0.2596
+           KL(real||zero)=1.3514  agree=0.6187  logit_l2=17.7206
+           KL(real||shuffled)=0.0440  agree=0.9430  logit_l2=0.8406
+           KL(real||mean_emb)=0.0230  agree=0.9609  logit_l2=0.4042
+[16000/100000] awr=2.6803 oracle=0.4128 ow_eff=0.10 critic=0.4733 expl_var=0.822 ent_t=2.501 ent_o=0.997 (37 sps, ETA 37min)
+[17000/100000] awr=2.4669 oracle=1.1131 ow_eff=0.10 critic=0.3233 expl_var=0.894 ent_t=2.520 ent_o=0.912 (38 sps, ETA 36min)
+[18000/100000] awr=2.5353 oracle=0.6865 ow_eff=0.10 critic=0.3173 expl_var=0.864 ent_t=2.603 ent_o=0.979 (39 sps, ETA 35min)
+Loading training shard 3/11: 12 files, 1,204,577 samples
+  Loaded 1,204,577 training samples
+[19000/100000] awr=2.6235 oracle=0.8839 ow_eff=0.10 critic=0.2890 expl_var=0.865 ent_t=2.572 ent_o=0.859 (31 sps, ETA 44min)
+[20000/100000] awr=2.4976 oracle=0.3084 ow_eff=0.10 critic=0.3311 expl_var=0.872 ent_t=2.654 ent_o=0.584 (31 sps, ETA 43min)
+  [Val@20000] acc_real=0.6902 acc_zero=0.4409 acc_shuf=0.6851 acc_rand=0.5353 acc_mean=0.6953 Δ(real-zero)=+0.2494
+           KL(real||zero)=1.1218  agree=0.6196  logit_l2=16.4270
+           KL(real||shuffled)=0.0554  agree=0.9387  logit_l2=0.8455
+           KL(real||mean_emb)=0.0330  agree=0.9566  logit_l2=0.5337
+           grad_cos=-0.1784  awr_norm=2.9551  bc_norm=1.5960  ratio=0.54
+[21000/100000] awr=2.6074 oracle=0.6483 ow_eff=0.10 critic=0.2820 expl_var=0.884 ent_t=2.517 ent_o=0.895 (32 sps, ETA 41min)
+[22000/100000] awr=2.6206 oracle=0.9118 ow_eff=0.10 critic=0.3073 expl_var=0.872 ent_t=2.314 ent_o=0.785 (33 sps, ETA 40min)
+[23000/100000] awr=2.6117 oracle=0.4587 ow_eff=0.10 critic=0.2568 expl_var=0.882 ent_t=2.636 ent_o=0.563 (33 sps, ETA 39min)
+[24000/100000] awr=2.3962 oracle=1.0772 ow_eff=0.10 critic=0.3061 expl_var=0.887 ent_t=2.316 ent_o=1.007 (34 sps, ETA 37min)
+[25000/100000] awr=2.5365 oracle=1.0976 ow_eff=0.10 critic=0.2268 expl_var=0.909 ent_t=2.546 ent_o=0.982 (34 sps, ETA 36min)
+  [Val@25000] acc_real=0.6919 acc_zero=0.4349 acc_shuf=0.6936 acc_rand=0.4681 acc_mean=0.7072 Δ(real-zero)=+0.2570
+           KL(real||zero)=1.0325  agree=0.6289  logit_l2=15.3748
+           KL(real||shuffled)=0.0581  agree=0.9251  logit_l2=0.9610
+           KL(real||mean_emb)=0.0328  agree=0.9557  logit_l2=0.4232
+  Saved checkpoint: /data/group_data/rl/geney/checkpoints/low_ow_ow01/checkpoint_25000.pth
+[26000/100000] awr=2.5100 oracle=0.5684 ow_eff=0.10 critic=0.2214 expl_var=0.893 ent_t=2.567 ent_o=0.853 (35 sps, ETA 35min)
+[27000/100000] awr=2.3378 oracle=1.0865 ow_eff=0.10 critic=0.2483 expl_var=0.871 ent_t=2.420 ent_o=1.223 (35 sps, ETA 34min)
+Loading training shard 4/11: 12 files, 1,208,116 samples
+  Loaded 1,208,116 training samples
+[28000/100000] awr=2.3843 oracle=0.7818 ow_eff=0.10 critic=0.2689 expl_var=0.865 ent_t=2.388 ent_o=1.138 (30 sps, ETA 39min)
+[29000/100000] awr=2.4763 oracle=1.0683 ow_eff=0.10 critic=0.3224 expl_var=0.886 ent_t=2.366 ent_o=0.901 (31 sps, ETA 38min)
+[30000/100000] awr=2.5381 oracle=0.8594 ow_eff=0.10 critic=0.3412 expl_var=0.878 ent_t=2.554 ent_o=0.707 (31 sps, ETA 37min)
+  [Val@30000] acc_real=0.6851 acc_zero=0.4272 acc_shuf=0.6860 acc_rand=0.4928 acc_mean=0.6928 Δ(real-zero)=+0.2579
+           KL(real||zero)=1.2195  agree=0.6000  logit_l2=16.9864
+           KL(real||shuffled)=0.0734  agree=0.9115  logit_l2=0.9237
+           KL(real||mean_emb)=0.0410  agree=0.9362  logit_l2=0.6241
+           grad_cos=+0.0342  awr_norm=2.6207  bc_norm=0.7835  ratio=0.30
+[31000/100000] awr=2.4753 oracle=1.0266 ow_eff=0.10 critic=0.3258 expl_var=0.850 ent_t=2.548 ent_o=0.939 (32 sps, ETA 36min)
+[32000/100000] awr=2.2602 oracle=0.7119 ow_eff=0.10 critic=0.3300 expl_var=0.874 ent_t=2.395 ent_o=0.575 (32 sps, ETA 35min)
+[33000/100000] awr=2.2370 oracle=1.0394 ow_eff=0.10 critic=0.2458 expl_var=0.904 ent_t=2.410 ent_o=0.895 (33 sps, ETA 34min)
+[34000/100000] awr=2.3787 oracle=0.7969 ow_eff=0.10 critic=0.2559 expl_var=0.872 ent_t=2.369 ent_o=0.857 (33 sps, ETA 33min)
+[35000/100000] awr=2.4944 oracle=0.3567 ow_eff=0.10 critic=0.2298 expl_var=0.902 ent_t=2.632 ent_o=0.603 (33 sps, ETA 32min)
+  [Val@35000] acc_real=0.6791 acc_zero=0.4094 acc_shuf=0.6715 acc_rand=0.4868 acc_mean=0.6851 Δ(real-zero)=+0.2698
+           KL(real||zero)=1.2943  agree=0.6017  logit_l2=18.7913
+           KL(real||shuffled)=0.1076  agree=0.8817  logit_l2=1.3776
+           KL(real||mean_emb)=0.0581  agree=0.9072  logit_l2=0.6780
+[36000/100000] awr=2.7603 oracle=0.2061 ow_eff=0.10 critic=0.2147 expl_var=0.911 ent_t=2.543 ent_o=0.556 (34 sps, ETA 32min)
+Loading training shard 5/11: 12 files, 1,208,431 samples
+  Loaded 1,208,431 training samples
+[37000/100000] awr=2.4221 oracle=0.7033 ow_eff=0.10 critic=0.3899 expl_var=0.862 ent_t=2.514 ent_o=0.907 (30 sps, ETA 34min)
+[38000/100000] awr=2.4871 oracle=0.3700 ow_eff=0.10 critic=0.4118 expl_var=0.879 ent_t=2.326 ent_o=0.647 (31 sps, ETA 34min)
+[39000/100000] awr=2.3487 oracle=0.4566 ow_eff=0.10 critic=0.3699 expl_var=0.869 ent_t=2.417 ent_o=0.704 (31 sps, ETA 33min)
+[40000/100000] awr=2.2887 oracle=0.4219 ow_eff=0.10 critic=0.2735 expl_var=0.905 ent_t=2.441 ent_o=0.589 (32 sps, ETA 32min)
+  [Val@40000] acc_real=0.6996 acc_zero=0.4170 acc_shuf=0.6834 acc_rand=0.4221 acc_mean=0.6945 Δ(real-zero)=+0.2826
+           KL(real||zero)=1.3683  agree=0.5787  logit_l2=14.6644
+           KL(real||shuffled)=0.0852  agree=0.9013  logit_l2=0.9601
+           KL(real||mean_emb)=0.0543  agree=0.9379  logit_l2=0.6124
+           grad_cos=+0.1156  awr_norm=3.1022  bc_norm=0.9242  ratio=0.30
+[41000/100000] awr=2.2234 oracle=0.9029 ow_eff=0.10 critic=0.2573 expl_var=0.873 ent_t=2.312 ent_o=0.801 (32 sps, ETA 31min)
+[42000/100000] awr=2.0634 oracle=0.4348 ow_eff=0.10 critic=0.3242 expl_var=0.889 ent_t=2.205 ent_o=0.674 (32 sps, ETA 30min)
+[43000/100000] awr=2.3300 oracle=0.8968 ow_eff=0.10 critic=0.2751 expl_var=0.906 ent_t=2.246 ent_o=0.937 (33 sps, ETA 29min)
+[44000/100000] awr=2.3758 oracle=0.5259 ow_eff=0.10 critic=0.2069 expl_var=0.913 ent_t=2.438 ent_o=0.757 (33 sps, ETA 28min)
+[45000/100000] awr=2.3726 oracle=0.7366 ow_eff=0.10 critic=0.2246 expl_var=0.860 ent_t=2.267 ent_o=1.200 (33 sps, ETA 28min)
+  [Val@45000] acc_real=0.6987 acc_zero=0.4145 acc_shuf=0.6817 acc_rand=0.4528 acc_mean=0.7030 Δ(real-zero)=+0.2843
+           KL(real||zero)=1.3141  agree=0.5762  logit_l2=15.2986
+           KL(real||shuffled)=0.1172  agree=0.8834  logit_l2=1.0977
+           KL(real||mean_emb)=0.0598  agree=0.9166  logit_l2=0.5789
+Loading training shard 6/11: 12 files, 1,209,432 samples
+  Loaded 1,209,432 training samples
+[46000/100000] awr=2.3294 oracle=0.8670 ow_eff=0.10 critic=0.3556 expl_var=0.877 ent_t=2.401 ent_o=0.832 (31 sps, ETA 29min)
+[47000/100000] awr=2.5420 oracle=0.5038 ow_eff=0.10 critic=0.2636 expl_var=0.903 ent_t=2.603 ent_o=0.844 (31 sps, ETA 29min)
+[48000/100000] awr=2.3485 oracle=0.6329 ow_eff=0.10 critic=0.2902 expl_var=0.865 ent_t=2.364 ent_o=0.920 (31 sps, ETA 28min)
+[49000/100000] awr=2.1445 oracle=0.7863 ow_eff=0.10 critic=0.3956 expl_var=0.852 ent_t=2.216 ent_o=0.741 (31 sps, ETA 27min)
+[50000/100000] awr=2.1839 oracle=0.6977 ow_eff=0.10 critic=0.2387 expl_var=0.909 ent_t=2.253 ent_o=0.678 (32 sps, ETA 26min)
+  [Val@50000] acc_real=0.6868 acc_zero=0.4281 acc_shuf=0.6902 acc_rand=0.4885 acc_mean=0.6970 Δ(real-zero)=+0.2587
+           KL(real||zero)=1.2662  agree=0.5609  logit_l2=15.1505
+           KL(real||shuffled)=0.1219  agree=0.8843  logit_l2=1.3503
+           KL(real||mean_emb)=0.0660  agree=0.9115  logit_l2=1.0037
+           grad_cos=+0.1379  awr_norm=3.4740  bc_norm=0.9651  ratio=0.28
+  Saved checkpoint: /data/group_data/rl/geney/checkpoints/low_ow_ow01/checkpoint_50000.pth
+[51000/100000] awr=2.3748 oracle=0.5678 ow_eff=0.10 critic=0.2700 expl_var=0.887 ent_t=2.313 ent_o=0.735 (32 sps, ETA 26min)
+[52000/100000] awr=2.1800 oracle=0.8728 ow_eff=0.10 critic=0.2481 expl_var=0.908 ent_t=2.376 ent_o=1.020 (32 sps, ETA 25min)
+[53000/100000] awr=2.2547 oracle=0.7582 ow_eff=0.10 critic=0.2090 expl_var=0.913 ent_t=2.292 ent_o=0.704 (32 sps, ETA 24min)
+[54000/100000] awr=2.3812 oracle=0.4207 ow_eff=0.10 critic=0.2076 expl_var=0.898 ent_t=2.463 ent_o=0.765 (33 sps, ETA 23min)
+Loading training shard 7/11: 12 files, 1,211,150 samples
+  Loaded 1,211,150 training samples
+[55000/100000] awr=2.4619 oracle=0.2486 ow_eff=0.10 critic=0.3965 expl_var=0.850 ent_t=2.456 ent_o=0.513 (30 sps, ETA 25min)
+  [Val@55000] acc_real=0.6962 acc_zero=0.4281 acc_shuf=0.6834 acc_rand=0.4587 acc_mean=0.6962 Δ(real-zero)=+0.2681
+           KL(real||zero)=1.1488  agree=0.6051  logit_l2=15.2587
+           KL(real||shuffled)=0.0983  agree=0.8979  logit_l2=1.2138
+           KL(real||mean_emb)=0.0599  agree=0.9226  logit_l2=0.8224
+[56000/100000] awr=2.5767 oracle=0.3310 ow_eff=0.10 critic=0.2285 expl_var=0.894 ent_t=2.462 ent_o=0.736 (31 sps, ETA 24min)
+[57000/100000] awr=2.4885 oracle=1.5801 ow_eff=0.10 critic=0.2613 expl_var=0.903 ent_t=2.474 ent_o=0.915 (31 sps, ETA 23min)
+[58000/100000] awr=2.4350 oracle=0.3707 ow_eff=0.10 critic=0.3134 expl_var=0.862 ent_t=2.506 ent_o=0.912 (31 sps, ETA 23min)
+[59000/100000] awr=2.4331 oracle=0.2970 ow_eff=0.10 critic=0.3432 expl_var=0.882 ent_t=2.428 ent_o=0.514 (31 sps, ETA 22min)
+[60000/100000] awr=2.4112 oracle=0.3531 ow_eff=0.10 critic=0.1978 expl_var=0.911 ent_t=2.333 ent_o=0.483 (32 sps, ETA 21min)
+  [Val@60000] acc_real=0.6996 acc_zero=0.5047 acc_shuf=0.6877 acc_rand=0.6119 acc_mean=0.7081 Δ(real-zero)=+0.1949
+           KL(real||zero)=0.9801  agree=0.6902  logit_l2=13.3987
+           KL(real||shuffled)=0.1054  agree=0.8860  logit_l2=1.0001
+           KL(real||mean_emb)=0.0630  agree=0.9081  logit_l2=0.5132
+           grad_cos=+0.1292  awr_norm=2.6355  bc_norm=0.5495  ratio=0.21
+[61000/100000] awr=2.2877 oracle=0.3564 ow_eff=0.10 critic=0.1998 expl_var=0.899 ent_t=2.460 ent_o=0.591 (32 sps, ETA 20min)
+[62000/100000] awr=2.3903 oracle=0.6262 ow_eff=0.10 critic=0.1643 expl_var=0.927 ent_t=2.478 ent_o=0.724 (32 sps, ETA 20min)
+[63000/100000] awr=2.3743 oracle=0.6036 ow_eff=0.10 critic=0.1717 expl_var=0.934 ent_t=2.298 ent_o=0.924 (32 sps, ETA 19min)
+Loading training shard 8/11: 12 files, 1,209,963 samples
+  Loaded 1,209,963 training samples
+[64000/100000] awr=2.4376 oracle=0.6230 ow_eff=0.10 critic=0.3339 expl_var=0.855 ent_t=2.517 ent_o=0.795 (30 sps, ETA 20min)
+[65000/100000] awr=2.4430 oracle=1.0082 ow_eff=0.10 critic=0.2936 expl_var=0.862 ent_t=2.406 ent_o=0.441 (31 sps, ETA 19min)
+  [Val@65000] acc_real=0.6996 acc_zero=0.4613 acc_shuf=0.6877 acc_rand=0.5430 acc_mean=0.7098 Δ(real-zero)=+0.2383
+           KL(real||zero)=1.1025  agree=0.6145  logit_l2=14.5039
+           KL(real||shuffled)=0.1332  agree=0.8630  logit_l2=1.4307
+           KL(real||mean_emb)=0.0849  agree=0.9021  logit_l2=1.0295
+[66000/100000] awr=2.3580 oracle=0.6883 ow_eff=0.10 critic=0.2280 expl_var=0.906 ent_t=2.493 ent_o=0.845 (31 sps, ETA 18min)
+[67000/100000] awr=2.3348 oracle=0.4394 ow_eff=0.10 critic=0.2920 expl_var=0.889 ent_t=2.401 ent_o=0.625 (31 sps, ETA 18min)
+[68000/100000] awr=2.3430 oracle=0.2088 ow_eff=0.10 critic=0.2897 expl_var=0.893 ent_t=2.406 ent_o=0.563 (31 sps, ETA 17min)
+[69000/100000] awr=2.4244 oracle=0.3851 ow_eff=0.10 critic=0.2002 expl_var=0.876 ent_t=2.450 ent_o=0.474 (31 sps, ETA 16min)
+[70000/100000] awr=2.3759 oracle=0.7790 ow_eff=0.10 critic=0.1874 expl_var=0.923 ent_t=2.496 ent_o=0.627 (32 sps, ETA 16min)
+  [Val@70000] acc_real=0.7055 acc_zero=0.4749 acc_shuf=0.6928 acc_rand=0.5617 acc_mean=0.7140 Δ(real-zero)=+0.2306
+           KL(real||zero)=1.1182  agree=0.6340  logit_l2=17.1304
+           KL(real||shuffled)=0.1349  agree=0.8868  logit_l2=1.2888
+           KL(real||mean_emb)=0.0804  agree=0.9089  logit_l2=0.8506
+           grad_cos=-0.0802  awr_norm=2.5323  bc_norm=0.9646  ratio=0.38
+[71000/100000] awr=2.3848 oracle=0.2208 ow_eff=0.10 critic=0.2025 expl_var=0.911 ent_t=2.408 ent_o=0.352 (32 sps, ETA 15min)
+[72000/100000] awr=2.2284 oracle=0.4676 ow_eff=0.10 critic=0.1751 expl_var=0.912 ent_t=2.414 ent_o=0.710 (32 sps, ETA 15min)
+Loading training shard 9/11: 12 files, 1,205,392 samples
+  Loaded 1,205,392 training samples
+[73000/100000] awr=2.3693 oracle=0.3745 ow_eff=0.10 critic=0.3342 expl_var=0.863 ent_t=2.385 ent_o=0.637 (28 sps, ETA 16min)
+[74000/100000] awr=2.3796 oracle=0.4842 ow_eff=0.10 critic=0.2945 expl_var=0.893 ent_t=2.430 ent_o=0.702 (29 sps, ETA 15min)
+[75000/100000] awr=2.2898 oracle=0.7381 ow_eff=0.10 critic=0.3220 expl_var=0.863 ent_t=2.323 ent_o=0.788 (29 sps, ETA 14min)
+  [Val@75000] acc_real=0.7021 acc_zero=0.4391 acc_shuf=0.6877 acc_rand=0.5106 acc_mean=0.7115 Δ(real-zero)=+0.2630
+           KL(real||zero)=1.1655  agree=0.5915  logit_l2=15.5127
+           KL(real||shuffled)=0.1618  agree=0.8749  logit_l2=1.6453
+           KL(real||mean_emb)=0.1246  agree=0.8919  logit_l2=1.2718
+  Saved checkpoint: /data/group_data/rl/geney/checkpoints/low_ow_ow01/checkpoint_75000.pth
+[76000/100000] awr=2.1983 oracle=0.5493 ow_eff=0.10 critic=0.2662 expl_var=0.878 ent_t=2.262 ent_o=0.675 (29 sps, ETA 14min)
+[77000/100000] awr=2.4649 oracle=0.6196 ow_eff=0.10 critic=0.2129 expl_var=0.901 ent_t=2.605 ent_o=0.420 (29 sps, ETA 13min)
+[78000/100000] awr=2.3565 oracle=0.9451 ow_eff=0.10 critic=0.1910 expl_var=0.918 ent_t=2.356 ent_o=0.877 (29 sps, ETA 13min)
+[79000/100000] awr=2.3916 oracle=0.4429 ow_eff=0.10 critic=0.1867 expl_var=0.909 ent_t=2.363 ent_o=0.618 (29 sps, ETA 12min)
+[80000/100000] awr=2.1163 oracle=0.4309 ow_eff=0.10 critic=0.1510 expl_var=0.946 ent_t=2.220 ent_o=0.562 (30 sps, ETA 11min)
+  [Val@80000] acc_real=0.7004 acc_zero=0.4596 acc_shuf=0.6860 acc_rand=0.5226 acc_mean=0.7038 Δ(real-zero)=+0.2409
+           KL(real||zero)=1.1540  agree=0.6034  logit_l2=15.7613
+           KL(real||shuffled)=0.1337  agree=0.8766  logit_l2=1.5144
+           KL(real||mean_emb)=0.0790  agree=0.9098  logit_l2=0.8763
+           grad_cos=-0.1516  awr_norm=3.1006  bc_norm=0.5817  ratio=0.19
+[81000/100000] awr=2.3226 oracle=0.5105 ow_eff=0.10 critic=0.1642 expl_var=0.935 ent_t=2.406 ent_o=0.634 (30 sps, ETA 11min)
+Loading training shard 10/11: 12 files, 1,210,539 samples
+  Loaded 1,210,539 training samples
+[82000/100000] awr=2.3338 oracle=0.4804 ow_eff=0.10 critic=0.3962 expl_var=0.826 ent_t=2.488 ent_o=0.621 (29 sps, ETA 11min)
+[83000/100000] awr=2.2860 oracle=0.4641 ow_eff=0.10 critic=0.2964 expl_var=0.914 ent_t=2.319 ent_o=0.514 (29 sps, ETA 10min)
+[84000/100000] awr=2.3788 oracle=0.3031 ow_eff=0.10 critic=0.2434 expl_var=0.874 ent_t=2.411 ent_o=0.507 (29 sps, ETA 9min)
+[85000/100000] awr=2.3135 oracle=0.4786 ow_eff=0.10 critic=0.2913 expl_var=0.909 ent_t=2.269 ent_o=0.600 (29 sps, ETA 9min)
+  [Val@85000] acc_real=0.6860 acc_zero=0.4545 acc_shuf=0.6723 acc_rand=0.5685 acc_mean=0.6834 Δ(real-zero)=+0.2315
+           KL(real||zero)=1.1029  agree=0.6085  logit_l2=16.6276
+           KL(real||shuffled)=0.1186  agree=0.8885  logit_l2=1.3350
+           KL(real||mean_emb)=0.0786  agree=0.9217  logit_l2=0.9107
+[86000/100000] awr=2.3662 oracle=0.7568 ow_eff=0.10 critic=0.2336 expl_var=0.916 ent_t=2.358 ent_o=0.848 (29 sps, ETA 8min)
+[87000/100000] awr=2.3446 oracle=0.2742 ow_eff=0.10 critic=0.2000 expl_var=0.907 ent_t=2.481 ent_o=0.366 (29 sps, ETA 7min)
+[88000/100000] awr=2.2641 oracle=0.1755 ow_eff=0.10 critic=0.2805 expl_var=0.918 ent_t=2.251 ent_o=0.531 (29 sps, ETA 7min)
+[89000/100000] awr=1.9903 oracle=0.4058 ow_eff=0.10 critic=0.1784 expl_var=0.945 ent_t=2.231 ent_o=0.540 (30 sps, ETA 6min)
+[90000/100000] awr=2.2615 oracle=0.4340 ow_eff=0.10 critic=0.1732 expl_var=0.948 ent_t=2.245 ent_o=0.397 (30 sps, ETA 6min)
+  [Val@90000] acc_real=0.6911 acc_zero=0.4689 acc_shuf=0.6970 acc_rand=0.6043 acc_mean=0.7166 Δ(real-zero)=+0.2221
+           KL(real||zero)=1.0554  agree=0.6238  logit_l2=17.0150
+           KL(real||shuffled)=0.1345  agree=0.8766  logit_l2=1.4162
+           KL(real||mean_emb)=0.0767  agree=0.9004  logit_l2=0.8499
+           grad_cos=-0.0776  awr_norm=2.5562  bc_norm=0.4817  ratio=0.19
+Loading training shard 11/11: 6 files, 603,208 samples
+  Loaded 603,208 training samples
+[91000/100000] awr=2.4628 oracle=0.2526 ow_eff=0.10 critic=0.3273 expl_var=0.883 ent_t=2.314 ent_o=0.498 (30 sps, ETA 5min)
+[92000/100000] awr=2.3572 oracle=0.3761 ow_eff=0.10 critic=0.2588 expl_var=0.914 ent_t=2.376 ent_o=0.689 (30 sps, ETA 4min)
+[93000/100000] awr=2.2642 oracle=0.5591 ow_eff=0.10 critic=0.2331 expl_var=0.901 ent_t=2.310 ent_o=0.696 (30 sps, ETA 4min)
+[94000/100000] awr=2.2944 oracle=0.3960 ow_eff=0.10 critic=0.1634 expl_var=0.936 ent_t=2.310 ent_o=0.486 (30 sps, ETA 3min)
+[95000/100000] awr=2.1326 oracle=0.2039 ow_eff=0.10 critic=0.1450 expl_var=0.951 ent_t=2.315 ent_o=0.380 (30 sps, ETA 3min)
+  [Val@95000] acc_real=0.7030 acc_zero=0.4443 acc_shuf=0.6936 acc_rand=0.5285 acc_mean=0.7123 Δ(real-zero)=+0.2587
+           KL(real||zero)=1.2241  agree=0.5830  logit_l2=16.3374
+           KL(real||shuffled)=0.1653  agree=0.8638  logit_l2=1.5943
+           KL(real||mean_emb)=0.1004  agree=0.9013  logit_l2=1.1134
+[96000/100000] awr=2.3833 oracle=0.3228 ow_eff=0.10 critic=0.1428 expl_var=0.942 ent_t=2.431 ent_o=0.255 (31 sps, ETA 2min)
+[97000/100000] awr=2.3895 oracle=0.5150 ow_eff=0.10 critic=0.1522 expl_var=0.930 ent_t=2.349 ent_o=0.432 (31 sps, ETA 2min)
+[98000/100000] awr=2.2827 oracle=0.2298 ow_eff=0.10 critic=0.1200 expl_var=0.954 ent_t=2.256 ent_o=0.405 (31 sps, ETA 1min)
+[99000/100000] awr=2.3194 oracle=0.3532 ow_eff=0.10 critic=0.1325 expl_var=0.946 ent_t=2.245 ent_o=0.478 (31 sps, ETA 1min)
+Loading training shard 1/11: 12 files, 1,205,853 samples
+  Loaded 1,205,853 training samples
+[100000/100000] awr=2.2681 oracle=0.6623 ow_eff=0.10 critic=0.4084 expl_var=0.833 ent_t=2.208 ent_o=0.559 (30 sps, ETA 0min)
+  [Val@100000] acc_real=0.7089 acc_zero=0.4868 acc_shuf=0.6902 acc_rand=0.5685 acc_mean=0.7072 Δ(real-zero)=+0.2221
+           KL(real||zero)=1.1198  agree=0.6451  logit_l2=18.8398
+           KL(real||shuffled)=0.1449  agree=0.8749  logit_l2=1.4831
+           KL(real||mean_emb)=0.0807  agree=0.9047  logit_l2=1.0463
+           grad_cos=-0.0389  awr_norm=2.8857  bc_norm=0.5066  ratio=0.18
+  Saved checkpoint: /data/group_data/rl/geney/checkpoints/low_ow_ow01/checkpoint_100000.pth
+
+Training complete. Final model: /data/group_data/rl/geney/checkpoints/low_ow_ow01/final.pth
+Total time: 55.4 min
+Final validation: acc_real=0.7089 acc_zero=0.4868 acc_shuf=0.6834 acc_rand=0.5677 Δ(real-zero)=+0.2221
+==========================================
+Completed: Tue Apr  7 02:01:28 PM EDT 2026
+==========================================

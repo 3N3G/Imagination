@@ -1,0 +1,15 @@
+Traceback (most recent call last):
+  File "/data/user_data/geney/.conda/envs/craftax_fast_llm/lib/python3.10/runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/data/user_data/geney/.conda/envs/craftax_fast_llm/lib/python3.10/runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+  File "/home/geney/Imagination/eval/eval_online.py", line 780, in <module>
+    main()
+  File "/home/geney/Imagination/eval/eval_online.py", line 776, in main
+    run_eval(args)
+  File "/home/geney/Imagination/eval/eval_online.py", line 303, in run_eval
+    model.load_state_dict(torch.load(ckpt_path, map_location=device, weights_only=True))
+  File "/data/user_data/geney/.conda/envs/craftax_fast_llm/lib/python3.10/site-packages/torch/nn/modules/module.py", line 2629, in load_state_dict
+    raise RuntimeError(
+RuntimeError: Error(s) in loading state_dict for ActorCriticAugLN:
+	Missing key(s) in state_dict: "actor_ln1.weight", "actor_ln1.bias", "actor_ln2.weight", "actor_ln2.bias", "actor_ln3.weight", "actor_ln3.bias", "actor_ln4.weight", "actor_ln4.bias", "critic_ln1.weight", "critic_ln1.bias", "critic_ln2.weight", "critic_ln2.bias", "critic_ln3.weight", "critic_ln3.bias", "critic_ln4.weight", "critic_ln4.bias". 

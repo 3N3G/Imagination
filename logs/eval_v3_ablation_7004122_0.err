@@ -1,0 +1,48 @@
+Loading checkpoint shards:   0%|          | 0/5 [00:00<?, ?it/s]Loading checkpoint shards:  20%|██        | 1/5 [00:02<00:08,  2.18s/it]Loading checkpoint shards:  40%|████      | 2/5 [00:04<00:06,  2.18s/it]Loading checkpoint shards:  60%|██████    | 3/5 [00:06<00:04,  2.19s/it]Loading checkpoint shards:  80%|████████  | 4/5 [00:07<00:01,  1.60s/it]Loading checkpoint shards: 100%|██████████| 5/5 [00:07<00:00,  1.26s/it]Loading checkpoint shards: 100%|██████████| 5/5 [00:07<00:00,  1.58s/it]
+Some weights of the model checkpoint at Qwen/Qwen3-8B were not used when initializing Qwen3ForCausalLM: ['model.layers.31.input_layernorm.weight', 'model.layers.31.mlp.down_proj.weight', 'model.layers.31.mlp.gate_proj.weight', 'model.layers.31.mlp.up_proj.weight', 'model.layers.31.post_attention_layernorm.weight', 'model.layers.31.self_attn.k_norm.weight', 'model.layers.31.self_attn.k_proj.weight', 'model.layers.31.self_attn.o_proj.weight', 'model.layers.31.self_attn.q_norm.weight', 'model.layers.31.self_attn.q_proj.weight', 'model.layers.31.self_attn.v_proj.weight', 'model.layers.32.input_layernorm.weight', 'model.layers.32.mlp.down_proj.weight', 'model.layers.32.mlp.gate_proj.weight', 'model.layers.32.mlp.up_proj.weight', 'model.layers.32.post_attention_layernorm.weight', 'model.layers.32.self_attn.k_norm.weight', 'model.layers.32.self_attn.k_proj.weight', 'model.layers.32.self_attn.o_proj.weight', 'model.layers.32.self_attn.q_norm.weight', 'model.layers.32.self_attn.q_proj.weight', 'model.layers.32.self_attn.v_proj.weight', 'model.layers.33.input_layernorm.weight', 'model.layers.33.mlp.down_proj.weight', 'model.layers.33.mlp.gate_proj.weight', 'model.layers.33.mlp.up_proj.weight', 'model.layers.33.post_attention_layernorm.weight', 'model.layers.33.self_attn.k_norm.weight', 'model.layers.33.self_attn.k_proj.weight', 'model.layers.33.self_attn.o_proj.weight', 'model.layers.33.self_attn.q_norm.weight', 'model.layers.33.self_attn.q_proj.weight', 'model.layers.33.self_attn.v_proj.weight', 'model.layers.34.input_layernorm.weight', 'model.layers.34.mlp.down_proj.weight', 'model.layers.34.mlp.gate_proj.weight', 'model.layers.34.mlp.up_proj.weight', 'model.layers.34.post_attention_layernorm.weight', 'model.layers.34.self_attn.k_norm.weight', 'model.layers.34.self_attn.k_proj.weight', 'model.layers.34.self_attn.o_proj.weight', 'model.layers.34.self_attn.q_norm.weight', 'model.layers.34.self_attn.q_proj.weight', 'model.layers.34.self_attn.v_proj.weight', 'model.layers.35.input_layernorm.weight', 'model.layers.35.mlp.down_proj.weight', 'model.layers.35.mlp.gate_proj.weight', 'model.layers.35.mlp.up_proj.weight', 'model.layers.35.post_attention_layernorm.weight', 'model.layers.35.self_attn.k_norm.weight', 'model.layers.35.self_attn.k_proj.weight', 'model.layers.35.self_attn.o_proj.weight', 'model.layers.35.self_attn.q_norm.weight', 'model.layers.35.self_attn.q_proj.weight', 'model.layers.35.self_attn.v_proj.weight']
+- This IS expected if you are initializing Qwen3ForCausalLM from the checkpoint of a model trained on another task or with another architecture (e.g. initializing a BertForSequenceClassification model from a BertForPreTraining model).
+- This IS NOT expected if you are initializing Qwen3ForCausalLM from the checkpoint of a model that you expect to be exactly identical (initializing a BertForSequenceClassification model from a BertForSequenceClassification model).
+wandb: WARNING `start_method` is deprecated and will be removed in a future version of wandb. This setting is currently non-functional and safely ignored.
+wandb: [wandb.login()] Loaded credentials for https://api.wandb.ai from /home/geney/.netrc.
+wandb: Currently logged in as: gene-jin-yang (iris-sobolmark) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: Tracking run with wandb version 0.24.2
+wandb: Run data is saved locally in /tmp/wandb_7004122/wandb/run-20260407_123912-585ndiw9
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run v3_all_fixes_gemini
+wandb: ⭐️ View project at https://wandb.ai/iris-sobolmark/craftax-offline-awr
+wandb: 🚀 View run at https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/585ndiw9
+wandb: uploading artifact run-585ndiw9-gemini_samplesepisode_10-2fC-lw; updating run metadata; uploading artifact run-585ndiw9-summaryepisodes-5wuExQ
+wandb: uploading artifact run-585ndiw9-gemini_samplesepisode_10-2fC-lw; uploading artifact run-585ndiw9-summaryepisodes-5wuExQ
+wandb: uploading artifact run-585ndiw9-summaryepisodes-5wuExQ; uploading media/table/summary/episodes_2672_799663bddde203297dcf.table.json; uploading output.log; uploading wandb-summary.json; uploading config.yaml (+ 3 more)
+wandb: uploading history steps 177-184, summary, console lines 170-212
+wandb: 
+wandb: Run history:
+wandb:       achievements/collect_coal_step ▁
+wandb:      achievements/collect_drink_step ▅▆▅█▁▇
+wandb:    achievements/collect_sapling_step ▁▁▅█
+wandb:      achievements/collect_stone_step ▁█
+wandb:       achievements/collect_wood_step ▅▆▄▅█▄▁▆▂▇
+wandb:    achievements/defeat_skeleton_step ▁█
+wandb:      achievements/defeat_zombie_step ▂▆▁▄█
+wandb:            achievements/eat_cow_step ▂▆▁▄█
+wandb: achievements/make_stone_pickaxe_step ▁
+wandb:  achievements/make_wood_pickaxe_step ▁▆█
+wandb:                                  +44 ...
+wandb: 
+wandb: Run summary:
+wandb:       achievement_freq/collect_coal 0.1
+wandb:      achievement_freq/collect_drink 0.6
+wandb:    achievement_freq/collect_sapling 0.4
+wandb:      achievement_freq/collect_stone 0.2
+wandb:       achievement_freq/collect_wood 1
+wandb:    achievement_freq/defeat_skeleton 0.2
+wandb:      achievement_freq/defeat_zombie 0.5
+wandb:            achievement_freq/eat_cow 0.5
+wandb: achievement_freq/make_stone_pickaxe 0.1
+wandb:  achievement_freq/make_wood_pickaxe 0.3
+wandb:                                 +64 ...
+wandb: 
+wandb: 🚀 View run v3_all_fixes_gemini at: https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/585ndiw9
+wandb: ⭐️ View project at: https://wandb.ai/iris-sobolmark/craftax-offline-awr
+wandb: Synced 5 W&B file(s), 192 media file(s), 22 artifact file(s) and 0 other file(s)
+wandb: Find logs at: /tmp/wandb_7004122/wandb/run-20260407_123912-585ndiw9/logs

@@ -1,0 +1,68 @@
+==========================================
+Job:       val_pure_awr
+Job ID:    7008713
+Task ID:   N/A
+Host:      babel-o9-20
+GPU:       NVIDIA L40S
+Conda env: /data/user_data/geney/.conda/envs/craftax_fast_llm
+Workdir:   /home/geney/Imagination
+Date:      Tue Apr  7 08:37:39 PM EDT 2026
+==========================================
+=== Validating pure_awr_oracle_w512 ===
+======================================================================
+AWR Validation — Hidden State Ablation
+======================================================================
+  Checkpoint: /data/group_data/rl/geney/checkpoints/pure_awr_oracle_w512/final.pth
+  Val data: /data/group_data/rl/geney/new_craftax_llm_labelled_results_shards/final_trajectories (offset=126, max=4)
+  Device: cuda
+
+  Model loaded: ActorCriticAug (width=512, 14,260,268 params)
+Loading 4 validation files...
+  Loaded 401,791 validation samples
+
+======================================================================
+Condition      Mean NLL   Accuracy    Samples
+----------------------------------------------------------------------
+  Hidden stats loaded from /data/group_data/rl/geney/checkpoints/awr_imagination/hidden_state_stats.npz
+real             2.1267    41.31%    401,791  (2.4s)
+zero             2.5427    37.21%    401,791  (2.1s)
+shuffled         2.9694    31.69%    401,791  (2.1s)
+----------------------------------------------------------------------
+
+Deltas (positive = real is better):
+  zero - real = +0.4160 (+19.6%)
+  shuffled - real = +0.8427 (+39.6%)
+
+======================================================================
+Results saved to /data/group_data/rl/geney/checkpoints/pure_awr_oracle_w512/val_results.json
+
+=== Validating pure_awr_psf_w512 ===
+======================================================================
+AWR Validation — Hidden State Ablation
+======================================================================
+  Checkpoint: /data/group_data/rl/geney/checkpoints/pure_awr_psf_w512/final.pth
+  Val data: /data/group_data/rl/geney/predict_state_full/final_trajectories (offset=126, max=4)
+  Device: cuda
+
+  Model loaded: ActorCriticAug (width=512, 14,260,268 params)
+Loading 4 validation files...
+  Loaded 401,791 validation samples
+
+======================================================================
+Condition      Mean NLL   Accuracy    Samples
+----------------------------------------------------------------------
+  Hidden stats loaded from /data/group_data/rl/geney/checkpoints/awr_imagination/hidden_state_stats.npz
+real             2.4743    38.04%    401,791  (2.2s)
+zero             2.4585    38.55%    401,791  (2.1s)
+shuffled         2.4777    37.94%    401,791  (2.1s)
+----------------------------------------------------------------------
+
+Deltas (positive = real is better):
+  zero - real = -0.0158 (-0.6%)
+  shuffled - real = +0.0034 (+0.1%)
+
+======================================================================
+Results saved to /data/group_data/rl/geney/checkpoints/pure_awr_psf_w512/val_results.json
+==========================================
+Completed: Tue Apr  7 08:38:34 PM EDT 2026
+==========================================

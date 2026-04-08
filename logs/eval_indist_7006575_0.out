@@ -1,0 +1,12 @@
+==========================================
+Job:       eval_indist
+Job ID:    7006575
+Task ID:   0
+Host:      babel-m5-32
+GPU:       NVIDIA L40S
+Conda env: /data/user_data/geney/.conda/envs/craftax_fast_llm
+Workdir:   /home/geney/Imagination
+Date:      Tue Apr  7 04:20:20 PM EDT 2026
+==========================================
+=== Eval indist [0]: pure_awr_oracle_w512 ===
+Prompt template: predict_state_only_prompt_concise.txt (with 3 real few-shot examples)
