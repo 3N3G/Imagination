@@ -1,4 +1,3 @@
-
 # Experiment Log
 
 ## 2026-04-08
@@ -7,8 +6,8 @@
 - **Unaugmented AWR+BC diagnostic** (job 7010899): Same but WITH golden BC (ow=0.5, of=0.05, zero embeddings). **Return: 13.90 ± 5.78** — OOD golden BC degrades but doesn't destroy policy without embeddings.
 - **Augmented AWR+BC** (job 7018872): Full BC+AWR with real embeddings and new norm stats logging. **Return: 4.90 ± 1.60** — full collapse, confirming embedding pathway makes BC catastrophic.
 - **Key finding:** Embedding pathway amplifies BC toxicity from mild degradation (16→14) to full collapse (16→5). Hidden norm stats show oracle embeddings are trivially distinguishable post-normalization (norm 77.7 vs 62.9, dim_mean_spread 0.93 vs 0.02).
-- **Union normalization** (job 7019887): Computing stats over training+oracle union made no difference — oracle is 0.3% of data, separability is inherent to game state distribution differences. Eval pending (job 7019889).
-- Code changes: `pipeline/gemini_label.py` (history support), `pipeline/text_utils.py` (`build_history_block`), `offline_rl/train_awr_weighted_v2.py` (norm stats logging, `--union-norm`), `eval/eval_unaugmented.py` (`--augmented` flag).
+- **Union normalization** — naive (unweighted): **4.80 ± 2.45**, no change from train-only (4.90). Weighted union (5% oracle): **6.70 ± 2.24**, small improvement but still collapsed. Normalization is not the root cause — separability is inherent to the data distributions.
+- Code changes: `pipeline/gemini_label.py` (history support), `pipeline/text_utils.py` (`build_history_block`), `offline_rl/train_awr_weighted_v2.py` (norm stats logging, `--union-norm` with weighted combination), `eval/eval_unaugmented.py` (`--augmented` flag).
 - [Detail →](log_2026-04-08.md)
 
 ## 2026-04-07
