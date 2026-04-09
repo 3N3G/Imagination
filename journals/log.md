@@ -1,13 +1,15 @@
 # Experiment Log
 
 ## 2026-04-08
-- **History-conditioned labelling** launched (job 7010450): Gemini predict-only + last 5 states as compact history. ~1.07M calls, ~$938 est. New `--history-steps` flag in `pipeline/gemini_label.py`. Status: running 13h+.
-- **Unaugmented AWR diagnostic** (job 7010451): v2 code + default LN arch + zero embeddings, no BC. **Return: 16.00 ± 3.27** — v2 code works fine.
-- **Unaugmented AWR+BC diagnostic** (job 7010899): Same but WITH golden BC (ow=0.5, of=0.05, zero embeddings). **Return: 13.90 ± 5.78** — OOD golden BC degrades but doesn't destroy policy without embeddings.
-- **Augmented AWR+BC** (job 7018872): Full BC+AWR with real embeddings and new norm stats logging. **Return: 4.90 ± 1.60** — full collapse, confirming embedding pathway makes BC catastrophic.
-- **Key finding:** Embedding pathway amplifies BC toxicity from mild degradation (16→14) to full collapse (16→5). Hidden norm stats show oracle embeddings are trivially distinguishable post-normalization (norm 77.7 vs 62.9, dim_mean_spread 0.93 vs 0.02).
-- **Union normalization** — naive (unweighted): **4.80 ± 2.45**, no change from train-only (4.90). Weighted union (5% oracle): **6.70 ± 2.24**, small improvement but still collapsed. Normalization is not the root cause — separability is inherent to the data distributions.
-- Code changes: `pipeline/gemini_label.py` (history support), `pipeline/text_utils.py` (`build_history_block`), `offline_rl/train_awr_weighted_v2.py` (norm stats logging, `--union-norm` with weighted combination), `eval/eval_unaugmented.py` (`--augmented` flag).
+- **50-ep definitive results** (correct eval mode: online for aug, zero for noaug):
+  - AWR no aug (zero emb, no BC): **18.38 ± 2.69** — healthy baseline
+  - AWR+BC no aug (zero emb, BC): **12.28 ± 5.55** — OOD golden BC degrades -33%
+  - AWR+BC aug (real emb, BC): **7.46 ± 4.91** — embedding worsens collapse further to -59%
+  - AWR+BC aug naive union: **6.68 ± 5.46** — normalization change doesn't help
+  - AWR+BC aug weighted union: **6.46 ± 4.54** — normalization change doesn't help
+- **Key finding:** Embedding pathway amplifies BC toxicity (18→12 without emb, 18→7 with emb). Normalization is not the root cause — separability is inherent to data distributions.
+- History-conditioned labelling (job 7010450) running. Hidden norm stats logging added. `eval_online.py` now shows full Gemini text in video.
+- Code changes: `pipeline/gemini_label.py`, `pipeline/text_utils.py`, `offline_rl/train_awr_weighted_v2.py` (`--union-norm`), `eval/eval_unaugmented.py` (`--augmented`), `eval/eval_online.py` (full Gemini text in video).
 - [Detail →](log_2026-04-08.md)
 
 ## 2026-04-07
