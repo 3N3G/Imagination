@@ -1,8 +1,3 @@
----
-name: project_overview
-description: Craftax imagination-augmented RL — architecture, baselines, best results, and current direction
-type: project
----
 
 # Imagination-Augmented Offline RL for Craftax
 

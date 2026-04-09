@@ -1,19 +1,25 @@
----
-name: experiment_log
-description: Central daily log of experiments, results, and decisions for the Craftax imagination-augmented RL project
-type: project
----
 
 # Experiment Log
+
+## 2026-04-08
+- **History-conditioned labelling** launched (job 7010450): Gemini predict-only + last 5 states as compact history. ~1.07M calls, ~$938 est. New `--history-steps` flag in `pipeline/gemini_label.py`. Status: running 13h+.
+- **Unaugmented AWR diagnostic** (job 7010451): v2 code + default LN arch + zero embeddings, no BC. **Return: 16.00 ± 3.27** — v2 code works fine.
+- **Unaugmented AWR+BC diagnostic** (job 7010899): Same but WITH golden BC (ow=0.5, of=0.05, zero embeddings). **Return: 13.90 ± 5.78** — OOD golden BC degrades but doesn't destroy policy without embeddings.
+- **Augmented AWR+BC** (job 7018872): Full BC+AWR with real embeddings and new norm stats logging. **Return: 4.90 ± 1.60** — full collapse, confirming embedding pathway makes BC catastrophic.
+- **Key finding:** Embedding pathway amplifies BC toxicity from mild degradation (16→14) to full collapse (16→5). Hidden norm stats show oracle embeddings are trivially distinguishable post-normalization (norm 77.7 vs 62.9, dim_mean_spread 0.93 vs 0.02).
+- **Union normalization** (job 7019887): Computing stats over training+oracle union made no difference — oracle is 0.3% of data, separability is inherent to game state distribution differences. Eval pending (job 7019889).
+- Code changes: `pipeline/gemini_label.py` (history support), `pipeline/text_utils.py` (`build_history_block`), `offline_rl/train_awr_weighted_v2.py` (norm stats logging, `--union-norm`), `eval/eval_unaugmented.py` (`--augmented` flag).
+- [Detail →](log_2026-04-08.md)
 
 ## 2026-04-07
 - **Key finding**: BC+AWR gets 2-4 return vs 17-19 for pure AWR. control_v2_zero (V2 arch, no BC) gets 18.40 — architecture is fine, BC objective is sole cause of collapse.
 - Found 2 bugs in train_awr_weighted_v2.py: unweighted oracle critic loss, oracle entropy leak. Fixed.
 - Diagnostic run confirms model uses hidden as nonzero cue, not semantic content (KL(real||shuf) 100x smaller than KL(real||zero)).
-- Norm-as-tag hypothesis ruled out by direct test (rescaling norm has zero effect on predictions).
-- Oracle dataset memorized by step 20K (loss 1.41→0.03). AWR dataset NOT memorized (2.85→2.2).
-- Original unaug model: 11.8% accuracy on oracle actions but 19.1 return. BC+AWR: 70% accuracy but 2-4 return.
-- Running: anti-memorization sweep (4 configs), gated imagination experiment.
+- Anti-memorization sweep (4 configs): 2.8-4.7 return. Regularization slows memorization but doesn't fix gameplay.
+- Gated imagination (ActorCriticAugGated): 2.80 return. Gate architecture doesn't help.
+- **6 more bugs fixed**: shard wraparound stats, no grad clipping, stale diagnostic batches, hidden stats bias, Config mutation, entropy scope.
+- **Fix ablation** (6 configs, identical hparams): all_fixes=3.70, old_behavior=2.60, no_clip=2.30, both_ent=1.20. Grad clipping at 1.0 is the most helpful fix. Both-stream entropy is harmful.
+- **Low OW sweep**: OW=0 → 15.40, OW=0.01 → 5.90, OW=0.05 → 5.00, OW=0.10 → 4.70. Even trace BC (0.01) causes cliff-drop from 15 to 6. Not a dosage issue — BC is fundamentally toxic.
 - [Detail →](log_2026-04-07.md)
 
 ## 2026-04-06
