@@ -1,5 +1,15 @@
 # Experiment Log
 
+## 2026-04-10
+- **AWR aug (row 0) 50-ep eval**: **16.30 ± 3.61** — real embeddings alone (no BC) only slightly hurt vs pure AWR (18.38). Embeddings are not harmful without BC; collapse requires both.
+- **Action prediction accuracy grid** (all 6 policies, 807K train samples + 38K oracle):
+  - AWR no aug: zero (39.9%) > real (34.7%) = shuffled — model ignores embeddings entirely (trained with zero)
+  - AWR aug: real (44.4%) > zero (38.5%) > shuffled (33.3%) — uses embeddings semantically on training dist; oracle: zero best (OOD embeddings harmful)
+  - BC models (all 4): **92% oracle accuracy with real embeddings** — complete memorization confirmed. Shuffled also gives 88-90% oracle accuracy → hidden state is the primary discriminating signal, not the embedding.
+  - BC training NLL: 5.41 (noaug) vs 2.63 (pure AWR) — BC has overwritten PPO policy
+- **Mechanistic story complete**: Oracle hidden states are stereotyped → BC teaches model to use them as a mode-switch → at eval, oracle-like hidden states trigger oracle actions in OOD game states
+- [Detail →](log_2026-04-10.md)
+
 ## 2026-04-08
 - **50-ep definitive results** (correct eval mode: online for aug, zero for noaug):
   - AWR no aug (zero emb, no BC): **18.38 ± 2.69** — healthy baseline
