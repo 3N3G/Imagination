@@ -1,5 +1,13 @@
 # Experiment Log
 
+## 2026-04-11
+- **embed.py fixed**: incremental per-file saving (model loaded once, files saved immediately). Prevents total data loss on job timeout.
+- **rl partition has no internet**: Gemini API calls hang silently on babel-v5-16. Split emb_cmp_gemini into CPU embed phase + GPU train phase.
+- **hist5_gpu_pipeline resubmitted** (7058889, 70h): was about to timeout with zero saves. Now saves incrementally.
+- **emb_cmp_gemini_embed** (7058920, CPU partition): 842K PSF labels → Gemini embedding-001 (3072-dim), pending.
+- **Baseline clarified**: psf-w512=7.20 (Mar 29) used top-250 filtering — invalid. Correct baseline = psf_w512=17.10 (flash-lite PSF, Apr 7). Current experiment compares same labels with different embedding method.
+- [Detail →](log_2026-04-11.md)
+
 ## 2026-04-10
 - **AWR aug (row 0) 50-ep eval**: **16.30 ± 3.61** — real embeddings alone (no BC) only slightly hurt vs pure AWR (18.38). Embeddings are not harmful without BC; collapse requires both.
 - **Action prediction accuracy grid** (all 6 policies, 807K train samples + 38K oracle):
