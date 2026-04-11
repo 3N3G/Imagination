@@ -119,6 +119,8 @@ class OfflineDataset:
         max_dataset_gb: float = 80.0,
         device: str = "cuda",
         no_prescan: bool = False,
+        union_norm_paths: list[str] | None = None,
+        union_norm_weight: float = 0.0,
     ):
         self.hidden_mode = hidden_mode
         self.device = device
@@ -194,10 +196,15 @@ class OfflineDataset:
         self.return_to_go = None
         self.size = 0
 
+        self._union_norm_paths = union_norm_paths or []
+        self._union_norm_weight = union_norm_weight
         if len(self._shards) > 1:
             print(f"  Sharded into {len(self._shards)} chunks for memory budget")
             if self.need_hidden and not no_prescan:
                 self._prescan_hidden_stats(file_info)
+        elif self._union_norm_paths and self.need_hidden:
+            # Single shard but union norm requested — still need prescan to include oracle
+            self._prescan_hidden_stats(file_info)
         self._load_shard(0)
 
     def _estimate_gb(self, n: int) -> float:
@@ -220,11 +227,19 @@ class OfflineDataset:
         return shards
 
     def _prescan_hidden_stats(self, file_info):
-        """Pre-scan all files to compute global hidden state stats before loading any shard."""
-        print("  Pre-scanning all files for hidden state stats...")
-        count = 0
-        h_sum = np.zeros((Config.HIDDEN_STATE_DIM,), dtype=np.float64)
-        h_sumsq = np.zeros((Config.HIDDEN_STATE_DIM,), dtype=np.float64)
+        """Pre-scan all files to compute global hidden state stats before loading any shard.
+
+        If union_norm_paths are set, computes weighted stats: oracle data is weighted
+        to match its effective batch fraction (union_norm_weight) rather than its
+        raw sample count fraction.
+        """
+        union_label = f" (weighted union, oracle weight={self._union_norm_weight:.2%})" if self._union_norm_paths else ""
+        print(f"  Pre-scanning all files for hidden state stats{union_label}...")
+
+        # --- Scan training files ---
+        t_count = 0
+        t_sum = np.zeros((Config.HIDDEN_STATE_DIM,), dtype=np.float64)
+        t_sumsq = np.zeros((Config.HIDDEN_STATE_DIM,), dtype=np.float64)
         for fpath, _ in file_info:
             try:
                 with np.load(fpath, mmap_mode="r") as data:
@@ -232,21 +247,73 @@ class OfflineDataset:
                         continue
                     raw = np.asarray(data["hidden_state"])
                     hs = (np.mean(raw, axis=1) if raw.ndim == 3 else raw).astype(np.float64)
-                    count += len(hs)
-                    h_sum += hs.sum(axis=0)
-                    h_sumsq += np.square(hs).sum(axis=0)
+                    t_count += len(hs)
+                    t_sum += hs.sum(axis=0)
+                    t_sumsq += np.square(hs).sum(axis=0)
             except Exception as e:
                 print(f"    Skipping {fpath} in prescan: {e}")
-        if count > 0:
-            mean = h_sum / count
-            var = np.maximum(h_sumsq / count - np.square(mean), 1e-6)
-            self.hidden_mean = mean.astype(np.float32)
+
+        if t_count == 0:
+            return
+
+        t_mean = t_sum / t_count
+        t_var = t_sumsq / t_count - np.square(t_mean)
+
+        if not self._union_norm_paths:
+            # Training-only stats
+            var = np.maximum(t_var, 1e-6)
+            self.hidden_mean = t_mean.astype(np.float32)
             self.hidden_std = np.sqrt(var).astype(np.float32)
-            self._norm_count = count
-            self._norm_sum = h_sum
-            self._norm_sumsq = h_sumsq
-            self._stats_frozen = True  # global stats computed, no need to update per-shard
-            print(f"    Global stats from {count:,} samples across {len(file_info)} files")
+            self._norm_count = t_count
+            self._norm_sum = t_sum
+            self._norm_sumsq = t_sumsq
+            self._stats_frozen = True
+            print(f"    Global stats from {t_count:,} samples across {len(file_info)} files")
+            return
+
+        # --- Scan oracle files ---
+        o_count = 0
+        o_sum = np.zeros((Config.HIDDEN_STATE_DIM,), dtype=np.float64)
+        o_sumsq = np.zeros((Config.HIDDEN_STATE_DIM,), dtype=np.float64)
+        for p in self._union_norm_paths:
+            try:
+                with np.load(p, mmap_mode="r") as data:
+                    if "hidden_state" not in data.files:
+                        continue
+                    raw = np.asarray(data["hidden_state"])
+                    hs = (np.mean(raw, axis=1) if raw.ndim == 3 else raw).astype(np.float64)
+                    o_count += len(hs)
+                    o_sum += hs.sum(axis=0)
+                    o_sumsq += np.square(hs).sum(axis=0)
+            except Exception as e:
+                print(f"    Skipping {p} in prescan: {e}")
+
+        if o_count == 0:
+            # Fall back to training-only
+            var = np.maximum(t_var, 1e-6)
+            self.hidden_mean = t_mean.astype(np.float32)
+            self.hidden_std = np.sqrt(var).astype(np.float32)
+            self._stats_frozen = True
+            print(f"    Global stats from {t_count:,} training samples (no oracle hidden states found)")
+            return
+
+        o_mean = o_sum / o_count
+        o_var = o_sumsq / o_count - np.square(o_mean)
+
+        # Weighted combination: alpha = oracle batch fraction
+        alpha = self._union_norm_weight
+        mean = (1 - alpha) * t_mean + alpha * o_mean
+        second_moment = (1 - alpha) * (t_var + np.square(t_mean)) + alpha * (o_var + np.square(o_mean))
+        var = np.maximum(second_moment - np.square(mean), 1e-6)
+
+        self.hidden_mean = mean.astype(np.float32)
+        self.hidden_std = np.sqrt(var).astype(np.float32)
+        self._norm_count = t_count + o_count
+        self._norm_sum = t_sum + o_sum
+        self._norm_sumsq = t_sumsq + o_sumsq
+        self._stats_frozen = True
+        print(f"    Weighted stats: {t_count:,} train (weight={1-alpha:.2%}) + "
+              f"{o_count:,} oracle (weight={alpha:.2%})")
 
     @property
     def num_shards(self):
@@ -867,6 +934,8 @@ def parse_args():
                     help="Don't train critic on oracle data (actor-only BC)")
     p.add_argument("--no-prescan-stats", action="store_true",
                     help="Skip pre-scanning all files for hidden stats (use incremental stats)")
+    p.add_argument("--union-norm", action="store_true",
+                    help="Compute normalization stats over union of training + oracle data")
     p.add_argument("--max-grad-norm", type=float, default=1.0,
                     help="Max gradient norm for clipping (0 = no clipping, default: 1.0)")
     p.add_argument("--dropout", type=float, default=0.0,
@@ -881,7 +950,131 @@ def parse_args():
                     help="Path to held-out validation .npz for real/zero/shuffled accuracy")
     p.add_argument("--val-freq", type=int, default=5000,
                     help="Validation frequency in steps (default: 5000)")
+    p.add_argument("--hidden-dim", type=int, default=0,
+                    help="Override embedding hidden dim (0 = use Config default 4096)")
+    # Pretrained checkpoint + selective freezing
+    p.add_argument("--pretrained-checkpoint", type=str, default=None,
+                    help="Path to pretrained .pth checkpoint to load before training")
+    p.add_argument("--freeze-mode", type=str, default="none",
+                    choices=["none", "obs_branch", "obs_and_post_merge"],
+                    help="Freeze parts of the model (use with --pretrained-checkpoint)")
+    p.add_argument("--no-awr", action="store_true",
+                    help="Disable AWR loss; train with BC only on oracle data")
     return p.parse_args()
+
+
+# ==============================================================================
+# 6b. Selective model freezing
+# ==============================================================================
+def apply_freeze(model, freeze_mode: str, model_class: type) -> tuple[int, int]:
+    """Freeze parts of the model for fine-tuning with a pretrained checkpoint.
+
+    Returns (frozen_param_count, trainable_param_count).
+    """
+    if freeze_mode == "none":
+        total = sum(p.numel() for p in model.parameters())
+        return 0, total
+
+    if model_class == ActorCriticAugLN:
+        # ActorCriticAugLN layout:
+        #   obs → obs_fc1 + ln1  (pre-merge obs)
+        #   hid → hidden_fc1 + ln2  (pre-merge hidden)
+        #   cat([ao, ah]) → fc1 + ln3 → fc2 + ln4 → out  (post-merge)
+        obs_modules = [
+            "actor_obs_fc1", "actor_ln1",
+            "critic_obs_fc1", "critic_ln1",
+        ]
+        post_merge_modules = [
+            "actor_fc1", "actor_ln3", "actor_fc2", "actor_ln4", "actor_out",
+            "critic_fc1", "critic_ln3", "critic_fc2", "critic_ln4", "critic_out",
+        ]
+    elif model_class in (ActorCriticAugV2, ActorCriticAugGated):
+        obs_modules = [
+            "actor_obs_fc1", "actor_obs_fc2", "actor_obs_fc3",
+            "actor_obs_ln1", "actor_obs_ln2", "actor_obs_ln3",
+            "critic_obs_fc1", "critic_obs_fc2", "critic_obs_fc3",
+            "critic_obs_ln1", "critic_obs_ln2", "critic_obs_ln3",
+        ]
+        post_merge_modules = [
+            "actor_merge", "actor_merge_ln", "actor_out",
+            "critic_merge", "critic_merge_ln", "critic_out",
+        ]
+    else:
+        raise ValueError(f"Freeze mode not supported for {model_class.__name__}")
+
+    freeze_set = set(obs_modules)
+    if freeze_mode == "obs_and_post_merge":
+        freeze_set.update(post_merge_modules)
+
+    frozen, trainable = 0, 0
+    for name, param in model.named_parameters():
+        module_name = name.rsplit(".", 1)[0]
+        if module_name in freeze_set:
+            param.requires_grad = False
+            frozen += param.numel()
+        else:
+            trainable += param.numel()
+
+    return frozen, trainable
+
+
+# ==============================================================================
+# 6c. BC-only training step
+# ==============================================================================
+def train_step_bc_only(
+    model, optimizer, oracle_batch: dict,
+    oracle_loss_weight: float,
+    entropy_coeff: float,
+    max_grad_norm: float = 0.0,
+) -> dict:
+    """BC-only training step (no AWR loss). Used with --no-awr flag."""
+    pi_oracle, value_oracle = model(oracle_batch["obs"], oracle_batch["hidden_state"])
+    log_probs_oracle = pi_oracle.log_prob(oracle_batch["action"])
+    oracle_actor_loss = -torch.mean(log_probs_oracle)
+
+    oracle_advantage = oracle_batch["return_to_go"] - value_oracle
+    oracle_critic_loss = 0.5 * torch.mean(oracle_advantage.pow(2))
+
+    entropy_oracle = pi_oracle.entropy().mean()
+    entropy_loss = -entropy_oracle
+
+    total_loss = (oracle_loss_weight * (oracle_actor_loss + oracle_critic_loss)
+                  + entropy_coeff * entropy_loss)
+
+    optimizer.zero_grad()
+    total_loss.backward()
+    if max_grad_norm > 0:
+        grad_norm = nn_utils.clip_grad_norm_(
+            [p for p in model.parameters() if p.requires_grad], max_grad_norm
+        ).item()
+    else:
+        grad_norm = sum(
+            p.grad.norm().item() ** 2
+            for p in model.parameters() if p.grad is not None
+        ) ** 0.5
+    optimizer.step()
+
+    return {
+        "actor_loss": 0.0,
+        "oracle_actor_loss": oracle_actor_loss.item(),
+        "critic_loss": 0.0,
+        "oracle_critic_loss": oracle_critic_loss.item(),
+        "total_loss": total_loss.item(),
+        "grad_norm": grad_norm,
+        "entropy_train": 0.0,
+        "entropy_oracle": entropy_oracle.item(),
+        "entropy_loss": entropy_loss.item(),
+        "oracle_loss_weight_effective": oracle_loss_weight,
+        "mean_weight_train": 0.0,
+        "weight_clip_frac": 0.0,
+        "mean_value_train": 0.0,
+        "mean_value_oracle": value_oracle.detach().mean().item(),
+        "mean_return_train": 0.0,
+        "mean_return_oracle": oracle_batch["return_to_go"].mean().item(),
+        "explained_variance": 0.0,
+        "adv_mean": 0.0,
+        "adv_std": 0.0,
+    }
 
 
 # ==============================================================================
@@ -889,6 +1082,9 @@ def parse_args():
 # ==============================================================================
 def main():
     args = parse_args()
+
+    if args.hidden_dim > 0:
+        Config.HIDDEN_STATE_DIM = args.hidden_dim
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -934,7 +1130,14 @@ def main():
     print(f"  Weight decay: {args.weight_decay}")
     print(f"  Dropout: {args.dropout}")
     print(f"  Max grad norm: {args.max_grad_norm}")
+    print(f"  Union norm: {args.union_norm}")
     print(f"  LayerNorm: {not args.no_layernorm}")
+    if args.pretrained_checkpoint:
+        print(f"  Pretrained: {args.pretrained_checkpoint}")
+    if args.freeze_mode != "none":
+        print(f"  Freeze mode: {args.freeze_mode}")
+    if args.no_awr:
+        print(f"  Mode: BC-only (AWR disabled)")
     print(f"  Data: {args.data_dir} (offset={args.file_offset}, max={args.max_files})")
     print(f"  Oracle: {args.oracle_data}")
     print(f"  Steps: {args.total_steps}, Batch: {args.batch_size}, LR: {args.lr}")
@@ -944,6 +1147,7 @@ def main():
     print()
 
     # Load training dataset
+    union_norm_paths = [args.oracle_data] if args.union_norm else None
     dataset = OfflineDataset(
         args.data_dir, args.data_glob,
         max_files=args.max_files, file_offset=args.file_offset,
@@ -951,6 +1155,8 @@ def main():
         max_dataset_gb=args.max_dataset_gb,
         device=device,
         no_prescan=args.no_prescan_stats,
+        union_norm_paths=union_norm_paths,
+        union_norm_weight=args.oracle_fraction if args.union_norm else 0.0,
     )
 
     stats_path = os.path.join(args.save_dir, "hidden_state_stats.npz")
@@ -960,10 +1166,15 @@ def main():
     oracle = OracleDataset(args.oracle_data, device=device)
 
     # Batch splits
-    oracle_batch_size = max(1, int(args.batch_size * args.oracle_fraction))
-    train_batch_size = args.batch_size - oracle_batch_size
-    print(f"\nBatch composition: {train_batch_size} train + {oracle_batch_size} oracle "
-          f"= {args.batch_size} total")
+    if args.no_awr:
+        oracle_batch_size = args.batch_size
+        train_batch_size = 0
+        print(f"\nBC-only mode: {oracle_batch_size} oracle per batch (no AWR)")
+    else:
+        oracle_batch_size = max(1, int(args.batch_size * args.oracle_fraction))
+        train_batch_size = args.batch_size - oracle_batch_size
+        print(f"\nBatch composition: {train_batch_size} train + {oracle_batch_size} oracle "
+              f"= {args.batch_size} total")
 
     # Shard rotation
     shard_steps = None
@@ -989,10 +1200,26 @@ def main():
         model_kwargs["dropout"] = args.dropout
     model = ModelClass(**model_kwargs).to(device)
 
+    # Load pretrained checkpoint (before freezing so all weights are loaded)
+    if args.pretrained_checkpoint:
+        print(f"Loading pretrained checkpoint: {args.pretrained_checkpoint}")
+        state_dict = torch.load(args.pretrained_checkpoint, map_location=device, weights_only=True)
+        model.load_state_dict(state_dict)
+        print("  Checkpoint loaded successfully")
+
+    # Apply selective freezing
+    if args.freeze_mode != "none":
+        frozen_n, trainable_n = apply_freeze(model, args.freeze_mode, ModelClass)
+        print(f"  Freeze mode: {args.freeze_mode}")
+        print(f"  Frozen: {frozen_n:,} params")
+        print(f"  Trainable: {trainable_n:,} params")
+
+    # Create optimizer with only trainable parameters
+    trainable_params = [p for p in model.parameters() if p.requires_grad]
     if args.weight_decay > 0:
-        optimizer = optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+        optimizer = optim.AdamW(trainable_params, lr=args.lr, weight_decay=args.weight_decay)
     else:
-        optimizer = optim.Adam(model.parameters(), lr=args.lr)
+        optimizer = optim.Adam(trainable_params, lr=args.lr)
 
     total_params = sum(p.numel() for p in model.parameters())
     print(f"Model: {total_params:,} parameters")
@@ -1020,6 +1247,9 @@ def main():
         "dropout": args.dropout,
         "no_layernorm": args.no_layernorm,
         "num_shards": dataset.num_shards,
+        "pretrained_checkpoint": args.pretrained_checkpoint,
+        "freeze_mode": args.freeze_mode,
+        "no_awr": args.no_awr,
     }
     with open(os.path.join(args.save_dir, "training_metadata.json"), "w") as f:
         json.dump(meta, f, indent=2, default=str)
@@ -1067,8 +1297,8 @@ def main():
     t0 = time.time()
 
     for step in range(1, args.total_steps + 1):
-        # Shard rotation
-        if shard_steps and step > 1 and (step - 1) % shard_steps == 0:
+        # Shard rotation (skip in no-awr mode since we don't sample training data)
+        if shard_steps and not args.no_awr and step > 1 and (step - 1) % shard_steps == 0:
             dataset.advance_shard()
             dataset.save_hidden_stats(stats_path)
 
@@ -1079,22 +1309,30 @@ def main():
         else:
             effective_ow = args.oracle_loss_weight
 
-        train_batch = dataset.sample(train_batch_size)
         oracle_batch = oracle.sample(
             oracle_batch_size,
             hidden_mean=dataset.hidden_mean,
             hidden_std=dataset.hidden_std,
         )
 
-        metrics = train_step_v2(
-            model, optimizer, train_batch, oracle_batch,
-            args.advantage_mode, effective_ow,
-            args.entropy_coeff, args.oracle_awr,
-            max_grad_norm=args.max_grad_norm,
-            awr_beta=args.awr_beta, awr_max_weight=Config.AWR_MAX_WEIGHT,
-            entropy_both_streams=args.entropy_both_streams,
-            no_oracle_critic=args.no_oracle_critic,
-        )
+        if args.no_awr:
+            metrics = train_step_bc_only(
+                model, optimizer, oracle_batch,
+                oracle_loss_weight=effective_ow,
+                entropy_coeff=args.entropy_coeff,
+                max_grad_norm=args.max_grad_norm,
+            )
+        else:
+            train_batch = dataset.sample(train_batch_size)
+            metrics = train_step_v2(
+                model, optimizer, train_batch, oracle_batch,
+                args.advantage_mode, effective_ow,
+                args.entropy_coeff, args.oracle_awr,
+                max_grad_norm=args.max_grad_norm,
+                awr_beta=args.awr_beta, awr_max_weight=Config.AWR_MAX_WEIGHT,
+                entropy_both_streams=args.entropy_both_streams,
+                no_oracle_critic=args.no_oracle_critic,
+            )
 
         if step % Config.LOG_FREQ == 0:
             if not args.no_wandb:
@@ -1158,7 +1396,7 @@ def main():
                           f"logit_l2={val_metrics.get(f'logit_l2_{mode}', 0):.4f}")
 
             # Gradient conflict diagnostic (every 2x val_freq to save time)
-            if effective_ow > 0 and step % (args.val_freq * 2) == 0:
+            if effective_ow > 0 and not args.no_awr and step % (args.val_freq * 2) == 0:
                 # Sample fresh batches to avoid using stale training-step tensors
                 fresh_train = dataset.sample(train_batch_size)
                 fresh_oracle = oracle.sample(

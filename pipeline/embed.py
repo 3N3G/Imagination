@@ -246,7 +246,7 @@ def _embed_one_gemini(text: str, url: str, output_dim: int) -> np.ndarray:
                 d = json.loads(resp.read())
             return np.array(d["embedding"]["values"], dtype=np.float32)
         except urlerror.HTTPError as e:
-            if e.code == 429 and attempt < 3:
+            if e.code in (429, 503) and attempt < 3:
                 time.sleep(2 ** attempt)
                 continue
             raise RuntimeError(f"Gemini embed HTTP {e.code}: {e.read()[:200]}")
