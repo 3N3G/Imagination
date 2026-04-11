@@ -1,9 +1,8 @@
 # Experiment Log
 
 ## 2026-04-11
-- **Embedding comparison launched** (3 conditions, same flash-lite PSF labels, pure AWR): Qwen3-8B generative (baseline 17.10), Gemini embedding-001 3072-dim (running), Qwen3-Embedding-8B 4096-dim (pending). Tests whether a dedicated embedding model produces usable signal vs generative hidden states.
-- **hist5 pipeline running**: 4.27M texts already labelled with k=5 history context. Now embedding → train → eval. Tests whether grounding predictions in agent trajectory history improves embedding utility.
-- **Success criterion for both**: return > 18.38 (no-aug ceiling) OR real >> zero in accuracy grid. Neither achieved yet on PSF-style labels.
+- **Embedding comparison running**: Gemini embedding-001 (3072-dim) and Qwen3-Embedding-8B (4096-dim) vs Qwen3-8B generative baseline (17.10), same flash-lite PSF labels. Hypothesis: dedicated embedding models may produce cleaner/more semantic representations with less generative noise.
+- **hist5 pipeline running**: 4.27M texts labelled with k=5 history context → embedding → train → eval. Hypothesis: snapshot-only PSF predictions may not correspond well to agent actions; history grounds Gemini in the agent's recent behavior.
 - [Detail →](log_2026-04-11.md)
 
 ## 2026-04-10
