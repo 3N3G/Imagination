@@ -162,7 +162,7 @@ def _load_model_qwen3embed(device: str):
     import torch
     from transformers import AutoModel, AutoTokenizer
 
-    MODEL_ID = "Qwen/Qwen3-Embedding"
+    MODEL_ID = "Qwen/Qwen3-Embedding-8B"
     print(f"  Loading {MODEL_ID}...")
     t0 = time.time()
     tokenizer = AutoTokenizer.from_pretrained(MODEL_ID, trust_remote_code=True)

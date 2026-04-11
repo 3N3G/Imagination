@@ -1,11 +1,9 @@
 # Experiment Log
 
 ## 2026-04-11
-- **embed.py fixed**: incremental per-file saving (model loaded once, files saved immediately). Prevents total data loss on job timeout.
-- **rl partition has no internet**: Gemini API calls hang silently on babel-v5-16. Split emb_cmp_gemini into CPU embed phase + GPU train phase.
-- **hist5_gpu_pipeline resubmitted** (7058889, 70h): was about to timeout with zero saves. Now saves incrementally.
-- **emb_cmp_gemini_embed** (7058920, CPU partition): 842K PSF labels → Gemini embedding-001 (3072-dim), pending.
-- **Baseline clarified**: psf-w512=7.20 (Mar 29) used top-250 filtering — invalid. Correct baseline = psf_w512=17.10 (flash-lite PSF, Apr 7). Current experiment compares same labels with different embedding method.
+- **Embedding comparison launched** (3 conditions, same flash-lite PSF labels, pure AWR): Qwen3-8B generative (baseline 17.10), Gemini embedding-001 3072-dim (running), Qwen3-Embedding-8B 4096-dim (pending). Tests whether a dedicated embedding model produces usable signal vs generative hidden states.
+- **hist5 pipeline running**: 4.27M texts already labelled with k=5 history context. Now embedding → train → eval. Tests whether grounding predictions in agent trajectory history improves embedding utility.
+- **Success criterion for both**: return > 18.38 (no-aug ceiling) OR real >> zero in accuracy grid. Neither achieved yet on PSF-style labels.
 - [Detail →](log_2026-04-11.md)
 
 ## 2026-04-10
