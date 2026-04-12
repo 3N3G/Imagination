@@ -507,6 +507,7 @@ def run_eval(args):
         ep_gemini_log = []
         ep_achievements = {}
         ep_action_counts = np.zeros(ACTION_DIM, dtype=np.int32)
+        ep_actions: list[int] = []
         ep_gemini_errors = 0
 
         # Hidden state (initialized to zero until first Gemini call)
@@ -627,6 +628,7 @@ def run_eval(args):
 
             ep_values.append(v)
             ep_action_counts[action] += 1
+            ep_actions.append(int(action))
 
             # --- Step environment ---
             rng, step_key = jax.random.split(rng)
@@ -690,6 +692,7 @@ def run_eval(args):
             "gemini_calls": len(ep_gemini_log),
             "gemini_errors": ep_gemini_errors,
             "mean_value": float(np.mean(ep_values)) if ep_values else 0,
+            "actions": ep_actions,
         }
         all_results.append(result)
 
