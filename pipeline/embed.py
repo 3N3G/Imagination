@@ -239,17 +239,22 @@ def _embed_one_gemini(text: str, url: str, output_dim: int) -> np.ndarray:
     }).encode()
     headers = {"Content-Type": "application/json"}
 
-    for attempt in range(4):
+    for attempt in range(6):
         try:
             req = urlrequest.Request(url, data=payload, headers=headers, method="POST")
             with urlrequest.urlopen(req, timeout=30) as resp:
                 d = json.loads(resp.read())
             return np.array(d["embedding"]["values"], dtype=np.float32)
         except urlerror.HTTPError as e:
-            if e.code in (429, 503) and attempt < 3:
+            if e.code in (429, 500, 502, 503, 504) and attempt < 5:
                 time.sleep(2 ** attempt)
                 continue
             raise RuntimeError(f"Gemini embed HTTP {e.code}: {e.read()[:200]}")
+        except (urlerror.URLError, TimeoutError) as e:
+            if attempt < 5:
+                time.sleep(2 ** attempt)
+                continue
+            raise RuntimeError(f"Gemini embed network error: {e}")
     raise RuntimeError("Gemini embed: max retries exceeded")
 
 
