@@ -1,5 +1,11 @@
 # Experiment Log
 
+## 2026-04-12
+- **Freeze BC experiment**: freeze_obs_bcawr (BC+AWR with obs_fc1 frozen) **= 16.80 ± 3.49**, matching AWR baseline (16.30). First BC+AWR that does not collapse (previously 7.46 unfrozen). freeze_all_bcawr (14.68) slightly worse; BC-only variants still toxic (5.54, 8.56).
+- **V2 arch comparison**: V2 AWR (16.72) matches LN AWR baseline; V2 BC+AWR (4.74) is WORSE than LN (7.46) — deeper arch does not protect against BC.
+- **Qwen3-gen (PSF) embedding**: 18.62 ± 3.20 vs unaug baseline 18.38 ± 2.69 (+0.24). Imagination marginally helps pure AWR.
+- [Detail →](log_2026-04-12.md)
+
 ## 2026-04-11
 - **Embedding comparison running**: Gemini embedding-001 (3072-dim) and Qwen3-Embedding-8B (4096-dim) vs Qwen3-8B generative baseline (17.10), same flash-lite PSF labels. Hypothesis: dedicated embedding models may produce cleaner/more semantic representations with less generative noise.
 - **hist5 pipeline running**: 4.27M texts labelled with k=5 history context → embedding → train → eval. Hypothesis: snapshot-only PSF predictions may not correspond well to agent actions; history grounds Gemini in the agent's recent behavior.
