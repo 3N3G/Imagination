@@ -483,7 +483,14 @@ class OracleDataset:
         action_t = torch.tensor(self.action[idx], dtype=torch.long, device=self.device)
         rtg_t = torch.tensor(self.return_to_go[idx], dtype=torch.float32, device=self.device)
 
-        hidden_raw = (self.hidden_state[idx] - hidden_mean) / hidden_std
+        if self.hidden_state.shape[1] != hidden_mean.shape[0]:
+            # Dim mismatch between oracle hidden (e.g. 4096-dim Qwen3-8B) and training
+            # (e.g. 3072-dim Gemini-embed). Only valid when oracle_loss_weight=0 and
+            # oracle_fraction=0: model still consumes the tensor but downstream grads
+            # are zero-weighted. Return zeros sized for the training model.
+            hidden_raw = np.zeros((batch_size, hidden_mean.shape[0]), dtype=np.float32)
+        else:
+            hidden_raw = (self.hidden_state[idx] - hidden_mean) / hidden_std
         hidden_t = torch.tensor(hidden_raw, dtype=torch.float32, device=self.device)
 
         return {"obs": obs_t, "action": action_t, "hidden_state": hidden_t, "return_to_go": rtg_t}
