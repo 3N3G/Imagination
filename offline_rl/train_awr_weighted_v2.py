@@ -1255,12 +1255,18 @@ def main():
         json.dump(meta, f, indent=2, default=str)
 
     # --- Pre-training diagnostics ---
+    hstats = None
     if dataset.hidden_state is not None:
-        # Post-normalization distribution stats
-        hstats = log_hidden_norm_stats(
-            dataset.hidden_state, oracle.hidden_state,
-            dataset.hidden_mean, dataset.hidden_std,
-        )
+        train_dim = dataset.hidden_state.shape[1]
+        oracle_dim = oracle.hidden_state.shape[1] if oracle.hidden_state is not None else train_dim
+        if train_dim != oracle_dim:
+            print(f"\n--- Hidden state diagnostics: skipped (train dim {train_dim} != oracle dim {oracle_dim}) ---")
+        else:
+            hstats = log_hidden_norm_stats(
+                dataset.hidden_state, oracle.hidden_state,
+                dataset.hidden_mean, dataset.hidden_std,
+            )
+    if hstats is not None:
         print("\n--- Hidden state normalization stats ---")
         print(f"  Normalization params: mean_norm={hstats['hidden_stats/norm_mean_norm']:.2f}, "
               f"std_mean={hstats['hidden_stats/norm_std_mean']:.4f}, "

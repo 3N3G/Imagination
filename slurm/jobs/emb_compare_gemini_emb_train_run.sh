@@ -49,13 +49,7 @@ python -m eval.validate_awr \
     --dropout 0.0
 
 echo ""
-echo "--- Oracle (golden) data ---"
-python -m eval.validate_awr \
-    --checkpoint "${CKPT_DIR}/final.pth" \
-    --data-dir /data/group_data/rl/geney/oracle_pipeline/final_trajectories \
-    --file-offset 0 --max-files 1 \
-    --hidden-stats "${CKPT_DIR}/hidden_state_stats.npz" \
-    --dropout 0.0
+echo "--- Oracle (golden) data: SKIPPED (oracle data is 4096-dim Qwen3-8B; gemini_emb is 3072-dim) ---"
 
 echo ""
 echo "======================================================================"
