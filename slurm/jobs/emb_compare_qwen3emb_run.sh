@@ -48,11 +48,11 @@ echo ""
 echo "======================================================================"
 echo "PHASE 4: Validate (held-out training + oracle data)"
 echo "======================================================================"
-echo "--- Held-out training data (files 126+) ---"
+echo "--- Held-out training data (last 8 files) ---"
 python -m eval.validate_awr \
     --checkpoint "${CKPT_DIR}/final.pth" \
     --data-dir "${FINAL_DIR}" \
-    --file-offset 126 --max-files 8 \
+    --file-offset 117 --max-files 8 \
     --hidden-stats "${CKPT_DIR}/hidden_state_stats.npz" \
     --dropout 0.0
 
