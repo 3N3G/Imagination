@@ -193,6 +193,9 @@ def parse_args():
     p.add_argument("--cross-hidden-dir", type=str, default=None,
                     help="Load hidden states from a DIFFERENT data dir (same obs/actions) "
                          "to test cross-distribution embedding transfer")
+    p.add_argument("--hidden-dim", type=int, default=HIDDEN_STATE_DIM,
+                    help="Hidden state dim of the trained model (default 4096 for Qwen3-8B; "
+                         "set to 3072 for Gemini embedding-001)")
     return p.parse_args()
 
 
@@ -217,7 +220,7 @@ def main():
                 obs_dim=OBS_DIM,
                 action_dim=ACTION_DIM,
                 layer_width=layer_width,
-                hidden_state_dim=HIDDEN_STATE_DIM,
+                hidden_state_dim=args.hidden_dim,
                 dropout=args.dropout,
             ).to(args.device)
         elif args.no_layernorm:
@@ -225,14 +228,14 @@ def main():
                 obs_dim=OBS_DIM,
                 action_dim=ACTION_DIM,
                 layer_width=layer_width,
-                hidden_state_dim=HIDDEN_STATE_DIM,
+                hidden_state_dim=args.hidden_dim,
             ).to(args.device)
         else:
             model = ActorCriticAugLN(
                 obs_dim=OBS_DIM,
                 action_dim=ACTION_DIM,
                 layer_width=layer_width,
-                hidden_state_dim=HIDDEN_STATE_DIM,
+                hidden_state_dim=args.hidden_dim,
                 dropout=args.dropout,
             ).to(args.device)
     else:
@@ -305,7 +308,7 @@ def main():
     else:
         # Unaugmented: single condition (obs-only, hidden=zeros passed to forward but ignored)
         n = len(val["obs"])
-        zero_hidden = np.zeros((n, HIDDEN_STATE_DIM), dtype=np.float32)
+        zero_hidden = np.zeros((n, args.hidden_dim), dtype=np.float32)
         t0 = time.time()
         metrics = evaluate_nll(
             model, val["obs"], val["action"], zero_hidden,
