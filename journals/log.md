@@ -3,7 +3,7 @@
 ## 2026-04-12
 - **Freeze BC experiment**: freeze_obs_bcawr (BC+AWR with obs_fc1 frozen) **= 16.80 ± 3.49**, matching AWR baseline (16.30). First BC+AWR that does not collapse (previously 7.46 unfrozen). freeze_all_bcawr (14.68) slightly worse; BC-only variants still toxic (5.54, 8.56). freeze_obs_bc shows 97.9% golden acc but 30.7% held-out — pure memorization.
 - **V2 arch comparison**: V2 AWR (16.72) matches LN AWR baseline; V2 BC+AWR (4.74) is WORSE than LN (7.46). V2_bc golden acc=91.25% (memorization) while held-out acc=41.18%.
-- **Embedding comparison (pure AWR, PSF)**: qwen3gen=18.62±3.20, qwen3emb=17.86±3.84. Neither clearly beats unaug 18.38±2.69. Gemini-embed train pending.
+- **Embedding-source comparison (pure AWR, PSF)**: qwen3gen (original layer-30)=18.62±3.20, qwen3emb (dedicated embedding model)=17.86±3.84. All within noise of unaug 18.38±2.69. Real-vs-zero validation <1% acc either encoder → pure-AWR policy essentially ignores the embedding regardless of source. Gemini-embed pending. Dedicated-embedding-is-cleaner hypothesis not supported.
 - [Detail →](log_2026-04-12.md)
 
 ## 2026-04-11
