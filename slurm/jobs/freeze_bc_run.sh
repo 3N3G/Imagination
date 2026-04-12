@@ -48,6 +48,7 @@ CMD=(python -m offline_rl.train_awr_weighted_v2
     --total-steps 50000
     --save-freq 10000
     --wandb-name "${TAG}"
+    --max-dataset-gb 30
 )
 
 if [ "${NO_AWR[$ID]}" = "yes" ]; then

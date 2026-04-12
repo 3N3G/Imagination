@@ -35,6 +35,7 @@ CMD=(python -m offline_rl.train_awr_weighted_v2
     --save-freq 25000
     --arch-v2
     --wandb-name "${TAG}"
+    --max-dataset-gb 30
 )
 
 if [ "$ID" -eq 0 ]; then

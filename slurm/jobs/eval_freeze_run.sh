@@ -21,5 +21,5 @@ python -m eval.eval_online \
     --hidden-stats "${CKPT_DIR}/hidden_state_stats.npz" \
     --layer-width 512 \
     --num-episodes 50 \
-    --eval-dir "${EVAL_DIR}" \
+    --output-dir "${EVAL_DIR}" \
     --wandb-name "eval_${TAG}"

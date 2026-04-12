@@ -23,5 +23,5 @@ python -m eval.eval_online \
     --layer-width 512 \
     --arch-v2 \
     --num-episodes 50 \
-    --eval-dir "${EVAL_DIR}" \
+    --output-dir "${EVAL_DIR}" \
     --wandb-name "eval_${TAG}"
