@@ -601,6 +601,7 @@ def train_step_v2(
     awr_beta: float = 10.0, awr_max_weight: float = 20.0,
     entropy_both_streams: bool = False,
     no_oracle_critic: bool = False,
+    bc_obs_stopgrad: bool = False,
 ) -> dict:
     # --- AWR loss on training data ---
     pi_train, value_train = model(train_batch["obs"], train_batch["hidden_state"])
@@ -612,7 +613,8 @@ def train_step_v2(
     awr_loss = -torch.mean(log_probs_train * weights_train)
 
     # --- Oracle loss ---
-    pi_oracle, value_oracle = model(oracle_batch["obs"], oracle_batch["hidden_state"])
+    pi_oracle, value_oracle = model(oracle_batch["obs"], oracle_batch["hidden_state"],
+                                    obs_detach=bc_obs_stopgrad)
     log_probs_oracle = pi_oracle.log_prob(oracle_batch["action"])
 
     if oracle_awr:
@@ -967,6 +969,10 @@ def parse_args():
                     help="Freeze parts of the model (use with --pretrained-checkpoint)")
     p.add_argument("--no-awr", action="store_true",
                     help="Disable AWR loss; train with BC only on oracle data")
+    p.add_argument("--bc-obs-stopgrad", action="store_true",
+                    help="Stop gradients through the obs pathway on the BC (oracle) "
+                         "forward. AWR still updates obs normally; only the imagination/"
+                         "hidden branch receives BC gradients.")
     return p.parse_args()
 
 
@@ -1345,6 +1351,7 @@ def main():
                 awr_beta=args.awr_beta, awr_max_weight=Config.AWR_MAX_WEIGHT,
                 entropy_both_streams=args.entropy_both_streams,
                 no_oracle_critic=args.no_oracle_critic,
+                bc_obs_stopgrad=args.bc_obs_stopgrad,
             )
 
         if step % Config.LOG_FREQ == 0:
