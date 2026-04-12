@@ -171,10 +171,10 @@ def call_gemini(prompt: str, api_key: str, model: str = GEMINI_MODEL,
 
 
 # ======================================================================
-# Qwen3-8B embedding (truncated to layer 30)
+# Embedding backends
 # ======================================================================
 class QwenEmbedder:
-    """Loads Qwen3-8B truncated to 31 layers for layer-30 extraction."""
+    """Loads Qwen3-8B truncated to 31 layers for layer-30 mean-pool extraction."""
 
     def __init__(self, device: str = "cuda"):
         from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
@@ -213,6 +213,99 @@ class QwenEmbedder:
         return mean_pooled[0].cpu().numpy().astype(np.float32)
 
 
+class Qwen3EmbedEmbedder:
+    """Qwen3-Embedding model with last-token pooling. Produces 4096-dim vectors."""
+
+    def __init__(self, device: str = "cuda"):
+        from transformers import AutoModel, AutoTokenizer
+
+        MODEL_ID = "Qwen/Qwen3-Embedding-8B"
+        print(f"Loading {MODEL_ID} (last-token pooling)...")
+        t0 = time.time()
+        self.tokenizer = AutoTokenizer.from_pretrained(MODEL_ID, trust_remote_code=True)
+        if self.tokenizer.pad_token is None:
+            self.tokenizer.pad_token = self.tokenizer.eos_token
+        self.tokenizer.padding_side = "left"
+
+        self.model = AutoModel.from_pretrained(
+            MODEL_ID, dtype=torch.float16,
+            attn_implementation="sdpa", trust_remote_code=True,
+        ).to(device)
+        self.model.eval()
+        self.device = device
+        self.hidden_dim = self.model.config.hidden_size
+        print(f"  Loaded in {time.time() - t0:.1f}s, hidden_dim={self.hidden_dim}")
+
+    @torch.no_grad()
+    def embed(self, text: str) -> np.ndarray:
+        """Embed a single text → (hidden_dim,) float32 via last-token pooling."""
+        enc = self.tokenizer(
+            [text], return_tensors="pt", truncation=True,
+            max_length=2048, padding=False,
+        )
+        input_ids = enc["input_ids"].to(self.device)
+        attention_mask = enc["attention_mask"].to(self.device)
+
+        out = self.model(input_ids=input_ids, attention_mask=attention_mask)
+        # Last non-padding token
+        seq_len = attention_mask.sum(dim=1) - 1
+        last_hs = out.last_hidden_state[0, seq_len[0]]  # (H,)
+        return last_hs.float().cpu().numpy()
+
+
+class GeminiEmbedder:
+    """Calls Gemini text-embedding-004 API for each text. Output dim configurable."""
+
+    def __init__(self, api_key: str, output_dim: int = 3072):
+        import os
+        self.api_key = api_key or os.environ.get("GEMINI_API_KEY", "")
+        if not self.api_key:
+            raise ValueError("GeminiEmbedder requires api_key or GEMINI_API_KEY env var")
+        self.output_dim = output_dim
+        self.url = (
+            "https://generativelanguage.googleapis.com/v1beta/models"
+            f"/gemini-embedding-001:embedContent?key={self.api_key}"
+        )
+        print(f"GeminiEmbedder: gemini-embedding-001, output_dim={output_dim}")
+
+    def embed(self, text: str) -> np.ndarray:
+        """Embed a single text → (output_dim,) float32."""
+        import json
+        from urllib import request as urlrequest, error as urlerror
+
+        payload = json.dumps({
+            "content": {"parts": [{"text": text}]},
+            "outputDimensionality": self.output_dim,
+        }).encode()
+        for attempt in range(4):
+            try:
+                req = urlrequest.Request(
+                    self.url, data=payload,
+                    headers={"Content-Type": "application/json"}, method="POST",
+                )
+                with urlrequest.urlopen(req, timeout=30) as resp:
+                    d = json.loads(resp.read())
+                return np.array(d["embedding"]["values"], dtype=np.float32)
+            except urlerror.HTTPError as e:
+                if e.code == 429 and attempt < 3:
+                    import time as _t; _t.sleep(2 ** attempt)
+                    continue
+                raise RuntimeError(f"Gemini embed HTTP {e.code}: {e.read()[:200]}")
+        raise RuntimeError("GeminiEmbedder: max retries exceeded")
+
+
+def make_embedder(backend: str, device: str, api_key: str = "", output_dim: int = 3072):
+    """Factory: returns the right embedder for the given backend string."""
+    if backend == "qwen3_gen":
+        return QwenEmbedder(device=device)
+    elif backend == "qwen3_embed":
+        return Qwen3EmbedEmbedder(device=device)
+    elif backend == "gemini_embed":
+        return GeminiEmbedder(api_key=api_key, output_dim=output_dim)
+    else:
+        raise ValueError(f"Unknown embed_backend: {backend!r}")
+
+
 # ======================================================================
 # Video rendering helpers
 # ======================================================================
@@ -224,22 +317,39 @@ def render_frame(env_state) -> np.ndarray:
 
 
 def make_video_frame(game_frame, values, rewards, gemini_text, step):
-    """Compose game frame + value graph + Gemini text overlay."""
+    """Compose game frame + value graph + full Gemini text overlay."""
     target_w = 600
     h, w = game_frame.shape[:2]
     scale = target_w / w
     target_h = int(h * scale)
-    footer_h = 400
+
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    line_h = 16
+    graph_h = 50
+    graph_overhead = 10 + graph_h + 20  # padding + graph + gap
+
+    # Wrap gemini text to fit width (~90 chars per line at font scale 0.35)
+    max_chars = 90
+    text_lines = []
+    if gemini_text:
+        for raw_line in gemini_text.split("\n"):
+            if not raw_line.strip():
+                text_lines.append("")
+                continue
+            while len(raw_line) > max_chars:
+                text_lines.append(raw_line[:max_chars])
+                raw_line = raw_line[max_chars:]
+            text_lines.append(raw_line)
+
+    text_region_h = max(len(text_lines) * line_h + 20, 100)
+    footer_h = graph_overhead + text_region_h
 
     canvas = np.zeros((target_h + footer_h, target_w, 3), dtype=np.uint8)
     resized = cv2.resize(game_frame, (target_w, target_h), interpolation=cv2.INTER_NEAREST)
     canvas[:target_h, :target_w] = resized
 
-    font = cv2.FONT_HERSHEY_SIMPLEX
-
     # Value graph
     graph_y = target_h + 10
-    graph_h = 50
     cv2.rectangle(canvas, (10, graph_y), (target_w - 10, graph_y + graph_h), (30, 30, 30), -1)
     if len(values) > 1:
         v_min, v_max = min(min(values), 0), max(max(values), 1)
@@ -253,14 +363,11 @@ def make_video_frame(game_frame, values, rewards, gemini_text, step):
     cv2.putText(canvas, f"Step {step}  V={values[-1]:.2f}  R={sum(rewards):.2f}",
                 (10, graph_y - 3), font, 0.4, (200, 200, 200), 1)
 
-    # Gemini text
+    # Full Gemini text
     text_y = graph_y + graph_h + 20
-    if gemini_text:
-        for line in gemini_text.split("\n")[:15]:
-            if text_y > target_h + footer_h - 10:
-                break
-            cv2.putText(canvas, line[:90], (10, text_y), font, 0.35, (180, 180, 180), 1)
-            text_y += 16
+    for line in text_lines:
+        cv2.putText(canvas, line, (10, text_y), font, 0.35, (180, 180, 180), 1)
+        text_y += line_h
 
     return canvas
 
@@ -300,7 +407,8 @@ def run_eval(args):
         ModelClass = ActorCriticAugBase
     else:
         ModelClass = ActorCriticAugLN
-    model_kwargs = dict(obs_dim=OBS_DIM, action_dim=ACTION_DIM, layer_width=layer_width, hidden_state_dim=EMBED_HIDDEN_DIM)
+    _hidden_dim = args.hidden_dim if args.hidden_dim > 0 else EMBED_HIDDEN_DIM
+    model_kwargs = dict(obs_dim=OBS_DIM, action_dim=ACTION_DIM, layer_width=layer_width, hidden_state_dim=_hidden_dim)
     if ModelClass != ActorCriticAugBase:
         model_kwargs["dropout"] = args.dropout
     model = ModelClass(**model_kwargs).to(device)
@@ -316,8 +424,13 @@ def run_eval(args):
     hidden_std = stats["std"].astype(np.float32)
     print(f"Hidden stats loaded: mean=[{hidden_mean.min():.1f},{hidden_mean.max():.1f}]")
 
-    # Load Qwen embedder
-    embedder = QwenEmbedder(device=device)
+    # Load embedder (backend selectable)
+    embedder = make_embedder(
+        backend=args.embed_backend,
+        device=device,
+        api_key=api_key or "",
+        output_dim=args.hidden_dim if args.hidden_dim > 0 else EMBED_HIDDEN_DIM,
+    )
 
     # Init Craftax environment
     import craftax.craftax.envs.craftax_pixels_env as pxmod
@@ -397,7 +510,7 @@ def run_eval(args):
         ep_gemini_errors = 0
 
         # Hidden state (initialized to zero until first Gemini call)
-        current_hidden = np.zeros(EMBED_HIDDEN_DIM, dtype=np.float32)
+        current_hidden = np.zeros(_hidden_dim, dtype=np.float32)
         current_gemini_text = ""
 
         while not done and step < 10000:
@@ -600,10 +713,15 @@ def run_eval(args):
         video_path = None
         if args.save_video and ep_frames:
             video_path = ep_dir / "gameplay.mp4"
-            h, w = ep_frames[0].shape[:2]
+            # Pad all frames to the max height (variable due to Gemini text length)
+            max_h = max(f.shape[0] for f in ep_frames)
+            w = ep_frames[0].shape[1]
             fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-            writer = cv2.VideoWriter(str(video_path), fourcc, 15.0, (w, h))
+            writer = cv2.VideoWriter(str(video_path), fourcc, 15.0, (w, max_h))
             for frame in ep_frames:
+                if frame.shape[0] < max_h:
+                    pad = np.zeros((max_h - frame.shape[0], w, 3), dtype=np.uint8)
+                    frame = np.vstack([frame, pad])
                 writer.write(cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
             writer.release()
             # Re-encode to H.264 for browser compatibility (wandb)
@@ -613,6 +731,7 @@ def run_eval(args):
                 ret = subprocess.run(
                     ["ffmpeg", "-y", "-i", str(video_path),
                      "-c:v", "libx264", "-preset", "fast", "-crf", "23",
+                     "-vf", "pad=ceil(iw/2)*2:ceil(ih/2)*2",
                      "-pix_fmt", "yuv420p", str(h264_path)],
                     capture_output=True, timeout=120,
                 )
@@ -779,6 +898,11 @@ def main():
                     help="Use ActorCriticAugV2 architecture")
     p.add_argument("--arch-gated", action="store_true",
                     help="Use ActorCriticAugGated architecture")
+    p.add_argument("--embed-backend", type=str, default="qwen3_gen",
+                    choices=["qwen3_gen", "qwen3_embed", "gemini_embed"],
+                    help="Which model embeds the Gemini text (default: qwen3_gen)")
+    p.add_argument("--hidden-dim", type=int, default=0,
+                    help="Override embedding hidden dim (0 = use EMBED_HIDDEN_DIM=4096)")
     args = p.parse_args()
     run_eval(args)
 
