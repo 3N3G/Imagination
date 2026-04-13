@@ -9,6 +9,7 @@ Variants
 ActorCriticAug       – dual-branch (obs + hidden), tanh, no normalization
 ActorCriticAugLN     – dual-branch with LayerNorm + optional Dropout
 ActorCritic          – obs-only baseline (no hidden branch)
+ActorCriticHiddenOnly – hidden-only baseline (no obs branch), LayerNorm
 """
 
 from __future__ import annotations
@@ -448,6 +449,74 @@ class ActorCritic(nn.Module):
         cx = torch.tanh(self.critic_fc1(obs))
         cx = torch.tanh(self.critic_fc2(cx))
         cx = torch.tanh(self.critic_fc3(cx))
+        value = self.critic_out(cx).squeeze(-1)
+
+        return pi, value
+
+
+# ---------------------------------------------------------------------------
+# Hidden-only baseline (imagination embedding only, no obs)
+# ---------------------------------------------------------------------------
+class ActorCriticHiddenOnly(nn.Module):
+    """Mirror of ActorCritic but over the LLM hidden state only.
+
+    Takes the normalized imagination embedding and produces an action
+    distribution / value without ever seeing the symbolic obs. Matches the
+    3-layer depth / width of the unaugmented ActorCritic baseline and uses
+    LayerNorm + optional Dropout like ActorCriticAugLN.
+
+    The `obs` argument is accepted for API compatibility but ignored.
+    """
+
+    def __init__(
+        self,
+        obs_dim: int = 8268,
+        action_dim: int = 43,
+        layer_width: int = 512,
+        hidden_state_dim: int = 4096,
+        dropout: float = 0.0,
+    ):
+        super().__init__()
+        self.actor_fc1 = nn.Linear(hidden_state_dim, layer_width)
+        self.actor_fc2 = nn.Linear(layer_width, layer_width)
+        self.actor_fc3 = nn.Linear(layer_width, layer_width)
+        self.actor_out = nn.Linear(layer_width, action_dim)
+        self.actor_ln1 = nn.LayerNorm(layer_width)
+        self.actor_ln2 = nn.LayerNorm(layer_width)
+        self.actor_ln3 = nn.LayerNorm(layer_width)
+
+        self.critic_fc1 = nn.Linear(hidden_state_dim, layer_width)
+        self.critic_fc2 = nn.Linear(layer_width, layer_width)
+        self.critic_fc3 = nn.Linear(layer_width, layer_width)
+        self.critic_out = nn.Linear(layer_width, 1)
+        self.critic_ln1 = nn.LayerNorm(layer_width)
+        self.critic_ln2 = nn.LayerNorm(layer_width)
+        self.critic_ln3 = nn.LayerNorm(layer_width)
+
+        self.drop = nn.Dropout(dropout)
+        self._init_weights()
+
+    def _init_weights(self):
+        for layer in [
+            self.actor_fc1, self.actor_fc2, self.actor_fc3,
+            self.critic_fc1, self.critic_fc2, self.critic_fc3,
+        ]:
+            orthogonal_init(layer, gain=np.sqrt(2))
+        orthogonal_init(self.actor_out, gain=0.01)
+        orthogonal_init(self.critic_out, gain=1.0)
+
+    def forward(self, obs, hidden_state, obs_detach: bool = False, hidden_detach: bool = False):
+        # obs is ignored; obs_detach/hidden_detach kwargs kept for API compat
+        del obs, obs_detach
+        h = hidden_state.detach() if hidden_detach else hidden_state
+        ax = self.drop(torch.tanh(self.actor_ln1(self.actor_fc1(h))))
+        ax = self.drop(torch.tanh(self.actor_ln2(self.actor_fc2(ax))))
+        ax = self.drop(torch.tanh(self.actor_ln3(self.actor_fc3(ax))))
+        pi = Categorical(logits=self.actor_out(ax))
+
+        cx = self.drop(torch.tanh(self.critic_ln1(self.critic_fc1(h))))
+        cx = self.drop(torch.tanh(self.critic_ln2(self.critic_fc2(cx))))
+        cx = self.drop(torch.tanh(self.critic_ln3(self.critic_fc3(cx))))
         value = self.critic_out(cx).squeeze(-1)
 
         return pi, value

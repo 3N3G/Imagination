@@ -26,7 +26,13 @@ import time
 import numpy as np
 import torch
 
-from models.actor_critic_aug import ActorCriticAugLN, ActorCriticAug as ActorCriticAugBase, ActorCriticAugV2, ActorCritic
+from models.actor_critic_aug import (
+    ActorCriticAugLN,
+    ActorCriticAug as ActorCriticAugBase,
+    ActorCriticAugV2,
+    ActorCritic,
+    ActorCriticHiddenOnly,
+)
 
 
 # ==============================================================================
@@ -188,6 +194,8 @@ def parse_args():
                     help="Use ActorCriticAug (no LayerNorm) instead of ActorCriticAugLN")
     p.add_argument("--arch-v2", action="store_true",
                     help="Use ActorCriticAugV2 architecture")
+    p.add_argument("--arch-hidden-only", action="store_true",
+                    help="Use ActorCriticHiddenOnly (hidden/imagination input only)")
     p.add_argument("--dropout", type=float, default=0.0,
                     help="Dropout rate (must match training architecture)")
     p.add_argument("--cross-hidden-dir", type=str, default=None,
@@ -215,7 +223,15 @@ def main():
 
     # Load model
     if augmented:
-        if args.arch_v2:
+        if args.arch_hidden_only:
+            model = ActorCriticHiddenOnly(
+                obs_dim=OBS_DIM,
+                action_dim=ACTION_DIM,
+                layer_width=layer_width,
+                hidden_state_dim=args.hidden_dim,
+                dropout=args.dropout,
+            ).to(args.device)
+        elif args.arch_v2:
             model = ActorCriticAugV2(
                 obs_dim=OBS_DIM,
                 action_dim=ACTION_DIM,

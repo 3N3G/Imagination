@@ -38,7 +38,13 @@ import torch
 import torch.nn.utils as nn_utils
 import torch.optim as optim
 
-from models.actor_critic_aug import ActorCriticAugLN, ActorCriticAug as ActorCriticAugBase, ActorCriticAugV2, ActorCriticAugGated
+from models.actor_critic_aug import (
+    ActorCriticAugLN,
+    ActorCriticAug as ActorCriticAugBase,
+    ActorCriticAugV2,
+    ActorCriticAugGated,
+    ActorCriticHiddenOnly,
+)
 
 
 # ==============================================================================
@@ -957,6 +963,8 @@ def parse_args():
                     help="Use ActorCriticAugV2 (deep obs branch + late hidden injection)")
     p.add_argument("--arch-gated", action="store_true",
                     help="Use ActorCriticAugGated (V2 + learned 0/1 gate on imagination)")
+    p.add_argument("--arch-hidden-only", action="store_true",
+                    help="Use ActorCriticHiddenOnly (hidden/imagination input only, obs ignored)")
     p.add_argument("--val-data", type=str, default=None,
                     help="Path to held-out validation .npz for real/zero/shuffled accuracy")
     p.add_argument("--val-freq", type=int, default=5000,
@@ -1201,7 +1209,9 @@ def main():
         shard_steps = max(1, args.total_steps // dataset.num_shards)
         print(f"Shard rotation every {shard_steps} steps ({dataset.num_shards} shards)")
 
-    if args.arch_gated:
+    if args.arch_hidden_only:
+        ModelClass = ActorCriticHiddenOnly
+    elif args.arch_gated:
         ModelClass = ActorCriticAugGated
     elif args.arch_v2:
         ModelClass = ActorCriticAugV2
@@ -1215,7 +1225,7 @@ def main():
         layer_width=args.layer_width,
         hidden_state_dim=Config.HIDDEN_STATE_DIM,
     )
-    if ModelClass in (ActorCriticAugLN, ActorCriticAugV2, ActorCriticAugGated):
+    if ModelClass in (ActorCriticAugLN, ActorCriticAugV2, ActorCriticAugGated, ActorCriticHiddenOnly):
         model_kwargs["dropout"] = args.dropout
     model = ModelClass(**model_kwargs).to(device)
 

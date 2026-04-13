@@ -41,7 +41,13 @@ import torch
 
 from labelling.obs_to_text import obs_to_text
 from llm.prompts import filter_text_obs
-from models.actor_critic_aug import ActorCriticAug as ActorCriticAugBase, ActorCriticAugLN, ActorCriticAugV2, ActorCriticAugGated
+from models.actor_critic_aug import (
+    ActorCriticAug as ActorCriticAugBase,
+    ActorCriticAugLN,
+    ActorCriticAugV2,
+    ActorCriticAugGated,
+    ActorCriticHiddenOnly,
+)
 
 from pipeline.config import (
     ACTION_NAMES,
@@ -399,7 +405,9 @@ def run_eval(args):
 
     # Load policy
     layer_width = args.layer_width
-    if args.arch_gated:
+    if args.arch_hidden_only:
+        ModelClass = ActorCriticHiddenOnly
+    elif args.arch_gated:
         ModelClass = ActorCriticAugGated
     elif args.arch_v2:
         ModelClass = ActorCriticAugV2
@@ -901,6 +909,8 @@ def main():
                     help="Use ActorCriticAugV2 architecture")
     p.add_argument("--arch-gated", action="store_true",
                     help="Use ActorCriticAugGated architecture")
+    p.add_argument("--arch-hidden-only", action="store_true",
+                    help="Use ActorCriticHiddenOnly (hidden/imagination input only)")
     p.add_argument("--embed-backend", type=str, default="qwen3_gen",
                     choices=["qwen3_gen", "qwen3_embed", "gemini_embed"],
                     help="Which model embeds the Gemini text (default: qwen3_gen)")
