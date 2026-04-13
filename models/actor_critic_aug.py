@@ -142,11 +142,13 @@ class ActorCriticAugLN(nn.Module):
         orthogonal_init(self.actor_out, gain=0.01)
         orthogonal_init(self.critic_out, gain=1.0)
 
-    def forward(self, obs, hidden_state, obs_detach: bool = False):
+    def forward(self, obs, hidden_state, obs_detach: bool = False, hidden_detach: bool = False):
         ao = self.drop(torch.tanh(self.actor_ln1(self.actor_obs_fc1(obs))))
         ah = self.drop(torch.tanh(self.actor_ln2(self.actor_hidden_fc1(hidden_state))))
         if obs_detach:
             ao = ao.detach()
+        if hidden_detach:
+            ah = ah.detach()
         ax = self.drop(torch.tanh(self.actor_ln3(self.actor_fc1(torch.cat([ao, ah], dim=1)))))
         ax = self.drop(torch.tanh(self.actor_ln4(self.actor_fc2(ax))))
         pi = Categorical(logits=self.actor_out(ax))
@@ -155,6 +157,8 @@ class ActorCriticAugLN(nn.Module):
         ch = self.drop(torch.tanh(self.critic_ln2(self.critic_hidden_fc1(hidden_state))))
         if obs_detach:
             co = co.detach()
+        if hidden_detach:
+            ch = ch.detach()
         cx = self.drop(torch.tanh(self.critic_ln3(self.critic_fc1(torch.cat([co, ch], dim=1)))))
         cx = self.drop(torch.tanh(self.critic_ln4(self.critic_fc2(cx))))
         value = self.critic_out(cx).squeeze(-1)

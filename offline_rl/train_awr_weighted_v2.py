@@ -602,9 +602,11 @@ def train_step_v2(
     entropy_both_streams: bool = False,
     no_oracle_critic: bool = False,
     bc_obs_stopgrad: bool = False,
+    awr_hidden_stopgrad: bool = False,
 ) -> dict:
     # --- AWR loss on training data ---
-    pi_train, value_train = model(train_batch["obs"], train_batch["hidden_state"])
+    pi_train, value_train = model(train_batch["obs"], train_batch["hidden_state"],
+                                  hidden_detach=awr_hidden_stopgrad)
     advantage_train = train_batch["return_to_go"] - value_train
     critic_loss = 0.5 * torch.mean(advantage_train.pow(2))
 
@@ -973,6 +975,10 @@ def parse_args():
                     help="Stop gradients through the obs pathway on the BC (oracle) "
                          "forward. AWR still updates obs normally; only the imagination/"
                          "hidden branch receives BC gradients.")
+    p.add_argument("--awr-hidden-stopgrad", action="store_true",
+                    help="Stop gradients through the hidden/imagination pathway on the "
+                         "AWR (training) forward. BC still updates hidden normally; only "
+                         "the obs branch receives AWR gradients.")
     return p.parse_args()
 
 
@@ -1352,6 +1358,7 @@ def main():
                 entropy_both_streams=args.entropy_both_streams,
                 no_oracle_critic=args.no_oracle_critic,
                 bc_obs_stopgrad=args.bc_obs_stopgrad,
+                awr_hidden_stopgrad=args.awr_hidden_stopgrad,
             )
 
         if step % Config.LOG_FREQ == 0:
