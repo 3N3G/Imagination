@@ -76,14 +76,19 @@ def sample_windows(seed: int = 7):
         fs = sorted([f for f in os.listdir(d) if f.endswith(".npz")])
         source_files[label] = [(label, os.path.join(d, f)) for f in fs]
 
-    target = {"psf_shards": 6, "psf_golden": 4}
+    target = {"psf_shards": 5, "psf_golden": 5}
     assert sum(target.values()) == N_TRAJECTORIES
+
+    # Minimum gap between two picks from the same source_file, to avoid
+    # near-duplicate windows when a source has only one file (golden has one).
+    MIN_FILE_GAP = 2000
 
     picks = []
     used = set()
+    picked_starts_by_path: dict[str, list[int]] = {}
 
     def pick_one(source_label):
-        for _ in range(400):
+        for _ in range(800):
             label, path = rng.choice(source_files[source_label])
             d = np.load(path, allow_pickle=True)
             obs_all = decode_obs_from_bitpacked(d)
@@ -100,7 +105,12 @@ def sample_windows(seed: int = 7):
             key = (label, path, start)
             if key in used:
                 continue
+            # Min-gap within same file
+            prior = picked_starts_by_path.get(path, [])
+            if any(abs(start - p) < MIN_FILE_GAP for p in prior):
+                continue
             used.add(key)
+            picked_starts_by_path.setdefault(path, []).append(start)
             return {
                 "source": label,
                 "source_file": os.path.basename(path),
