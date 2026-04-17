@@ -328,6 +328,16 @@ def obs_to_text(obs: np.ndarray) -> str:
     text += f"Iron:{inv['iron']}, Diamond:{inv['diamond']}, Sapphire:{inv['sapphire']}, "
     text += f"Ruby:{inv['ruby']}, Sapling:{inv['sapling']}, Torch:{inv['torches']}, "
     text += f"Arrow:{inv['arrows']}, Book:{inv['books']}, "
+    # Equipment levels (0=none, 1=wood, 2=stone, 3=iron, 4=diamond for pickaxe/sword;
+    # Bow: 0/1; armour slots are [body/head/legs/boots], each 0=none, 1=iron, 2=diamond;
+    # Enchantment levels: 0=none, 1=fire, 2=ice).
+    armour = decoded["armour"]
+    armour_ench = decoded["armour_enchantments"]
+    text += (
+        f"Pickaxe:{inv['pickaxe']}, Sword:{inv['sword']}, Bow:{inv['bow']}, "
+        f"SwordEnchantment:{inv['sword_enchantment']}, BowEnchantment:{inv['bow_enchantment']}, "
+        f"Armour:{armour}, ArmourEnchantments:{armour_ench}, "
+    )
     
     # Potions
     pots = decoded["potions"]
