@@ -6,6 +6,7 @@
 - **qwen3emb: reads content but content HURTS.** Adv/die prompts rise to 18.58 / 18.78 (+2pp vs baseline 16.60); emb-flip 11.6%. Kill the narrative → return goes UP.
 - **gemini_emb: reads content, mildly helpful.** Adv/die drops to 13.68 / 13.70 (−1.3pp vs baseline 14.96); emb-flip 14.2%. Highest content-sensitivity but lowest absolute return — obs-branch competence is the main gap.
 - Best online return (qwen3gen 17.58) comes from the MOST embedding-ignoring policy. "More content-sensitivity" ≠ better policy at these hyperparameters.
+- **β sweep on both emb encoders**: qwen3emb peaks at **β=3 = 17.88 ± 5.36** (+1.28 vs β=10 baseline, ~closes gap to qwen3gen 17.58). gemini_emb peaks at **β=30 = 15.68 ± 5.14** (+0.72). Opposite β preferences. Longer training (100K) hurts both (−0.9, −1.4) — more BC memorization, harmful content bites harder on qwen3emb.
 - [Detail →](log_2026-04-17.md)
 
 ## 2026-04-16
