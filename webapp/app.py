@@ -123,12 +123,13 @@ Current state:
 # ---------------------------------------------------------------------------
 def call_gemini(prompt: str, model: str, api_key: str,
                 temperature: float = 0.2, max_output_tokens: int = 2048):
-    use_thinking = model.startswith("gemini-2.5") or model.startswith("gemini-3")
     url = (f"https://generativelanguage.googleapis.com/v1beta/models/"
            f"{model}:generateContent?key={api_key}")
     gen_config = {"maxOutputTokens": max_output_tokens, "temperature": temperature}
-    # Disable thinking for speed (2.5 + 3.x both support it via thinkingConfig)
-    if use_thinking:
+    # Disable thinking for speed where the model supports budget=0.
+    # 2.5-flash/pro allow it; 3.x flash-lite/flash allow it; 3.1-pro REQUIRES
+    # thinking mode (errors with INVALID_ARGUMENT on budget=0).
+    if model.startswith("gemini-2.5") or "flash" in model:
         gen_config["thinkingConfig"] = {"thinkingBudget": 0}
     body = json.dumps({
         "contents": [{"parts": [{"text": prompt}]}],

@@ -76,22 +76,25 @@ def sample_windows(seed: int = 7):
         fs = sorted([f for f in os.listdir(d) if f.endswith(".npz")])
         source_files[label] = [(label, os.path.join(d, f)) for f in fs]
 
-    target = {"psf_shards": 5, "psf_golden": 5}
-    assert sum(target.values()) == N_TRAJECTORIES
+    target = [("psf_golden", 5), ("psf_shards", 5)]     # order preserved in output
+    assert sum(c for _, c in target) == N_TRAJECTORIES
 
     # Minimum gap between two picks from the same source_file, to avoid
     # near-duplicate windows when a source has only one file (golden has one).
     MIN_FILE_GAP = 2000
+    # Skip windows that contain any NOOP (action=0) — those look frozen.
+    NOOP = 0
 
     picks = []
     used = set()
     picked_starts_by_path: dict[str, list[int]] = {}
 
     def pick_one(source_label):
-        for _ in range(800):
+        for _ in range(2000):
             label, path = rng.choice(source_files[source_label])
             d = np.load(path, allow_pickle=True)
             obs_all = decode_obs_from_bitpacked(d)
+            actions = np.asarray(d["action"])
             episodes = find_episodes(np.asarray(d["done"]))
             long_eps = [(s, e) for s, e in episodes if e - s >= TRAJECTORY_LEN + 3]
             if not long_eps:
@@ -104,6 +107,10 @@ def sample_windows(seed: int = 7):
             start = rng.choice(valid)
             key = (label, path, start)
             if key in used:
+                continue
+            # Filter out windows containing NOOPs — those look frozen / uninteresting.
+            window_actions = actions[start:start + TRAJECTORY_LEN]
+            if (window_actions == NOOP).any():
                 continue
             # Min-gap within same file
             prior = picked_starts_by_path.get(path, [])
@@ -122,11 +129,10 @@ def sample_windows(seed: int = 7):
             }
         raise RuntimeError(f"Could not sample from {source_label}")
 
-    for label, count in target.items():
+    for label, count in target:
         for _ in range(count):
             picks.append(pick_one(label))
-
-    rng.shuffle(picks)
+    # DO NOT shuffle — output order is preserved: golden first, then shards.
     return picks
 
 
