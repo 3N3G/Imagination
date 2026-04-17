@@ -30,11 +30,24 @@ No imagination-augmented config meaningfully exceeds the obs-only ceiling. Best 
 
 **How much does the policy listen to imagination?** Three complementary probes, all run per encoder on the PSF freeze_obs_bcawr family:
 
-1. **Direction counterfactuals** (multistep, flip obs vs. flip embedding, measure argmax action change):
-   - qwen3gen: 1.7% emb-flip vs 66% obs-flip → ignores imagination
-   - qwen3emb: 11.6% emb-flip → reads it
-   - gemini_emb: 14.2% emb-flip → reads it most
-   - All three are obs-dominated (≥60% obs-flip).
+1. **Direction counterfactuals** (*do actions change when we swap what the policy sees?*). Procedure per episode:
+   - Play normally up to a fixed "intervention step" *t* ∈ {0, 75, 150, 300} using the real policy.
+   - Record the symbolic obs *o* at step *t* and the real embedding *h* (= Qwen/Gemini embedding of the future narrative Gemini wrote for *o*).
+   - Build a **spatial-flipped obs** *o'*: the symbolic observation rotated 180° (tiles/entities mirrored around the player).
+   - Generate a **flipped embedding** *h'*: call Gemini on *o'*, embed that narrative.
+   - Forward the policy three times on the same state: (*o*, *h*) baseline, (*o'*, *h*) obs-flip, (*o*, *h'*) emb-flip.
+   - Record whether the argmax action differs from baseline for each flip. That's one data point per (episode × intervention step × flip type).
+   - Aggregate across all completed (episode × step) pairs (≈30 eps × 4 steps = up to 120 data points per policy per flip type, minus eps that ended early), then take the fraction where argmax changed.
+
+   The "14.2% emb-flip rate" for gemini_emb means that in 14.2% of the recorded gemini_emb probe events, replacing only the imagination embedding (while keeping the real obs) caused the policy to pick a different argmax action. The obs-flip rate is the same statistic but for the complementary intervention.
+
+   | Encoder | emb-flip rate (action change when only hidden swapped) | obs-flip rate |
+   |---|---:|---:|
+   | qwen3gen | 1.7% | 67% |
+   | qwen3emb | 11.6% | 76% |
+   | gemini_emb | 14.2% | 71% |
+
+   Obs-flip changes the argmax in ~60–83% of events for all three, confirming the obs is the dominant input. The emb-flip rate ranges 7–8× across encoders, confirming that "how much the policy listens to imagination" varies — but it's always small relative to how much it listens to obs.
 
 2. **Value counterfactuals** (new; Health/Food field perturbation on the obs fed to Gemini, measure ΔV on the policy's value head while symbolic obs stays real):
    - qwen3gen: mean \|ΔV\| = 0.08, arg-change 4% → **content-blind**
