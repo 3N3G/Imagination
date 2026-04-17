@@ -43,79 +43,82 @@ except ImportError:
 
 ACTION_DIM = 43
 ACTION_NAMES = [a.name for a in Action]
-ACTION_RE = re.compile(r'(?:\*\*|)?\s*Action\s*:?\s*(?:\*\*|)?\s*(\d+)', re.IGNORECASE)
-TAIL_NUM_RE = re.compile(r'(\d+)\s*\)?\s*$')
+# Parse "ACTION: <NAME>" — case-insensitive; matches one all-caps-ish token.
+ACTION_NAME_RE = re.compile(r'ACTION\s*:\s*\*{0,2}([A-Za-z_]+)\*{0,2}', re.IGNORECASE)
+
+# Map of accepted aliases onto canonical ACTION_NAMES. Enum names are the
+# truth; we add a few short aliases the model might emit.
+_ALIASES = {
+    "LEVEL_UP_STR": "LEVEL_UP_STRENGTH",
+    "LEVEL_UP_DEX": "LEVEL_UP_DEXTERITY",
+    "LEVEL_UP_INT": "LEVEL_UP_INTELLIGENCE",
+}
 
 
-SYSTEM_PROMPT = """You are playing Craftax — a survival-crafting game.
+SYSTEM_PROMPT = """You are playing Craftax. At every step, choose the single action that best follows this algorithm:
 
-Actions (must pick exactly one, 0-42):
-0:NOOP  1:LEFT  2:RIGHT  3:UP  4:DOWN  5:DO (interact/mine/attack/drink/eat)
-6:SLEEP  7:PLACE_STONE  8:PLACE_TABLE  9:PLACE_FURNACE  10:PLACE_PLANT
-11:MAKE_WOOD_PICKAXE  12:MAKE_STONE_PICKAXE  13:MAKE_IRON_PICKAXE
-14:MAKE_WOOD_SWORD  15:MAKE_STONE_SWORD  16:MAKE_IRON_SWORD
-17:REST  18:DESCEND  19:ASCEND  20:MAKE_DIAMOND_PICKAXE  21:MAKE_DIAMOND_SWORD
-22:MAKE_IRON_ARMOUR  23:MAKE_DIAMOND_ARMOUR  24:SHOOT_ARROW  25:MAKE_ARROW
-26:CAST_FIREBALL  27:CAST_ICEBALL  28:PLACE_TORCH
-29-34:DRINK_POTION_*  35:READ_BOOK  36:ENCHANT_SWORD  37:ENCHANT_ARMOUR
-38:MAKE_TORCH  39:LEVEL_UP_DEX  40:LEVEL_UP_STR  41:LEVEL_UP_INT  42:ENCHANT_BOW
+At every step, the player should act with the goal of staying alive and progressing down floors.
+This means the player will choose the highest-priority active goal in this order:
+1. Survive
+2. Take the ladder if it is open and visible
+3. Upgrade equipment if survival is stable
+4. Explore to find resources, troops, and the ladder
+1. Survive
+The player must track health, food, drink, and energy.  If food is <= 4, get food immediately by killing animals and eating them.  If drink is <= 4, get drink immediately from water tiles.  If energy is <= 4, make a safe enclosure and sleep.  If health is <= 4, restore food, drink, and energy before doing anything risky.  The player should never sleep in the open. Before sleeping, block enemies out, for example with stone walls. An easy way for the player to become safe is to mine a tunnel into a cluster of stone and place a stone behind blocking off the tunnel.
+2. Take the ladder if it is open and visible
+If the ladder is already open, the player should prioritize finding it and using it.  On the overworld, progression is just finding the ladder. Note that open and visible are not the same. A ladder opens so that a player who finds it can descend using it, but the player still needs to find the tile labelled as down_ladder. On later floors, the ladder opens only after 8 troops have been killed.  If the ladder is open, the player should stop focusing on upgrades unless the player is on the first floor, where most of the important early resources are found, such as wood, stone, and coal. Each time and only each time the player descends to a new floor, they will gain one player_xp, which can be used to upgrade one of three attributes:
+1. Strength: increases max health and physical melee damage
+2. Dexterity: increases max food, drink, and energy and slows their decrease
+2. Intelligence: increases max mana, mana regeneration, and spell damage
+3. Upgrade equipment
+The player should upgrade only when survival is stable and the ladder is not already the main priority.
+Upgrade order:
+Pickaxe: wood -> stone -> iron -> diamond
+Sword: wood -> stone -> iron -> diamond
+Armor: iron -> diamond
+Upgrade rules:
+If the player has no useful tools and less than 10 wood, gather wood first.
+If crafting is needed and there is no crafting table nearby, craft a crafting table.
+If the player has wood tools, mine 10 stone.
+If the player has stone but no stone tools, craft a stone pickaxe and stone sword.
+Mine coal whenever it is seen.
+Mine iron whenever it is seen if the player has an iron pickaxe.
+If the player has iron, coal, and wood, and is next to a furnace and crafting table, craft iron tools.
+If the player has extra iron, craft iron armor.
+If the player has diamonds and is next to a furnace and crafting table, craft diamond equipment.
+Diamond tools require diamond, coal, and wood.
+Diamond armor requires diamond and coal.
+4. Explore
+If the player is not in immediate danger, the ladder is not in sight, and no immediate upgrade is available, the player should explore.
+While exploring, the player should:
+- look for the ladder
+- kill troops if the ladder is still closed
+- gather useful nearby resources, especially wood, stone, coal, iron, and diamonds
 
-Coordinates are (Row, Col) relative to you at (0,0):
-  -Row = UP, +Row = DOWN, -Col = LEFT, +Col = RIGHT.
-DO acts on the tile you are facing (= the direction you most recently moved).
+Coordinates: (Row, Column) relative to player at (0,0).
+  Negative Row = UP, Positive Row = DOWN.
+  Negative Column = LEFT, Positive Column = RIGHT.
 
-=== ALGORITHM ===
-At every step, act with the goal of staying alive and progressing down floors.
-Pick the highest-priority active goal in this order:
-  1. Survive
-  2. Take the ladder if it is open
-  3. Upgrade equipment if survival is stable
-  4. Explore for resources, troops, and the ladder
+Available actions (only use these exact names):
+NOOP, LEFT, RIGHT, UP, DOWN, DO, SLEEP, PLACE_STONE, PLACE_TABLE,
+PLACE_FURNACE, PLACE_PLANT, MAKE_WOOD_PICKAXE, MAKE_STONE_PICKAXE,
+MAKE_IRON_PICKAXE, MAKE_WOOD_SWORD, MAKE_STONE_SWORD, MAKE_IRON_SWORD,
+REST, DESCEND, ASCEND, MAKE_DIAMOND_PICKAXE, MAKE_DIAMOND_SWORD,
+MAKE_IRON_ARMOUR, MAKE_DIAMOND_ARMOUR, SHOOT_ARROW, MAKE_ARROW,
+CAST_FIREBALL, CAST_ICEBALL, PLACE_TORCH, DRINK_POTION_RED,
+DRINK_POTION_GREEN, DRINK_POTION_BLUE, DRINK_POTION_PINK,
+DRINK_POTION_CYAN, DRINK_POTION_YELLOW, READ_BOOK, ENCHANT_SWORD,
+ENCHANT_ARMOUR, MAKE_TORCH, LEVEL_UP_DEXTERITY, LEVEL_UP_STRENGTH,
+LEVEL_UP_INTELLIGENCE, ENCHANT_BOW.
 
-1. SURVIVE
-   Track health, food, drink, energy.
-   - Food low → kill an animal (cow, snail, bat, …) and eat it (DO on it).
-   - Drink low → drink from a water tile (DO facing water).
-   - Energy low → make a safe enclosure (PLACE_STONE around you), then SLEEP.
-     Never sleep in the open.
-   - Health low → restore food/drink/energy before doing anything risky.
+Output format (strict):
+REASONING: <couple sentences of rationale>
+ACTION: <single action name>
 
-2. TAKE THE LADDER
-   If the ladder is OPEN (LadderOpen=True), prioritize finding it and using
-   DESCEND. On later floors, ladder opens only after killing 8 troops. On
-   Floor 0 you may still gather wood/stone/coal before descending since most
-   early resources are there. Every descent grants one XP to spend on
-   LEVEL_UP_STR / LEVEL_UP_DEX / LEVEL_UP_INT.
+Do not output anything else.
 
-3. UPGRADE EQUIPMENT (only when survival is stable and ladder is not the
-   main priority):
-   Upgrade order:
-     Pickaxe: wood → stone → iron → diamond
-     Sword:   wood → stone → iron → diamond
-     Armor:            iron → diamond
-   Rules:
-   - No useful tools → gather wood first (DO on a tree).
-   - Crafting needs a crafting table; if none nearby, PLACE_TABLE.
-   - After wood tools, mine stone.
-   - Mine coal and iron whenever seen.
-   - Adjacent to furnace+table with iron+coal+wood → craft iron tools.
-   - Extra iron → craft iron armour.
-   - Diamonds next to furnace+table: craft diamond equipment.
-
-4. EXPLORE
-   Not in danger, ladder not open, no upgrade available → move toward the
-   nearest useful unseen direction. Look for the ladder, kill troops if the
-   ladder is closed, gather wood/stone/coal/iron/diamonds.
-
-=== OUTPUT FORMAT (STRICT) ===
-Respond in AT MOST 2 short lines:
-Line 1: one-clause reason (e.g., "Tree at (-1,0), face UP to chop").
-Line 2 (REQUIRED, exactly this format): Action: <id>
-
-where <id> is a single integer 0-42. No other text after it.
-Example response:
-Tree at (-1,0), face UP to chop.
-Action: 3
+Current state:
+{current_state_filtered}
 """
 
 
@@ -136,46 +139,26 @@ def summarize_state(filt: str) -> str:
     return ", ".join(parts) if parts else "?"
 
 
-def build_user_prompt(filtered_obs: str, history: List[dict]) -> str:
-    buf = []
-    if history:
-        buf.append("--- RECENT HISTORY (last few steps) ---")
-        for i, h in enumerate(history):
-            buf.append(
-                f"t-{len(history)-i}: {h['summary']} | "
-                f"took action {h['action']} ({h['action_name']}) reward={h['reward']:+.1f}"
-            )
-        buf.append("--- END HISTORY ---")
-        buf.append("")
-    buf.append("CURRENT STATE (use ONLY this for coordinates, you are at (0,0)):")
-    buf.append(filtered_obs)
-    buf.append("")
-    buf.append("Respond in ≤2 lines, last line EXACTLY: Action: <id>")
-    return "\n".join(buf)
+def build_prompt(filtered_obs: str, _history_unused=None) -> str:
+    """One-shot prompt: fill the single `{current_state_filtered}` slot in
+    SYSTEM_PROMPT. history is ignored — kept as a positional for callers."""
+    return SYSTEM_PROMPT.replace("{current_state_filtered}", filtered_obs)
 
 
-def parse_action(text: str) -> Tuple[int, bool]:
-    matches = list(ACTION_RE.finditer(text))
-    if matches:
-        try:
-            a = int(matches[-1].group(1))
-            if 0 <= a < ACTION_DIM:
-                return a, True
-        except ValueError:
-            pass
-    stripped = text.strip()
-    m = TAIL_NUM_RE.search(stripped)
-    if m:
-        try:
-            a = int(m.group(1))
-            if 0 <= a < ACTION_DIM:
-                return a, True
-        except ValueError:
-            pass
-    return 0, False
+def parse_action(text: str) -> Tuple[int, bool, str]:
+    """Parse `ACTION: <NAME>` (last occurrence). Returns (id, ok, raw_match)."""
+    matches = list(ACTION_NAME_RE.finditer(text))
+    if not matches:
+        return 0, False, "[no match]"
+    raw = matches[-1].group(1).upper()
+    name = _ALIASES.get(raw, raw)
+    if name in ACTION_NAMES:
+        return ACTION_NAMES.index(name), True, matches[-1].group(0)
+    return 0, False, matches[-1].group(0)
 
 
-def make_frame(env_state, step, action_name, response_text, ep_return):
+def make_frame(env_state, step, action_name, response_text, ep_return,
+               raw_match: str = ""):
     """Render a frame with the game + a text overlay showing Gemini's reply."""
     pixels = np.array(render_craftax_pixels(env_state, block_pixel_size=16,
                                              do_night_noise=False), dtype=np.uint8)
@@ -189,7 +172,10 @@ def make_frame(env_state, step, action_name, response_text, ep_return):
     font = cv2.FONT_HERSHEY_SIMPLEX
     line_h = 14
     max_chars = 90
-    lines = [f"step={step}  ret={ep_return:+.2f}  a={action_name}"]
+    header = f"step={step}  ret={ep_return:+.2f}  extracted=a={action_name}"
+    if raw_match:
+        header += f"  | raw={raw_match!r}"
+    lines = [header]
     if response_text:
         for raw in response_text.splitlines():
             while len(raw) > max_chars:
@@ -227,31 +213,39 @@ def run_episode(env, env_params, rng, api_key: str, *,
         text_obs = obs_to_text(obs_np)
         filt = filter_text_obs(text_obs)
 
-        user = build_user_prompt(filt, history)
-        prompt = SYSTEM_PROMPT + "\n\n" + user
-
-        # NOTE: call_gemini's use_thinking=True sets thinkingBudget=0 (DISABLES
-        # thinking). We disable thinking so the full token budget goes to the
-        # answer, not reasoning. The algorithm+history already provide structure.
-        result = call_gemini(prompt, api_key, model=model, use_thinking=True,
-                             max_output_tokens=256, temperature=0.4)
-        n_calls += 1
-        if not result.get("ok"):
-            api_fail += 1
-            action = 0
-            parsed_ok = False
-            response_text = f"[API ERROR: {result.get('error', 'unknown')}]"
+        # Skip Gemini entirely while the player is asleep — the env forces a
+        # fixed NOOP-like behaviour (sleep auto-continues) and a model call is
+        # both wasted cost and misleading for the action log.
+        is_sleeping_now = bool(getattr(env_state, "is_sleeping", False))
+        if is_sleeping_now:
+            action = 0  # NOOP
+            parsed_ok = True
+            raw_match = "[SLEEPING → NOOP]"
+            response_text = "[sleeping — skipping Gemini]"
         else:
-            response_text = result["text"]
-            action, parsed_ok = parse_action(response_text)
-            if not parsed_ok:
-                parse_fail += 1
-            step_latencies.append(result.get("latency_s", 0.0))
+            prompt = build_prompt(filt)
+            result = call_gemini(prompt, api_key, model=model, use_thinking=False,
+                                 thinking_budget=1024,
+                                 max_output_tokens=2048, temperature=0.4)
+            n_calls += 1
+            if not result.get("ok"):
+                api_fail += 1
+                action = 0
+                parsed_ok = False
+                raw_match = "[API ERROR]"
+                response_text = f"[API ERROR: {result.get('error', 'unknown')}]"
+            else:
+                response_text = result["text"]
+                action, parsed_ok, raw_match = parse_action(response_text)
+                if not parsed_ok:
+                    parse_fail += 1
+                step_latencies.append(result.get("latency_s", 0.0))
 
         if record_video and cv2 is not None:
             action_name = ACTION_NAMES[action] if 0 <= action < ACTION_DIM else "?"
             frames.append(make_frame(env_state, step, action_name,
-                                      response_text, ep_return))
+                                      response_text, ep_return,
+                                      raw_match=raw_match))
 
         rng, step_key = jax.random.split(rng)
         next_obs, env_state, reward, done, info = env.step(
@@ -297,31 +291,53 @@ def run_episode(env, env_params, rng, api_key: str, *,
     }
 
 
-def save_video(frames: List[np.ndarray], path: Path) -> None:
-    if not frames or cv2 is None:
+def save_video(frames: List[np.ndarray], path: Path, fps: int = 15) -> None:
+    # Pipe raw RGB straight to ffmpeg → h264 + yuv420p + +faststart.
+    # The previous cv2-mp4v writer produced files without a leading moov atom;
+    # wandb's HTML5 player couldn't seek past the first buffered chunk, which
+    # showed up as videos silently cut off around 26s regardless of episode
+    # length. Writing h264 + faststart in one pass avoids that.
+    if not frames:
         return
+    import shutil, subprocess
+    if not shutil.which("ffmpeg"):
+        raise RuntimeError(
+            "ffmpeg not on PATH — required to write h264+faststart mp4 for wandb."
+        )
+
     max_h = max(f.shape[0] for f in frames)
     w = frames[0].shape[1]
-    fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-    writer = cv2.VideoWriter(str(path), fourcc, 15.0, (w, max_h))
-    for f in frames:
-        if f.shape[0] < max_h:
-            pad = np.zeros((max_h - f.shape[0], w, 3), dtype=np.uint8)
-            f = np.vstack([f, pad])
-        writer.write(cv2.cvtColor(f, cv2.COLOR_RGB2BGR))
-    writer.release()
-    import shutil, subprocess
-    if shutil.which("ffmpeg"):
-        h264 = path.with_suffix(".h264.mp4")
-        ret = subprocess.run(
-            ["ffmpeg", "-y", "-i", str(path),
-             "-c:v", "libx264", "-preset", "fast", "-crf", "23",
-             "-vf", "pad=ceil(iw/2)*2:ceil(ih/2)*2",
-             "-pix_fmt", "yuv420p", str(h264)],
-            capture_output=True, timeout=180,
-        )
-        if ret.returncode == 0 and h264.exists():
-            h264.rename(path)
+    out_w = w + (w & 1)
+    out_h = max_h + (max_h & 1)
+
+    proc = subprocess.Popen(
+        [
+            "ffmpeg", "-y", "-loglevel", "error",
+            "-f", "rawvideo", "-vcodec", "rawvideo",
+            "-pix_fmt", "rgb24",
+            "-s", f"{out_w}x{out_h}",
+            "-r", str(fps),
+            "-i", "-",
+            "-an",
+            "-c:v", "libx264", "-preset", "fast", "-crf", "23",
+            "-pix_fmt", "yuv420p",
+            "-movflags", "+faststart",
+            str(path),
+        ],
+        stdin=subprocess.PIPE,
+    )
+    try:
+        for f in frames:
+            if f.shape[0] != out_h or f.shape[1] != out_w:
+                padded = np.zeros((out_h, out_w, 3), dtype=np.uint8)
+                padded[:f.shape[0], :f.shape[1]] = f
+                f = padded
+            proc.stdin.write(np.ascontiguousarray(f, dtype=np.uint8).tobytes())
+    finally:
+        proc.stdin.close()
+    ret = proc.wait(timeout=300)
+    if ret != 0:
+        raise RuntimeError(f"ffmpeg exited with status {ret} writing {path}")
 
 
 def main():
@@ -352,21 +368,48 @@ def main():
 
     use_wandb = (not args.no_wandb) and wandb is not None
     if use_wandb:
-        wandb.init(
-            project="craftax-offline-awr",
-            entity="iris-sobolmark",
-            name=args.wandb_name or f"gemini-play-{time.strftime('%Y%m%d-%H%M%S')}",
-            config={
-                "eval_type": "gemini_plays_craftax",
-                "model": args.model,
-                "num_episodes": args.num_episodes,
-                "max_steps": args.max_steps,
-                "history_len": args.history_len,
-                "seed": args.seed,
-            },
-            settings=wandb.Settings(init_timeout=600, start_method="thread"),
-        )
-        print("wandb initialized")
+        # wandb's service-startup flake on some nodes can hang past the
+        # library's own init_timeout (we've seen 10+ min hangs where
+        # ServicePollForTokenError loops forever). Enforce a hard SIGALRM
+        # ceiling so the run always progresses.
+        import signal
+
+        def _wandb_timeout_handler(signum, frame):
+            raise TimeoutError("wandb.init exceeded hard timeout (SIGALRM)")
+
+        wandb_ok = False
+        for attempt in range(2):
+            try:
+                signal.signal(signal.SIGALRM, _wandb_timeout_handler)
+                signal.alarm(90)
+                wandb.init(
+                    project="craftax-llm-harnessed",
+                    entity="iris-sobolmark",
+                    name=args.wandb_name or f"gemini-play-{time.strftime('%Y%m%d-%H%M%S')}",
+                    config={
+                        "eval_type": "gemini_plays_craftax",
+                        "model": args.model,
+                        "num_episodes": args.num_episodes,
+                        "max_steps": args.max_steps,
+                        "history_len": args.history_len,
+                        "seed": args.seed,
+                    },
+                    settings=wandb.Settings(init_timeout=60),
+                )
+                signal.alarm(0)
+                print(f"wandb initialized (attempt {attempt + 1})")
+                wandb_ok = True
+                break
+            except Exception as e:
+                signal.alarm(0)
+                print(f"wandb init attempt {attempt + 1} failed ({type(e).__name__}: {e})")
+                try:
+                    wandb.finish(exit_code=1, quiet=True)
+                except Exception:
+                    pass
+        if not wandb_ok:
+            print("wandb init failed after retries; continuing without wandb")
+            use_wandb = False
 
     results = []
     t_start = time.time()

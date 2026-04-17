@@ -41,7 +41,7 @@ Use these game rules:
    - Negative Column = LEFT, Positive Column = RIGHT.
 2) Intrinsics: Health, Food, Drink, Energy, Mana. All out of 9.
    - Food/Drink/Energy naturally decay.
-   - If Food/Drink/Energy reaches 0, Health tends to decay.
+   - If Food/Drink/Energy reaches 0, Health will decay.
    - If Food/Drink/Energy are maintained, Health can recover.
 3) Floor progression uses ladders.
    - Descending requires reaching the ladder on the current floor.
@@ -53,25 +53,49 @@ Use these game rules:
    DRINK_POTION_*, READ_BOOK, ENCHANT_*, LEVEL_UP_*.
 
 Here is a good algorithm the player will play the game by:
-At every step, the player acts with the goal of staying alive and progressing down floors:
+At every step, the player should act with the goal of staying alive and progressing down floors.
+This means the player will choose the highest-priority active goal in this order:
 1. Survive
-2. Take the ladder if it is open
+2. Take the ladder if it is open and visible
 3. Upgrade equipment if survival is stable
-4. Explore to find resources, mobs, and the ladder
+4. Explore to find resources, troops, and the ladder
+1. Survive
+The player must track health, food, drink, and energy.  If food is <= 4, get food immediately by killing animals and eating them.  If drink is <= 4, get drink immediately from water tiles.  If energy is <= 4, make a safe enclosure and sleep.  If health is <= 4, restore food, drink, and energy before doing anything risky.  The player should never sleep in the open. Before sleeping, block enemies out, for example with stone walls. An easy way for the player to become safe is to mine a tunnel into a cluster of stone and place a stone behind blocking off the tunnel.
+2. Take the ladder if it is open and visible
+If the ladder is already open, the player should prioritize finding it and using it.  On the overworld, progression is just finding the ladder. Note that open and visible are not the same. A ladder opens so that a player who finds it can descend using it, but the player still needs to find the tile labelled as down_ladder. On later floors, the ladder opens only after 8 troops have been killed.  If the ladder is open, the player should stop focusing on upgrades unless the player is on the first floor, where most of the important early resources are found, such as wood, stone, and coal. Each time and only each time the player descends to a new floor, they will gain one player_xp, which can be used to upgrade one of three attributes:
+1. Strength: increases max health and physical melee damage
+2. Dexterity: increases max food, drink, and energy and slows their decrease
+2. Intelligence: increases max mana, mana regeneration, and spell damage
+3. Upgrade equipment
+The player should upgrade only when survival is stable and the ladder is not already the main priority.
+Upgrade order:
+Pickaxe: wood -> stone -> iron -> diamond
+Sword: wood -> stone -> iron -> diamond
+Armor: iron -> diamond
+Upgrade rules:
+If the player has no useful tools and less than 10 wood, gather wood first.
+If crafting is needed and there is no crafting table nearby, craft a crafting table.
+If the player has wood tools, mine 10 stone.
+If the player has stone but no stone tools, craft a stone pickaxe and stone sword.
+Mine coal whenever it is seen.
+Mine iron whenever it is seen if the player has an iron pickaxe.
+If the player has iron, coal, and wood, and is next to a furnace and crafting table, craft iron tools.
+If the player has extra iron, craft iron armor.
+If the player has diamonds and is next to a furnace and crafting table, craft diamond equipment.
+Diamond tools require diamond, coal, and wood.
+Diamond armor requires diamond and coal.
+4. Explore
+If the player is not in immediate danger, the ladder is not in sight, and no immediate upgrade is available, the player should explore.
+While exploring, the player should:
+- look for the ladder
+- kill troops if the ladder is still closed
+- gather useful nearby resources, especially wood, stone, coal, iron, and diamonds
 
-Your output must follow this format exactly:
+Predict at a high level what the next five steps for the player will look like, given that they are following the algorithm. Do not forecast beyond five time steps! In particular, the player can move at most five tiles during these five steps. Reason during your state understanding about the most immediate next step according to the algorithm and then predict the player's immediate behavior.
 
-Headline: <one-sentence summary of the next few moves>
+State Understanding: <A few sentences analyzing the current scene. Focus on careful spatial reasoning of the relevant tiles or tiles near the player. >
 
-Meaningful events (ordered):
-1. [t+1 to t+5] <what happens in the immediate next steps>
-2. [t+6 to t+11] <what happens next>
-3. [t+12 to t+15] <what happens after that>
-
-Trajectory summary:
-<2-3 sentences describing the overall shape of the next 15 steps>
-
-Do not output any text before `Headline:`.
+Prediction: <1 sentence description of the high-level behavior of the player in the next five steps. E.g. "move right to the cluster of trees", or "chase and kill the cow above", or "move down to look for water", or "move up and left to the visible open ladder". >
 
 Now, predict the future of the following state.
 
@@ -83,13 +107,43 @@ Current state:
 DEFAULT_ACTION_SELECT_PROMPT = """\
 You are playing Craftax. At every step, choose the single action that best follows this algorithm:
 
-1. Survive: if Health/Food/Drink/Energy are low, act to recover.
-   - Low food: eat cow/plant/fruit (DO on them), hunt nearby mobs.
-   - Low drink: drink water (DO on water/fountain).
-   - Low energy: SLEEP (protected by walls ideally), or REST in safe area.
-2. Take the ladder if it is open (DESCEND on an open down-ladder).
-3. Upgrade equipment if survival is stable (craft tools, make arrows, enchant).
-4. Explore: move to find resources, mobs, and the ladder.
+At every step, the player should act with the goal of staying alive and progressing down floors.
+This means the player will choose the highest-priority active goal in this order:
+1. Survive
+2. Take the ladder if it is open and visible
+3. Upgrade equipment if survival is stable
+4. Explore to find resources, troops, and the ladder
+1. Survive
+The player must track health, food, drink, and energy.  If food is <= 4, get food immediately by killing animals and eating them.  If drink is <= 4, get drink immediately from water tiles.  If energy is <= 4, make a safe enclosure and sleep.  If health is <= 4, restore food, drink, and energy before doing anything risky.  The player should never sleep in the open. Before sleeping, block enemies out, for example with stone walls. An easy way for the player to become safe is to mine a tunnel into a cluster of stone and place a stone behind blocking off the tunnel.
+2. Take the ladder if it is open and visible
+If the ladder is already open, the player should prioritize finding it and using it.  On the overworld, progression is just finding the ladder. Note that open and visible are not the same. A ladder opens so that a player who finds it can descend using it, but the player still needs to find the tile labelled as down_ladder. On later floors, the ladder opens only after 8 troops have been killed.  If the ladder is open, the player should stop focusing on upgrades unless the player is on the first floor, where most of the important early resources are found, such as wood, stone, and coal. Each time and only each time the player descends to a new floor, they will gain one player_xp, which can be used to upgrade one of three attributes:
+1. Strength: increases max health and physical melee damage
+2. Dexterity: increases max food, drink, and energy and slows their decrease
+2. Intelligence: increases max mana, mana regeneration, and spell damage
+3. Upgrade equipment
+The player should upgrade only when survival is stable and the ladder is not already the main priority.
+Upgrade order:
+Pickaxe: wood -> stone -> iron -> diamond
+Sword: wood -> stone -> iron -> diamond
+Armor: iron -> diamond
+Upgrade rules:
+If the player has no useful tools and less than 10 wood, gather wood first.
+If crafting is needed and there is no crafting table nearby, craft a crafting table.
+If the player has wood tools, mine 10 stone.
+If the player has stone but no stone tools, craft a stone pickaxe and stone sword.
+Mine coal whenever it is seen.
+Mine iron whenever it is seen if the player has an iron pickaxe.
+If the player has iron, coal, and wood, and is next to a furnace and crafting table, craft iron tools.
+If the player has extra iron, craft iron armor.
+If the player has diamonds and is next to a furnace and crafting table, craft diamond equipment.
+Diamond tools require diamond, coal, and wood.
+Diamond armor requires diamond and coal.
+4. Explore
+If the player is not in immediate danger, the ladder is not in sight, and no immediate upgrade is available, the player should explore.
+While exploring, the player should:
+- look for the ladder
+- kill troops if the ladder is still closed
+- gather useful nearby resources, especially wood, stone, coal, iron, and diamonds
 
 Coordinates: (Row, Column) relative to player at (0,0).
   Negative Row = UP, Positive Row = DOWN.
@@ -108,7 +162,7 @@ ENCHANT_ARMOUR, MAKE_TORCH, LEVEL_UP_DEXTERITY, LEVEL_UP_STRENGTH,
 LEVEL_UP_INTELLIGENCE, ENCHANT_BOW.
 
 Output format (strict):
-REASONING: <one-sentence rationale>
+REASONING: <couple sentences of rationale>
 ACTION: <single action name>
 
 Do not output anything else.

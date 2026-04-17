@@ -51,7 +51,7 @@ SOURCES = [
         "/data/group_data/rl/geney/oracle_pipeline/predict_only_final_gemini_emb",
     ),
 ]
-N_TRAJECTORIES = 10
+N_TRAJECTORIES = 15
 TRAJECTORY_LEN = 6
 BLOCK_SIZE = 16
 OUT_DIR = REPO_ROOT / "webapp" / "data"
@@ -76,7 +76,7 @@ def sample_windows(seed: int = 7):
         fs = sorted([f for f in os.listdir(d) if f.endswith(".npz")])
         source_files[label] = [(label, os.path.join(d, f)) for f in fs]
 
-    target = [("psf_golden", 5), ("psf_shards", 5)]     # order preserved in output
+    target = [("psf_golden", 10), ("psf_shards", 5)]    # order preserved in output
     assert sum(c for _, c in target) == N_TRAJECTORIES
 
     # Minimum gap between two picks from the same source_file, to avoid
