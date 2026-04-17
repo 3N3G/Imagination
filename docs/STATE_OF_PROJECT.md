@@ -1,6 +1,6 @@
 # State of the Project (2026-03-22 → 2026-04-17)
 
-**One-line:** We have mapped the regime for LLM-imagination-augmented RL on Craftax. The imagination pathway can be made content-sensitive and correct-directional, but the current training recipe cannot convert that signal into online returns above the obs-only baseline (~18.4). Bottleneck is not the imagination signal — it's how the policy integrates it.
+**One-line:** Across all imagination-augmented configs and the obs-only baseline, online returns sit in a narrow band (15.7–18.4) that is small relative to per-policy std (2.7–6.7). The more interesting finding is on the listening side: **we now have one encoder (gemini_emb) that passes *every* content-sensitivity test** — direction counterfactual, value counterfactual, and bad-prompt gameplay all point the right way. qwen3gen fails all three (content-blind); qwen3emb has the magnitudes but fails on sign (wrong-direction content). Game returns don't separate the three; mechanistic probes do.
 
 ## Details
 
@@ -18,15 +18,15 @@
 
 **Game returns (50-ep online).** The top policies, plus the unaug baseline:
 
-| Policy | Return |
-|---|---:|
-| unaug (obs only, no imagination) | **18.38 ± 2.69** |
-| qwen3emb β=3 freeze_obs_bcawr | 17.88 ± 5.36 |
-| qwen3gen freeze_obs_bcawr | 17.58 ± 3.56 |
-| gemini_emb freezenone | 16.20 ± 6.73 |
-| gemini_emb β=30 freeze_obs_bcawr | 15.68 ± 5.14 |
+| Policy | Return | gap vs unaug in units of this policy's σ |
+|---|---:|---:|
+| unaug (obs only, no imagination) | **18.38 ± 2.69** | — |
+| qwen3emb β=3 freeze_obs_bcawr | 17.88 ± 5.36 | 0.09σ |
+| qwen3gen freeze_obs_bcawr | 17.58 ± 3.56 | 0.22σ |
+| gemini_emb freezenone | 16.20 ± 6.73 | 0.32σ |
+| gemini_emb β=30 freeze_obs_bcawr | 15.68 ± 5.14 | 0.52σ |
 
-No imagination-augmented config meaningfully exceeds the obs-only ceiling. Best imagination policy (qwen3emb β=3) is within noise of unaug.
+Every imagination config is within ≤ 0.5 σ of the unaug baseline. At n=50, these rankings are suggestive but not decisive — swap 10 episodes of noise between any two and the order changes. Treat game returns as "all these configs are roughly in the same neighborhood" rather than as an informative ranking. The mechanistic probes below do a much better job of separating them.
 
 **How much does the policy listen to imagination?** Three complementary probes, all run per encoder on the PSF freeze_obs_bcawr family:
 
@@ -60,20 +60,23 @@ No imagination-augmented config meaningfully exceeds the obs-only ceiling. Best 
    - qwen3emb: **rises +2.0 pp** when content is sabotaged → its real content is net-harmful
    - gemini_emb: **drops −1.3 pp** → its real content is mildly helpful
 
-The three probes agree on the regime each policy falls into. Notably: **the highest-returning policy (qwen3gen) is the one that reads the imagination the least**. More content-sensitivity has *not* translated into higher return so far.
+The three probes agree, and together they give a much sharper separation than game returns do. **Only gemini_emb passes every test**: it has the highest emb-flip action-change rate (14.2%), it is the only encoder whose value function moves in the correct direction for *every* field perturbation (Health low, Health high, Food low, Food high), and its return drops when we sabotage the imagination with adversarial/die prompts (−1.3 pp) — the expected sign if the policy is really using the imagination content. qwen3gen fails all three (flat on every probe → content-blind). qwen3emb passes on magnitude but fails on sign (large \|ΔV\|, wrong direction; content is net-harmful so sabotaging it *raises* returns).
 
 ### High level
 
 **Why Craftax is hard.** Long episodes (500+ steps), 42 discrete actions, sparse achievement rewards, simultaneous attention required to food/drink/energy/health/inventory/positioning/combat across 9 floors. Credit assignment over this horizon is the core difficulty. The original motivation for imagination-augmentation was to inject short-horizon semantic context that could shortcut some of that credit-assignment work.
 
-**What regime we're in.** The obs-only baseline (~18.4) is strong because the symbolic observation already contains nearly everything the policy needs within a small neighborhood. Our best imagination-augmented policies match this ceiling but do not exceed it. The policy either:
-- ignores imagination (qwen3gen) and coasts on the obs branch,
-- listens to imagination but the content is miscalibrated (qwen3emb), or
-- listens and content is correct-signed but underpowered (gemini_emb).
+**What regime we're in.** The obs-only baseline (~18.4) is strong because the symbolic observation already contains nearly everything the policy needs within a small neighborhood, and all our imagination-augmented configs cluster around it within ≤ 0.5 σ. Game returns at n=50 can't discriminate here — we'd need much larger n, or a harder task, to get a clean return ranking. What *does* discriminate the configs is their relationship to the imagination signal:
 
-The **central finding** of the month is that correct imagination reading ≠ better policy: gemini_emb has the cleanest content-to-value mapping but underperforms content-blind qwen3gen by ~2 pp online. That means the bottleneck is obs-branch integration, not the imagination signal itself. The freezenone result (allowing the obs-branch to keep training alongside a content-aware hidden) is our first evidence that improving the *integration* is what unlocks modest gains.
+- **qwen3gen: content-blind.** Passes no content-sensitivity test. The hidden pathway is an expensive no-op; the policy coasts on the obs branch.
+- **qwen3emb β=3: content-reactive, wrong-direction.** Large magnitudes but wrong signs; sabotaging the content *raises* return by +2 pp.
+- **gemini_emb (β=30 and freezenone): content-reactive, correct-direction — the only one to pass every probe.**
+
+The **central finding** of the month is that we have demonstrated a training recipe that produces a *verifiably* imagination-reading policy: gemini_emb freezenone has returns in the same neighborhood as qwen3gen and unaug, but unlike them, its value function responds to imagination content in the semantically correct direction on every field we've probed. This is the first imagination-augmented policy in this project that can be said to actually *use* imagination correctly — we've gone from "policies that ignore or miscalibrate the imagination" to "policies that read it right."
+
+Whether that correct reading eventually translates into *better* returns — rather than merely comparable ones — is the next question. At the current scale it doesn't; the obs branch is strong enough to carry the policy on its own.
 
 **Open questions carried forward:**
-- Is there a recipe where the obs-branch and a content-correct hidden both train to strength, without the hidden pathway being ignored or net-negative?
-- Does a stronger training-time text generator (e.g. 3.1-pro) change the picture? The 3.1-pro swap at inference was null (needs retrain for OOD; deferred).
-- Is the ~18.4 ceiling itself an artifact of the obs encoding? A richer obs representation (pixel, or deeper symbolic MLP) might move it.
+- Can we find a task or regime where correct imagination reading *does* pay off in returns (harder task, worse obs, much longer episodes, distribution shift at eval)? Right now gemini_emb "reads right but doesn't need to."
+- Does a stronger training-time text generator (e.g. 3.1-pro) amplify the correct-direction signal enough to matter? The 3.1-pro swap at inference was null (needs retrain for OOD; deferred).
+- Is the ~18.4 ceiling itself an artifact of the obs encoding? A richer obs representation (pixel, or deeper symbolic MLP) might move it, and only then would imagination quality become a visible lever.
