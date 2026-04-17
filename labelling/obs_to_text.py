@@ -328,15 +328,31 @@ def obs_to_text(obs: np.ndarray) -> str:
     text += f"Iron:{inv['iron']}, Diamond:{inv['diamond']}, Sapphire:{inv['sapphire']}, "
     text += f"Ruby:{inv['ruby']}, Sapling:{inv['sapling']}, Torch:{inv['torches']}, "
     text += f"Arrow:{inv['arrows']}, Book:{inv['books']}, "
-    # Equipment levels (0=none, 1=wood, 2=stone, 3=iron, 4=diamond for pickaxe/sword;
-    # Bow: 0/1; armour slots are [body/head/legs/boots], each 0=none, 1=iron, 2=diamond;
-    # Enchantment levels: 0=none, 1=fire, 2=ice).
+    # Equipment named by tier rather than int level. Tool levels: pickaxe/sword
+    # 0..4 = none/wood/stone/iron/diamond; bow 0/1 = none/bow; armour slots
+    # (body/head/legs/boots) 0..2 = none/iron/diamond; enchantment levels
+    # 0..2 = none/fire/ice for sword + bow + each armour slot.
+    _TOOL_TIERS = ("none", "wood", "stone", "iron", "diamond")
+    _BOW_TIERS = ("none", "bow")
+    _ARMOUR_TIERS = ("none", "iron", "diamond")
+    _ENCHANT_TIERS = ("none", "fire", "ice")
+
+    def _name(tiers, lvl):
+        try:
+            return tiers[int(lvl)]
+        except (IndexError, ValueError, TypeError):
+            return f"lvl{lvl}"
+
     armour = decoded["armour"]
     armour_ench = decoded["armour_enchantments"]
     text += (
-        f"Pickaxe:{inv['pickaxe']}, Sword:{inv['sword']}, Bow:{inv['bow']}, "
-        f"SwordEnchantment:{inv['sword_enchantment']}, BowEnchantment:{inv['bow_enchantment']}, "
-        f"Armour:{armour}, ArmourEnchantments:{armour_ench}, "
+        f"Pickaxe:{_name(_TOOL_TIERS, inv['pickaxe'])}, "
+        f"Sword:{_name(_TOOL_TIERS, inv['sword'])}, "
+        f"Bow:{_name(_BOW_TIERS, inv['bow'])}, "
+        f"SwordEnchantment:{_name(_ENCHANT_TIERS, inv['sword_enchantment'])}, "
+        f"BowEnchantment:{_name(_ENCHANT_TIERS, inv['bow_enchantment'])}, "
+        f"Armour:[{','.join(_name(_ARMOUR_TIERS, a) for a in armour)}], "
+        f"ArmourEnchantments:[{','.join(_name(_ENCHANT_TIERS, a) for a in armour_ench)}], "
     )
     
     # Potions
