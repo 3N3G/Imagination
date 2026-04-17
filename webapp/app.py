@@ -214,7 +214,7 @@ col_img, col_meta = st.columns([1, 1])
 with col_img:
     st.image(str(DATA_DIR / current_step["image"]),
              caption=f"Step {step} local tile view",
-             use_container_width=True)
+             width="stretch")
 with col_meta:
     st.markdown(f"**Action taken:** `{current_step['action_name']}` "
                 f"(id={current_step['action']})")
@@ -233,7 +233,7 @@ for j, sc in enumerate(strip_cols):
     with sc:
         st.image(str(DATA_DIR / traj["steps"][j]["image"]),
                  caption=f"t+{j}: {traj['steps'][j]['action_name']}",
-                 use_container_width=True)
+                 width="stretch")
 
 st.divider()
 
@@ -294,7 +294,7 @@ with tab_future:
         with c_img:
             st.image(str(DATA_DIR / s["image"]),
                      caption=f"t+{j}: {s['action_name']} · r={s['reward']:.2f}",
-                     use_container_width=True)
+                     width="stretch")
         with c_txt:
             with st.expander(f"t+{j} filtered obs text"):
                 st.text(s["obs_text_filtered"])
