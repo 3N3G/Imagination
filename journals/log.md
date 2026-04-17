@@ -1,5 +1,13 @@
 # Experiment Log
 
+## 2026-04-17
+- **Content-sensitivity probes on the 3 PSF freeze_obs_bcawr policies** (adversarial prompts + multistep direction counterfactual) separate "ignores embedding" from "reads embedding" regimes.
+- **qwen3gen: ignores content.** adv/die prompts flat (17.42, 17.92 vs baseline 17.58); emb-flip action-change 1.7% across 4 intervention steps. Obs-only policy effectively.
+- **qwen3emb: reads content but content HURTS.** Adv/die prompts rise to 18.58 / 18.78 (+2pp vs baseline 16.60); emb-flip 11.6%. Kill the narrative → return goes UP.
+- **gemini_emb: reads content, mildly helpful.** Adv/die drops to 13.68 / 13.70 (−1.3pp vs baseline 14.96); emb-flip 14.2%. Highest content-sensitivity but lowest absolute return — obs-branch competence is the main gap.
+- Best online return (qwen3gen 17.58) comes from the MOST embedding-ignoring policy. "More content-sensitivity" ≠ better policy at these hyperparameters.
+- [Detail →](log_2026-04-17.md)
+
 ## 2026-04-16
 - **PSF-consistent freeze BC+AWR**: rerun Apr-12 Exp 1 (4 configs) + encoder sweep on freeze_obs_bcawr (qwen3gen, qwen3emb, gemini_emb) with PSF labels on training AND golden/BC data.
 - **Best PSF freeze result: psf_freeze_obs_bcawr (qwen3gen) = 17.58 ± 3.56**, +0.78 over Apr-12 oracle-labelled version (16.80). Still below unaug 18.38.
