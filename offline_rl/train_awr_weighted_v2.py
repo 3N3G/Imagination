@@ -1138,12 +1138,16 @@ def main():
     if not args.no_wandb:
         if wandb is None:
             raise ImportError("wandb not installed; pass --no-wandb or install it")
-        wandb.init(
-            project=Config.WANDB_PROJECT, entity=Config.WANDB_ENTITY,
-            name=wandb_name,
-            config=vars(args),
-            settings=wandb.Settings(init_timeout=300),
-        )
+        try:
+            wandb.init(
+                project=Config.WANDB_PROJECT, entity=Config.WANDB_ENTITY,
+                name=wandb_name,
+                config=vars(args),
+                settings=wandb.Settings(init_timeout=300),
+            )
+        except Exception as e:
+            print(f"WARNING: wandb.init failed ({type(e).__name__}: {e}); continuing without wandb.")
+            args.no_wandb = True
 
     print("=" * 70)
     print(f"Weighted BC+AWR v2 Training (width={args.layer_width})")

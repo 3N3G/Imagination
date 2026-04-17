@@ -1,5 +1,24 @@
 # Experiment Log
 
+## 2026-04-16
+- **PSF-consistent freeze BC+AWR**: rerun Apr-12 Exp 1 (4 configs) + encoder sweep on freeze_obs_bcawr (qwen3gen, qwen3emb, gemini_emb) with PSF labels on training AND golden/BC data.
+- **Best PSF freeze result: psf_freeze_obs_bcawr (qwen3gen) = 17.58 ± 3.56**, +0.78 over Apr-12 oracle-labelled version (16.80). Still below unaug 18.38.
+- **Pure-BC configs diverge**: obs_bc collapses harder (2.96 vs 5.54) — oracle-embedding shortcut gone; all_bc improves (12.74 vs 8.56) — less room to overfit oracle.
+- **Encoder ordering under BC+AWR**: qwen3gen (17.58) > qwen3emb (16.60) > gemini_emb (14.96), ~2.6pp spread. Reverses Apr-12 pure-AWR trend where gemini_emb was marginally best. qwen3emb had the largest real-vs-shuffled validation gap (+15.3pp) but did not translate to higher online return.
+- [Detail →](log_2026-04-16.md)
+
+## 2026-04-15
+- **freeze_obs_bcawr β sweep (β∈{1,3,10,30})**: all 4 configs within noise (16.1–16.6); held-out real−zero gap ~58pp (content-presence, not content). AWR β is not a useful lever for this config.
+- **Gemini-plays iterations**: 3.1-flash-lite-preview 2.60±1.66 (worse than 2.5-flash 4.06); 3.1-pro-preview + ladder-rules addendum ep1=+10.80 (running). Thinking slows calls ~10×.
+- **PPO-from-freeze_obs_bcawr** still at ~16.5 (step 5M/100M) — stable, not progressing.
+- [Detail →](log_2026-04-15.md)
+
+## 2026-04-14
+- Hidden-only baseline (no obs, pure AWR): 1.98 — catastrophic collapse; imagination embedding alone cannot drive the policy.
+- hist5 pipeline: embedding ignored (real≈zero≈shuffled), online ~18.7 — matches obs-only level.
+- Gemini-plays Craftax pilot: 2.5-flash direct actor = 4.06 ± 1.98 return.
+- [Detail →](log_2026-04-14.md)
+
 ## 2026-04-12
 - **Freeze BC experiment**: freeze_obs_bcawr (BC+AWR with obs_fc1 frozen) **= 16.80 ± 3.49**, matching AWR baseline (16.30). First BC+AWR that does not collapse (previously 7.46 unfrozen). freeze_all_bcawr (14.68) slightly worse; BC-only variants still toxic (5.54, 8.56). freeze_obs_bc shows 97.9% golden acc but 30.7% held-out — pure memorization.
 - **V2 arch comparison**: V2 AWR (16.72) matches LN AWR baseline; V2 BC+AWR (4.74) is WORSE than LN (7.46). V2_bc golden acc=91.25% (memorization) while held-out acc=41.18%.

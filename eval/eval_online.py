@@ -465,28 +465,32 @@ def run_eval(args):
     # --- Init wandb ---
     use_wandb = not args.no_wandb and wandb is not None
     if use_wandb:
-        wandb.init(
-            project="craftax-offline-awr",
-            entity="iris-sobolmark",
-            name=args.wandb_name or f"eval-imagination-{time.strftime('%Y%m%d-%H%M%S')}",
-            config={
-                "eval_type": "online_imagination",
-                "num_episodes": args.num_episodes,
-                "checkpoint": str(ckpt_path),
-                "seed": args.seed,
-                "step_cadence": STEP_CADENCE,
-                "embed_model": EMBED_MODEL,
-                "embed_layer": EMBED_LAYER,
-                "embed_dim": EMBED_HIDDEN_DIM,
-                "gemini_model": _gemini_model,
-                "gemini_temperature": GEMINI_TEMPERATURE,
-                "predict_template": PREDICT_TEMPLATE_PATH.name,
-                "num_fewshot_examples": len(FEW_SHOT_EXAMPLES),
-                "embedding_mode": _embedding_mode,
-            },
-            settings=wandb.Settings(init_timeout=600, start_method="thread"),
-        )
-        print("wandb initialized")
+        try:
+            wandb.init(
+                project="craftax-offline-awr",
+                entity="iris-sobolmark",
+                name=args.wandb_name or f"eval-imagination-{time.strftime('%Y%m%d-%H%M%S')}",
+                config={
+                    "eval_type": "online_imagination",
+                    "num_episodes": args.num_episodes,
+                    "checkpoint": str(ckpt_path),
+                    "seed": args.seed,
+                    "step_cadence": STEP_CADENCE,
+                    "embed_model": EMBED_MODEL,
+                    "embed_layer": EMBED_LAYER,
+                    "embed_dim": EMBED_HIDDEN_DIM,
+                    "gemini_model": _gemini_model,
+                    "gemini_temperature": GEMINI_TEMPERATURE,
+                    "predict_template": PREDICT_TEMPLATE_PATH.name,
+                    "num_fewshot_examples": len(FEW_SHOT_EXAMPLES),
+                    "embedding_mode": _embedding_mode,
+                },
+                settings=wandb.Settings(init_timeout=600),
+            )
+            print("wandb initialized")
+        except Exception as e:
+            print(f"WARNING: wandb.init failed ({type(e).__name__}: {e}); continuing without wandb.")
+            use_wandb = False
     elif wandb is None:
         print("WARNING: wandb not installed, logging to files only")
 
