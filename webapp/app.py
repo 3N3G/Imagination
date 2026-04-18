@@ -1,10 +1,9 @@
 """Prompt-iteration webapp for Craftax imagination + action selection.
 
-Run locally:
-    cd webapp/
-    pip install -r requirements.txt
+Run locally (from repo root):
+    pip install -r webapp/requirements.txt
     export GEMINI_API_KEY=...
-    streamlit run app.py
+    streamlit run webapp/app.py
 
 Data + images are committed to webapp/data/ — no cluster access needed.
 """
@@ -12,6 +11,7 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 import time
 from pathlib import Path
 from urllib import request as urlrequest, error as urlerror
@@ -19,8 +19,13 @@ from urllib import request as urlrequest, error as urlerror
 import streamlit as st
 
 ROOT = Path(__file__).resolve().parent
+REPO_ROOT = ROOT.parent
+sys.path.insert(0, str(REPO_ROOT))           # so `from llm.gameplay import ...` works
 DATA_DIR = ROOT / "data"
 IMG_DIR = DATA_DIR / "images"
+
+# Source of truth for both prompts (and the algorithm they share).
+from llm.gameplay import FUTURE_PREDICT_PROMPT, ACTION_SELECT_PROMPT
 
 MODELS = [
     "gemini-2.5-flash",
@@ -28,155 +33,25 @@ MODELS = [
     "gemini-3-flash-preview",
     "gemini-3.1-flash-lite-preview",
 ]
+# Models that require thinking mode (cannot set thinkingBudget=0). For these
+# we leave thinking on by default and increase max_output_tokens, since
+# thinking tokens count toward the output budget and were causing mid-sentence
+# truncation at 2048.
+THINKING_REQUIRED = {"gemini-3.1-pro-preview"}
 
-DEFAULT_FUTURE_PREDICT_PROMPT = """\
-You are forecasting a plausible future for a Craftax state.
-
-Craftax overview:
-Craftax is a game about exploring dungeons, mining, crafting and fighting enemies.
-
-Use these game rules:
-1) Coordinates are (Row, Column), centered on the player at (0,0).
-   - Negative Row = UP, Positive Row = DOWN.
-   - Negative Column = LEFT, Positive Column = RIGHT.
-2) Intrinsics: Health, Food, Drink, Energy, Mana. All out of 9.
-   - Food/Drink/Energy naturally decay.
-   - If Food/Drink/Energy reaches 0, Health will decay.
-   - If Food/Drink/Energy are maintained, Health can recover.
-3) Floor progression uses ladders.
-   - Descending requires reaching the ladder on the current floor.
-   - On non-overworld floors, the ladder is generally closed until enough mobs are killed.
-4) Actions: NOOP, LEFT, RIGHT, UP, DOWN, DO (interact/attack/mine/drink/eat),
-   SLEEP, PLACE_STONE, PLACE_TABLE, PLACE_FURNACE, PLACE_PLANT,
-   MAKE_{WOOD,STONE,IRON,DIAMOND}_{PICKAXE,SWORD}, REST, DESCEND, ASCEND,
-   MAKE_ARROW, SHOOT_ARROW, CAST_FIREBALL, CAST_ICEBALL, PLACE_TORCH,
-   DRINK_POTION_*, READ_BOOK, ENCHANT_*, LEVEL_UP_*.
-
-Here is a good algorithm the player will play the game by:
-At every step, the player should act with the goal of staying alive and progressing down floors.
-This means the player will choose the highest-priority active goal in this order:
-1. Survive
-2. Take the ladder if it is open and visible
-3. Upgrade equipment if survival is stable
-4. Explore to find resources, troops, and the ladder
-1. Survive
-The player must track health, food, drink, and energy.  If food is <= 4, get food immediately by killing animals and eating them.  If drink is <= 4, get drink immediately from water tiles.  If energy is <= 4, make a safe enclosure and sleep.  If health is <= 4, restore food, drink, and energy before doing anything risky.  The player should never sleep in the open. Before sleeping, block enemies out, for example with stone walls. An easy way for the player to become safe is to mine a tunnel into a cluster of stone and place a stone behind blocking off the tunnel.
-2. Take the ladder if it is open and visible
-If the ladder is already open, the player should prioritize finding it and using it.  On the overworld, progression is just finding the ladder. Note that open and visible are not the same. A ladder opens so that a player who finds it can descend using it, but the player still needs to find the tile labelled as down_ladder. On later floors, the ladder opens only after 8 troops have been killed.  If the ladder is open, the player should stop focusing on upgrades unless the player is on the first floor, where most of the important early resources are found, such as wood, stone, and coal. Each time and only each time the player descends to a new floor, they will gain one player_xp, which can be used to upgrade one of three attributes:
-1. Strength: increases max health and physical melee damage
-2. Dexterity: increases max food, drink, and energy and slows their decrease
-2. Intelligence: increases max mana, mana regeneration, and spell damage
-3. Upgrade equipment
-The player should upgrade only when survival is stable and the ladder is not already the main priority.
-Upgrade order:
-Pickaxe: wood -> stone -> iron -> diamond
-Sword: wood -> stone -> iron -> diamond
-Armor: iron -> diamond
-Upgrade rules:
-If the player has no useful tools and less than 10 wood, gather wood first.
-If crafting is needed and there is no crafting table nearby, craft a crafting table.
-If the player has wood tools, mine 10 stone.
-If the player has stone but no stone tools, craft a stone pickaxe and stone sword.
-Mine coal whenever it is seen.
-Mine iron whenever it is seen if the player has an iron pickaxe.
-If the player has iron, coal, and wood, and is next to a furnace and crafting table, craft iron tools.
-If the player has extra iron, craft iron armor.
-If the player has diamonds and is next to a furnace and crafting table, craft diamond equipment.
-Diamond tools require diamond, coal, and wood.
-Diamond armor requires diamond and coal.
-4. Explore
-If the player is not in immediate danger, the ladder is not in sight, and no immediate upgrade is available, the player should explore.
-While exploring, the player should:
-- look for the ladder
-- kill troops if the ladder is still closed
-- gather useful nearby resources, especially wood, stone, coal, iron, and diamonds
-
-Predict at a high level what the next five steps for the player will look like, given that they are following the algorithm. Do not forecast beyond five time steps! In particular, the player can move at most five tiles during these five steps. Reason during your state understanding about the most immediate next step according to the algorithm and then predict the player's immediate behavior.
-
-State Understanding: <A few sentences analyzing the current scene. Focus on careful spatial reasoning of the relevant tiles or tiles near the player. >
-
-Prediction: <1 sentence description of the high-level behavior of the player in the next five steps. E.g. "move right to the cluster of trees", or "chase and kill the cow above", or "move down to look for water", or "move up and left to the visible open ladder".  Do not reference specific coordinates. >
-
-Now, predict the future of the following state.
-
-Current state:
-{current_state_filtered}
-"""
-
-
-DEFAULT_ACTION_SELECT_PROMPT = """\
-You are playing Craftax. At every step, choose the single action that best follows this algorithm:
-
-At every step, the player should act with the goal of staying alive and progressing down floors.
-This means the player will choose the highest-priority active goal in this order:
-1. Survive
-2. Take the ladder if it is open and visible
-3. Upgrade equipment if survival is stable
-4. Explore to find resources, troops, and the ladder
-1. Survive
-The player must track health, food, drink, and energy.  If food is <= 4, get food immediately by killing animals and eating them.  If drink is <= 4, get drink immediately from water tiles.  If energy is <= 4, make a safe enclosure and sleep.  If health is <= 4, restore food, drink, and energy before doing anything risky.  The player should never sleep in the open. Before sleeping, block enemies out, for example with stone walls. An easy way for the player to become safe is to mine a tunnel into a cluster of stone and place a stone behind blocking off the tunnel.
-2. Take the ladder if it is open and visible
-If the ladder is already open, the player should prioritize finding it and using it.  On the overworld, progression is just finding the ladder. Note that open and visible are not the same. A ladder opens so that a player who finds it can descend using it, but the player still needs to find the tile labelled as down_ladder. On later floors, the ladder opens only after 8 troops have been killed.  If the ladder is open, the player should stop focusing on upgrades unless the player is on the first floor, where most of the important early resources are found, such as wood, stone, and coal. Each time and only each time the player descends to a new floor, they will gain one player_xp, which can be used to upgrade one of three attributes:
-1. Strength: increases max health and physical melee damage
-2. Dexterity: increases max food, drink, and energy and slows their decrease
-2. Intelligence: increases max mana, mana regeneration, and spell damage
-3. Upgrade equipment
-The player should upgrade only when survival is stable and the ladder is not already the main priority.
-Upgrade order:
-Pickaxe: wood -> stone -> iron -> diamond
-Sword: wood -> stone -> iron -> diamond
-Armor: iron -> diamond
-Upgrade rules:
-If the player has no useful tools and less than 10 wood, gather wood first.
-If crafting is needed and there is no crafting table nearby, craft a crafting table.
-If the player has wood tools, mine 10 stone.
-If the player has stone but no stone tools, craft a stone pickaxe and stone sword.
-Mine coal whenever it is seen.
-Mine iron whenever it is seen if the player has an iron pickaxe.
-If the player has iron, coal, and wood, and is next to a furnace and crafting table, craft iron tools.
-If the player has extra iron, craft iron armor.
-If the player has diamonds and is next to a furnace and crafting table, craft diamond equipment.
-Diamond tools require diamond, coal, and wood.
-Diamond armor requires diamond and coal.
-4. Explore
-If the player is not in immediate danger, the ladder is not in sight, and no immediate upgrade is available, the player should explore.
-While exploring, the player should:
-- look for the ladder
-- kill troops if the ladder is still closed
-- gather useful nearby resources, especially wood, stone, coal, iron, and diamonds
-
-Coordinates: (Row, Column) relative to player at (0,0).
-  Negative Row = UP, Positive Row = DOWN.
-  Negative Column = LEFT, Positive Column = RIGHT.
-
-Available actions (only use these exact names):
-NOOP, LEFT, RIGHT, UP, DOWN, DO, SLEEP, PLACE_STONE, PLACE_TABLE,
-PLACE_FURNACE, PLACE_PLANT, MAKE_WOOD_PICKAXE, MAKE_STONE_PICKAXE,
-MAKE_IRON_PICKAXE, MAKE_WOOD_SWORD, MAKE_STONE_SWORD, MAKE_IRON_SWORD,
-REST, DESCEND, ASCEND, MAKE_DIAMOND_PICKAXE, MAKE_DIAMOND_SWORD,
-MAKE_IRON_ARMOUR, MAKE_DIAMOND_ARMOUR, SHOOT_ARROW, MAKE_ARROW,
-CAST_FIREBALL, CAST_ICEBALL, PLACE_TORCH, DRINK_POTION_RED,
-DRINK_POTION_GREEN, DRINK_POTION_BLUE, DRINK_POTION_PINK,
-DRINK_POTION_CYAN, DRINK_POTION_YELLOW, READ_BOOK, ENCHANT_SWORD,
-ENCHANT_ARMOUR, MAKE_TORCH, LEVEL_UP_DEXTERITY, LEVEL_UP_STRENGTH,
-LEVEL_UP_INTELLIGENCE, ENCHANT_BOW.
-
-Output format (strict):
-REASONING: <couple sentences of rationale>
-ACTION: <single action name>
-
-Do not output anything else.
-
-Current state:
-{current_state_filtered}
-"""
+# Defaults for the editable prompt textareas (single source of truth in
+# llm/gameplay.py — bring the algorithm changes there and webapp picks them up).
+DEFAULT_FUTURE_PREDICT_PROMPT = FUTURE_PREDICT_PROMPT
+DEFAULT_ACTION_SELECT_PROMPT = ACTION_SELECT_PROMPT
 
 
 # ---------------------------------------------------------------------------
-# Gemini HTTP call
+# Gemini HTTP call (with MAX_TOKENS auto-retry for thinking-mode models like
+# 3.1-pro, where thinking tokens silently consume the output budget and cause
+# mid-sentence truncation at 2048).
 # ---------------------------------------------------------------------------
-def call_gemini(prompt: str, model: str, api_key: str,
-                temperature: float = 0.2, max_output_tokens: int = 2048):
+def _single_call(prompt: str, model: str, api_key: str,
+                 temperature: float, max_output_tokens: int):
     url = (f"https://generativelanguage.googleapis.com/v1beta/models/"
            f"{model}:generateContent?key={api_key}")
     gen_config = {"maxOutputTokens": max_output_tokens, "temperature": temperature}
@@ -195,27 +70,77 @@ def call_gemini(prompt: str, model: str, api_key: str,
                              headers={"Content-Type": "application/json"},
                              method="POST")
     try:
-        with urlrequest.urlopen(req, timeout=90.0) as resp:
+        with urlrequest.urlopen(req, timeout=120.0) as resp:
             raw = resp.read().decode("utf-8")
     except urlerror.HTTPError as e:
         err = e.read().decode("utf-8", errors="replace")[:500]
         return {"text": "", "error": f"HTTP {e.code}: {err}",
-                "latency_s": time.perf_counter() - t0}
+                "latency_s": time.perf_counter() - t0,
+                "finish_reason": "ERROR",
+                "max_output_tokens": max_output_tokens}
 
     parsed = json.loads(raw)
     cands = parsed.get("candidates", [])
     text = ""
+    finish = "UNKNOWN"
     if cands:
         parts = cands[0].get("content", {}).get("parts", [])
         text = "".join(p.get("text", "") for p in parts if isinstance(p, dict))
+        finish = cands[0].get("finishReason", "UNKNOWN")
     usage = parsed.get("usageMetadata", {})
     return {
         "text": text,
         "prompt_tokens": usage.get("promptTokenCount", 0),
         "completion_tokens": usage.get("candidatesTokenCount", 0),
+        "thoughts_tokens": usage.get("thoughtsTokenCount", 0),
         "latency_s": time.perf_counter() - t0,
         "error": None,
+        "finish_reason": finish,
+        "max_output_tokens": max_output_tokens,
     }
+
+
+# Cap on the auto-retry budget so a runaway thinking model can't burn cost.
+MAX_TOKENS_AUTO_CAP = 16384
+
+
+def call_gemini(prompt: str, model: str, api_key: str,
+                temperature: float = 0.2, max_output_tokens: int = 2048):
+    """Single Gemini call with up to two auto-retries on MAX_TOKENS finish.
+
+    For thinking-required models (3.1-pro), thinking tokens count toward
+    `maxOutputTokens`. If the response is cut mid-sentence with
+    `finishReason: MAX_TOKENS`, we retry with the budget doubled (and again
+    if needed), up to MAX_TOKENS_AUTO_CAP. The final `max_output_tokens`
+    actually used is reported in the result so the UI can show it.
+    """
+    # Bump starting budget for thinking-required models so the first try
+    # already has room.
+    budget = max_output_tokens
+    if model in THINKING_REQUIRED:
+        budget = max(budget, 4096)
+
+    attempts = []
+    for _ in range(3):
+        result = _single_call(prompt, model, api_key, temperature, budget)
+        attempts.append({
+            "max_output_tokens": budget,
+            "finish_reason": result.get("finish_reason"),
+            "completion_tokens": result.get("completion_tokens", 0),
+            "thoughts_tokens": result.get("thoughts_tokens", 0),
+        })
+        if result.get("error"):
+            result["attempts"] = attempts
+            return result
+        if result.get("finish_reason") != "MAX_TOKENS":
+            result["attempts"] = attempts
+            return result
+        if budget >= MAX_TOKENS_AUTO_CAP:
+            break
+        budget = min(budget * 2, MAX_TOKENS_AUTO_CAP)
+
+    result["attempts"] = attempts
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -252,7 +177,14 @@ api_key = st.sidebar.text_input(
 )
 
 temperature = st.sidebar.slider("Gemini temperature", 0.0, 1.0, 0.2, 0.05)
-max_tokens = st.sidebar.number_input("Max output tokens", 256, 8192, 2048, 256)
+max_tokens = st.sidebar.number_input(
+    "Max output tokens (initial)", 256, MAX_TOKENS_AUTO_CAP, 4096, 256,
+    help=(
+        "Starting budget per call. If a thinking-required model "
+        "(e.g. 3.1-pro) returns finish=MAX_TOKENS, the call is auto-retried "
+        f"with the budget doubled, up to {MAX_TOKENS_AUTO_CAP} tokens."
+    ),
+)
 model_choices = st.sidebar.multiselect(
     "Models to run", MODELS, default=["gemini-2.5-flash", "gemini-3.1-pro-preview"]
 )
@@ -336,9 +268,24 @@ with tab_future:
                     if res.get("error"):
                         st.error(res["error"])
                     else:
+                        finish = res.get("finish_reason", "?")
+                        thoughts = res.get("thoughts_tokens", 0) or 0
+                        budget = res.get("max_output_tokens", "?")
+                        cap = " (hit auto-retry cap)" if (
+                            finish == "MAX_TOKENS" and budget == MAX_TOKENS_AUTO_CAP
+                        ) else ""
+                        if finish == "MAX_TOKENS":
+                            st.warning(
+                                f"finish=MAX_TOKENS at budget={budget}{cap} — output may be truncated. "
+                                f"Try larger 'Max output tokens' in the sidebar."
+                            )
+                        elif finish != "STOP":
+                            st.caption(f"finish={finish}")
                         st.caption(
                             f"{res['latency_s']:.1f}s · "
                             f"{res['prompt_tokens']}→{res['completion_tokens']} tok"
+                            + (f" · thoughts={thoughts}" if thoughts else "")
+                            + f" · budget={budget}"
                         )
                     st.text_area("Response", res["text"], height=400, key=f"fut_{mdl}")
 
@@ -393,9 +340,23 @@ with tab_action:
                     if res.get("error"):
                         st.error(res["error"])
                     else:
+                        finish = res.get("finish_reason", "?")
+                        thoughts = res.get("thoughts_tokens", 0) or 0
+                        budget = res.get("max_output_tokens", "?")
+                        cap = " (hit auto-retry cap)" if (
+                            finish == "MAX_TOKENS" and budget == MAX_TOKENS_AUTO_CAP
+                        ) else ""
+                        if finish == "MAX_TOKENS":
+                            st.warning(
+                                f"finish=MAX_TOKENS at budget={budget}{cap} — output may be truncated."
+                            )
+                        elif finish != "STOP":
+                            st.caption(f"finish={finish}")
                         st.caption(
                             f"{res['latency_s']:.1f}s · "
                             f"{res['prompt_tokens']}→{res['completion_tokens']} tok"
+                            + (f" · thoughts={thoughts}" if thoughts else "")
+                            + f" · budget={budget}"
                         )
                         # Extract predicted action name
                         text = res["text"]

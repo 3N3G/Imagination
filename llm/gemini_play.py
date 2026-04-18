@@ -55,71 +55,9 @@ _ALIASES = {
 }
 
 
-SYSTEM_PROMPT = """You are playing Craftax. At every step, choose the single action that best follows this algorithm:
-
-At every step, the player should act with the goal of staying alive and progressing down floors.
-This means the player will choose the highest-priority active goal in this order:
-1. Survive
-2. Take the ladder if it is open and visible
-3. Upgrade equipment if survival is stable
-4. Explore to find resources, troops, and the ladder
-1. Survive
-The player must track health, food, drink, and energy.  If food is <= 4, get food immediately by killing animals and eating them.  If drink is <= 4, get drink immediately from water tiles.  If energy is <= 4, make a safe enclosure and sleep.  If health is <= 4, restore food, drink, and energy before doing anything risky.  The player should never sleep in the open. Before sleeping, block enemies out, for example with stone walls. An easy way for the player to become safe is to mine a tunnel into a cluster of stone and place a stone behind blocking off the tunnel.
-2. Take the ladder if it is open and visible
-If the ladder is already open, the player should prioritize finding it and using it.  On the overworld, progression is just finding the ladder. Note that open and visible are not the same. A ladder opens so that a player who finds it can descend using it, but the player still needs to find the tile labelled as down_ladder. On later floors, the ladder opens only after 8 troops have been killed.  If the ladder is open, the player should stop focusing on upgrades unless the player is on the first floor, where most of the important early resources are found, such as wood, stone, and coal. Each time and only each time the player descends to a new floor, they will gain one player_xp, which can be used to upgrade one of three attributes:
-1. Strength: increases max health and physical melee damage
-2. Dexterity: increases max food, drink, and energy and slows their decrease
-2. Intelligence: increases max mana, mana regeneration, and spell damage
-3. Upgrade equipment
-The player should upgrade only when survival is stable and the ladder is not already the main priority.
-Upgrade order:
-Pickaxe: wood -> stone -> iron -> diamond
-Sword: wood -> stone -> iron -> diamond
-Armor: iron -> diamond
-Upgrade rules:
-If the player has no useful tools and less than 10 wood, gather wood first.
-If crafting is needed and there is no crafting table nearby, craft a crafting table.
-If the player has wood tools, mine 10 stone.
-If the player has stone but no stone tools, craft a stone pickaxe and stone sword.
-Mine coal whenever it is seen.
-Mine iron whenever it is seen if the player has an iron pickaxe.
-If the player has iron, coal, and wood, and is next to a furnace and crafting table, craft iron tools.
-If the player has extra iron, craft iron armor.
-If the player has diamonds and is next to a furnace and crafting table, craft diamond equipment.
-Diamond tools require diamond, coal, and wood.
-Diamond armor requires diamond and coal.
-4. Explore
-If the player is not in immediate danger, the ladder is not in sight, and no immediate upgrade is available, the player should explore.
-While exploring, the player should:
-- look for the ladder
-- kill troops if the ladder is still closed
-- gather useful nearby resources, especially wood, stone, coal, iron, and diamonds
-
-Coordinates: (Row, Column) relative to player at (0,0).
-  Negative Row = UP, Positive Row = DOWN.
-  Negative Column = LEFT, Positive Column = RIGHT.
-
-Available actions (only use these exact names):
-NOOP, LEFT, RIGHT, UP, DOWN, DO, SLEEP, PLACE_STONE, PLACE_TABLE,
-PLACE_FURNACE, PLACE_PLANT, MAKE_WOOD_PICKAXE, MAKE_STONE_PICKAXE,
-MAKE_IRON_PICKAXE, MAKE_WOOD_SWORD, MAKE_STONE_SWORD, MAKE_IRON_SWORD,
-REST, DESCEND, ASCEND, MAKE_DIAMOND_PICKAXE, MAKE_DIAMOND_SWORD,
-MAKE_IRON_ARMOUR, MAKE_DIAMOND_ARMOUR, SHOOT_ARROW, MAKE_ARROW,
-CAST_FIREBALL, CAST_ICEBALL, PLACE_TORCH, DRINK_POTION_RED,
-DRINK_POTION_GREEN, DRINK_POTION_BLUE, DRINK_POTION_PINK,
-DRINK_POTION_CYAN, DRINK_POTION_YELLOW, READ_BOOK, ENCHANT_SWORD,
-ENCHANT_ARMOUR, MAKE_TORCH, LEVEL_UP_DEXTERITY, LEVEL_UP_STRENGTH,
-LEVEL_UP_INTELLIGENCE, ENCHANT_BOW.
-
-Output format (strict):
-REASONING: <couple sentences of rationale>
-ACTION: <single action name>
-
-Do not output anything else.
-
-Current state:
-{current_state_filtered}
-"""
+# Single source of truth for the action-selection prompt — see llm/gameplay.py
+# (also used by the prompt-iteration webapp).
+from llm.gameplay import ACTION_SELECT_PROMPT as SYSTEM_PROMPT
 
 
 def summarize_state(filt: str) -> str:
