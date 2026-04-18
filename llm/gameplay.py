@@ -46,6 +46,7 @@ Upgrade order:
 Pickaxe: wood -> stone -> iron -> diamond. Each one takes one wood and one of that element.
 Sword: wood -> stone -> iron -> diamond. Each one takes one wood and one of that element.
 Armor: iron -> diamond. Each one takes 3 of that element.
+Note that the player does not have to strictly follow the order, e.g. if the player can craft an iron sword without a stone sword they should do so, crafting the best item they can.
 Upgrade rules:
 If the player has no useful tools and less than 10 wood, gather up to 10 wood first.
 If crafting is needed and there is no crafting table nearby, craft a crafting table.

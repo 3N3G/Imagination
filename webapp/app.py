@@ -24,7 +24,9 @@ sys.path.insert(0, str(REPO_ROOT))           # so `from llm.gameplay import ...`
 DATA_DIR = ROOT / "data"
 IMG_DIR = DATA_DIR / "images"
 
-# Source of truth for both prompts (and the algorithm they share).
+# Source of truth for both prompts (and the algorithm they share). Edit
+# llm/gameplay.py to change the algorithm — every consumer (this webapp,
+# llm/gemini_play.py, the labelling/eval .txt templates) reads from there.
 from llm.gameplay import FUTURE_PREDICT_PROMPT, ACTION_SELECT_PROMPT
 
 MODELS = [
@@ -38,12 +40,6 @@ MODELS = [
 # thinking tokens count toward the output budget and were causing mid-sentence
 # truncation at 2048.
 THINKING_REQUIRED = {"gemini-3.1-pro-preview"}
-
-# Defaults for the editable prompt textareas (single source of truth in
-# llm/gameplay.py — bring the algorithm changes there and webapp picks them up).
-DEFAULT_FUTURE_PREDICT_PROMPT = FUTURE_PREDICT_PROMPT
-DEFAULT_ACTION_SELECT_PROMPT = ACTION_SELECT_PROMPT
-
 
 # ---------------------------------------------------------------------------
 # Gemini HTTP call (with MAX_TOKENS auto-retry for thinking-mode models like
@@ -239,7 +235,7 @@ with tab_future:
     )
     prompt_future = st.text_area(
         "Prompt (use `{current_state_filtered}` placeholder):",
-        value=DEFAULT_FUTURE_PREDICT_PROMPT,
+        value=FUTURE_PREDICT_PROMPT,
         height=320,
         key="prompt_future",
     )
@@ -311,7 +307,7 @@ with tab_action:
     )
     prompt_action = st.text_area(
         "Prompt (use `{current_state_filtered}` placeholder):",
-        value=DEFAULT_ACTION_SELECT_PROMPT,
+        value=ACTION_SELECT_PROMPT,
         height=320,
         key="prompt_action",
     )

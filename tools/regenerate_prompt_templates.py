@@ -22,6 +22,7 @@ from llm.gameplay import FUTURE_PREDICT_PROMPT
 TARGETS = [
     Path.home() / "Craftax_Baselines" / "configs" / "future_imagination"
     / "templates" / "predict_state_only_prompt_concise.txt",
+    REPO_ROOT / "configs" / "training" / "templates" / "predict_state_only_prompt_concise.txt",
 ]
 
 
