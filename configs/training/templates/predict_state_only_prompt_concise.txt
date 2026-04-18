@@ -38,25 +38,28 @@ If the ladder is open and on screen, the player should prioritize using it unles
 2. Intelligence: increases max mana, mana regeneration, and spell damage
 
 3. Upgrade equipment
-The player should upgrade only when survival is stable. If the player has the material to craft something better than they have, they should.
-Upgrade order:
-Pickaxe: wood -> stone -> iron -> diamond. Each one takes one wood and one of that element.
-Sword: wood -> stone -> iron -> diamond. Each one takes one wood and one of that element.
-Armor: iron -> diamond. Each one takes 3 of that element.
-Note that the player does not have to strictly follow the order, e.g. if the player can craft an iron sword without a stone sword they should do so, crafting the best item they can.
-Upgrade rules:
-If the player has no useful tools and less than 10 wood, gather up to 10 wood first.
-If crafting is needed and there is no crafting table nearby, craft a crafting table.
-If the player has wood tools but no stone tools and less than 10 stone, mine 10 stone.
-If the player has stone but no stone tools, craft a stone pickaxe and stone sword.
-Mine coal whenever it is seen.
-Mine iron whenever it is seen if the player has a stone pickaxe.
-If the player has iron, coal, and wood, and is next to a furnace and crafting table, craft iron tools. If the player has enough materials, the player should craft a furnace (1 stone) and an adjacent crafting table (3 wood) and then craft iron tools (1 stone, 1 iron).
-If the player has extra iron, craft iron armor.
-If the player has diamonds and is next to a furnace and crafting table, craft diamond equipment.
-Diamond tools require diamond, coal, and wood.
-Diamond armor requires diamond and coal.
-If the player has extra resources they should also craft arrows (2 arrows for 1 wood 1 stone) or torches (4 torches for 1 wood 1 coal).
+The player should upgrade only when survival is stable. The player must always craft the highest-tier item they have the materials for but are missing, skipping lower tiers entirely. Always evaluate the Upgrade Decision Tree below from top to bottom (Highest Tier -> Lowest Tier).
+
+Crafting Costs & Requirements:
+- Pickaxe/Sword: 1 Wood + 1 [Wood/Stone/Iron/Diamond].
+- Armor: 3 [Iron/Diamond].
+- Stations: Crafting Table (3 Wood), Furnace (1 Stone). Iron and Diamond tier items require being adjacent to both a Furnace and Crafting Table.
+- Misc: Arrows (1 Wood + 1 Stone = 2), Torches (1 Wood + 1 Coal = 4).
+
+Upgrade Decision Tree (Evaluate in order 1 -> 4):
+1. Diamond Tier: If the player has Diamonds, Coal, and Wood: craft Diamond equipment.
+2. Iron Tier: If the player has at least 1 Iron, 1 Coal, and 1 Wood:
+- If a furnace and a table are adjacent: craft immediately.
+- If no Furnace/Table placed: place a Crafting Table (3 Wood) and Furnace (1 Stone), THEN craft Iron Sword and/or Pickaxe. This takes priority over Stone Tier even if stations aren't yet placed.
+3. Stone Tier: If the player lacks Iron/Diamond but has Stone and Wood: craft a Stone Pickaxe and Stone Sword.
+4. Wood/Base Tier: If the player lacks Stone but has Wood: craft Wood tools.
+
+Resource Gathering & Maintenance Rules:
+- Target of Opportunity: Mine Coal whenever seen. Mine Iron whenever seen (requires Stone Pickaxe).
+- Deficit Gathering:
+  - If the player has no useful tools and <10 Wood: gather up to 10 Wood.
+  - If the player has only Wood tools and <10 Stone: mine 10 Stone.
+- Surplus: If the player has extra resources after securing tools/armor, craft arrows or torches.
 
 4. Explore
 If the player is not in immediate danger, the ladder is not in sight, and no immediate upgrade is available, the player should explore.
