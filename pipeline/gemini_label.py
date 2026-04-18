@@ -147,14 +147,21 @@ def call_gemini(
     max_retries: int = 4,
     timeout_s: float = 120.0,
     use_thinking: bool = True,
+    thinking_budget: int = None,
 ) -> Dict[str, Any]:
-    """Single synchronous Gemini API call with exponential backoff."""
+    """Single synchronous Gemini API call with exponential backoff.
+
+    thinking_budget overrides use_thinking when not None:
+      - 0 disables thinking, N>0 caps thinking tokens at N, -1 is dynamic.
+    """
     url = f"{base_url}/{model}:generateContent?key={api_key}"
     gen_config: Dict[str, Any] = {
         "maxOutputTokens": max_output_tokens,
         "temperature": temperature,
     }
-    if use_thinking:
+    if thinking_budget is not None:
+        gen_config["thinkingConfig"] = {"thinkingBudget": int(thinking_budget)}
+    elif use_thinking:
         gen_config["thinkingConfig"] = {"thinkingBudget": 0}
     payload = {
         "contents": [{"parts": [{"text": prompt}]}],
@@ -310,6 +317,7 @@ def _worker(
     predict_only: bool = False,
     use_thinking: bool = True,
     history_steps: int = 0,
+    thinking_budget: Optional[int] = None,
 ) -> Dict:
     """Build prompt and call Gemini for one sample (runs in thread pool)."""
     pr = build_prompt(obs, action, reward, done_f32, call_info, template,
@@ -320,7 +328,8 @@ def _worker(
 
     limiter.wait()
     result = call_gemini(pr["prompt"], api_key, model=gemini_model,
-                         use_thinking=use_thinking)
+                         use_thinking=use_thinking,
+                         thinking_budget=thinking_budget)
 
     record = {
         "sample_idx": int(call_info["sample_idx"]),
@@ -347,6 +356,7 @@ def process_file(
     predict_only: bool = False,
     use_thinking: bool = True,
     history_steps: int = 0,
+    thinking_budget: Optional[int] = None,
 ) -> Dict:
     """Process all Gemini calls for one filtered trajectory file (concurrent)."""
     _output_dir = output_dir or GEMINI_OUTPUT_DIR
@@ -399,6 +409,7 @@ def process_file(
                 predict_only=predict_only,
                 use_thinking=use_thinking,
                 history_steps=history_steps,
+                thinking_budget=thinking_budget,
             ): ci
             for ci in pending
         }
@@ -439,12 +450,22 @@ def run(
     template_path: Optional[str] = None,
     predict_only: bool = False,
     history_steps: int = 0,
+    thinking_budget: Optional[int] = None,
 ):
-    """Main Gemini labelling entry point."""
+    """Main Gemini labelling entry point.
+
+    `thinking_budget`:
+      None → use the historical default (budget=0 if model is 2.5-flash, else
+             let the model use its own default — which for 3.x-flash and 3.x-pro
+             is thinking ON, dramatically increasing cost and latency).
+      0    → thinking disabled (recommended for high-volume labelling).
+      N>0  → cap at N thinking tokens. -1 → dynamic.
+    """
     _filtered_dir = Path(filtered_dir) if filtered_dir else FILTERED_DIR
     _output_dir = Path(output_dir) if output_dir else GEMINI_OUTPUT_DIR
     _gemini_model = gemini_model or GEMINI_MODEL
     _use_thinking = _gemini_model.startswith("gemini-2.5")
+    _thinking_budget = thinking_budget
 
     if template_path:
         _template_path = Path(template_path)
@@ -499,7 +520,7 @@ def run(
     print(f"  Template: {_template_path.name}")
     print(f"  Mode: {mode_str}")
     print(f"  History steps: {history_steps}")
-    print(f"  Use thinking: {_use_thinking}")
+    print(f"  Use thinking: {_use_thinking}  thinking_budget: {_thinking_budget}")
     print(f"  Rate limit: {GEMINI_REQUESTS_PER_MINUTE} req/min")
     est_input_tokens = 2300 + history_steps * 540
     est_cost = total_calls * (est_input_tokens * 0.15e-6 + 212 * 0.60e-6)
@@ -520,6 +541,7 @@ def run(
             predict_only=predict_only or history_steps > 0,
             use_thinking=_use_thinking,
             history_steps=history_steps,
+            thinking_budget=_thinking_budget,
         )
         total_processed += result["processed"]
         total_errors += result["errors"]
@@ -551,6 +573,9 @@ def main():
                         help="Override output directory (default: config GEMINI_OUTPUT_DIR)")
     parser.add_argument("--gemini-model", type=str, default=None,
                         help="Override Gemini model (default: config GEMINI_MODEL)")
+    parser.add_argument("--thinking-budget", type=int, default=None,
+                        help="Override thinking budget (0=off, N>0=cap, -1=dynamic). "
+                             "Default: 0 for 2.5-flash; model-default otherwise.")
     parser.add_argument("--template-path", type=str, default=None,
                         help="Override prompt template path")
     parser.add_argument("--predict-only", action="store_true",
@@ -572,7 +597,8 @@ def main():
         gemini_model=args.gemini_model,
         template_path=args.template_path,
         predict_only=args.predict_only,
-        history_steps=args.history_steps)
+        history_steps=args.history_steps,
+        thinking_budget=args.thinking_budget)
 
 
 if __name__ == "__main__":
