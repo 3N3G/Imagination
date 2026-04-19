@@ -138,6 +138,7 @@ def run_episode(env, env_params, rng, api_key: str, *,
     ep_return = 0.0
     history: List[dict] = []
     traj = []
+    prompts_log: List[dict] = []  # full {step, prompt, response} per Gemini call
     frames = []
     parse_fail = 0
     api_fail = 0
@@ -178,6 +179,11 @@ def run_episode(env, env_params, rng, api_key: str, *,
                 if not parsed_ok:
                     parse_fail += 1
                 step_latencies.append(result.get("latency_s", 0.0))
+            prompts_log.append({
+                "step": step,
+                "prompt": prompt,
+                "response": response_text,
+            })
 
         if record_video and cv2 is not None:
             action_name = ACTION_NAMES[action] if 0 <= action < ACTION_DIM else "?"
@@ -225,6 +231,7 @@ def run_episode(env, env_params, rng, api_key: str, *,
         "api_fail": api_fail,
         "mean_latency": float(np.mean(step_latencies)) if step_latencies else 0.0,
         "traj": traj,
+        "prompts_log": prompts_log,
         "frames": frames,
     }
 
@@ -376,7 +383,13 @@ def main():
             save_video(r["frames"], video_path)
             print(f"  Video saved: {video_path}")
 
-        r_small = {k: v for k, v in r.items() if k != "frames"}
+        prompts_log = r.get("prompts_log") or []
+        if prompts_log:
+            with open(ep_dir / "prompts.jsonl", "w") as f:
+                for entry in prompts_log:
+                    f.write(json.dumps(entry) + "\n")
+
+        r_small = {k: v for k, v in r.items() if k not in ("frames", "prompts_log")}
         with open(ep_dir / "summary.json", "w") as f:
             json.dump(r_small, f, indent=2)
 
@@ -397,6 +410,7 @@ def main():
                     print(f"  wandb video upload failed: {e}")
             wandb.log(log, step=ep + 1)
         r.pop("frames", None)
+        r.pop("prompts_log", None)
         results.append(r)
 
     returns = np.array([r["return"] for r in results], dtype=np.float32)
