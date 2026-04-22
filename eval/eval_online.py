@@ -59,6 +59,7 @@ from pipeline.config import (
     GEMINI_MODEL,
     GEMINI_TEMPERATURE,
 )
+from pipeline.embed import extract_prediction_suffix
 
 # --- Constants ---
 CKPT_DIR = Path("/data/group_data/rl/geney/checkpoints/awr_imagination")
@@ -66,7 +67,7 @@ PREDICT_TEMPLATE_PATH = (
     Path.home()
     / "Craftax_Baselines/configs/future_imagination/templates/predict_state_only_prompt_concise.txt"
 )
-STEP_CADENCE = 15
+STEP_CADENCE = 5  # matches prompt's 5-step forecast horizon
 ACTION_DIM = 43
 OBS_DIM = 8268
 DEFAULT_LAYER_WIDTH = 512
@@ -137,16 +138,27 @@ The player prioritizes crafting a stone sword on the first floor, gathering wood
 # Gemini API
 # ======================================================================
 def call_gemini(prompt: str, api_key: str, model: str = GEMINI_MODEL,
-                use_thinking: bool = True) -> dict:
-    """Call Gemini and return text + token counts."""
+                use_thinking: bool = True,
+                thinking_budget: int = None,
+                max_output_tokens: int = None) -> dict:
+    """Call Gemini and return text + token counts.
+
+    thinking_budget overrides use_thinking when not None (same semantics as
+    pipeline.gemini_label.call_gemini): 0 disables thinking, N>0 caps, -1
+    dynamic. max_output_tokens overrides the default when set (thinking models
+    need a larger budget since thoughts count against output).
+    """
     from urllib import request as urlrequest, error as urlerror
 
     url = f"{GEMINI_BASE_URL}/{model}:generateContent?key={api_key}"
+    _max_out = max_output_tokens if max_output_tokens is not None else GEMINI_MAX_OUTPUT_TOKENS
     gen_config = {
-        "maxOutputTokens": GEMINI_MAX_OUTPUT_TOKENS,
+        "maxOutputTokens": _max_out,
         "temperature": GEMINI_TEMPERATURE,
     }
-    if use_thinking:
+    if thinking_budget is not None:
+        gen_config["thinkingConfig"] = {"thinkingBudget": int(thinking_budget)}
+    elif use_thinking:
         gen_config["thinkingConfig"] = {"thinkingBudget": 0}
     payload = {
         "contents": [{"parts": [{"text": prompt}]}],
@@ -388,20 +400,19 @@ def run_eval(args):
         raise ValueError("Set GEMINI_API_KEY env var or pass --gemini-api-key")
 
     _gemini_model = args.gemini_model or GEMINI_MODEL
-    _use_thinking = _gemini_model.startswith("gemini-2.5")
+    _use_thinking = (
+        _gemini_model.startswith("gemini-2.5")
+        or _gemini_model.startswith("gemini-3")
+    )
     _embedding_mode = args.embedding_mode
     _needs_gemini = _embedding_mode in ("gemini", "adversarial", "die")
     _needs_api_key = _needs_gemini
 
-    # Load prompt template and inject real few-shot examples
-    raw_template = PREDICT_TEMPLATE_PATH.read_text()
-    # Replace the generic examples in the template with real oracle outputs
-    # Find the section between "Here are two good examples" and "Now, predict"
-    # and replace with our few-shot examples
-    # Template already contains the real oracle few-shot examples (updated in-place).
-    # No runtime replacement needed — just use it directly.
+    # Load prompt template (override via --prompt-template-path if given).
+    template_path = Path(args.prompt_template_path) if args.prompt_template_path else PREDICT_TEMPLATE_PATH
+    raw_template = template_path.read_text()
     template = raw_template
-    print(f"Prompt template: {PREDICT_TEMPLATE_PATH.name} (with {len(FEW_SHOT_EXAMPLES)} real few-shot examples)")
+    print(f"Prompt template: {template_path.name} (with {len(FEW_SHOT_EXAMPLES)} real few-shot examples)")
 
     # Load policy
     layer_width = args.layer_width
@@ -581,17 +592,27 @@ def run_eval(args):
                         elif _embedding_mode == "die":
                             prompt += DIE_PROMPT_SUFFIX
 
+                        _tb = getattr(args, "gemini_thinking_budget", None)
+                        _mo = 1024 if (_tb is not None and _tb > 0) else None
                         gemini_result = call_gemini(prompt, api_key,
                                                     model=_gemini_model,
-                                                    use_thinking=_use_thinking)
+                                                    use_thinking=_use_thinking,
+                                                    thinking_budget=_tb,
+                                                    max_output_tokens=_mo)
                         current_gemini_text = gemini_result["text"]
                         total_gemini_calls += 1
                         cost = (gemini_result["prompt_tokens"] * 0.15e-6
                                 + gemini_result["completion_tokens"] * 0.60e-6)
                         total_gemini_cost += cost
 
+                        # Optionally slice to the Prediction: suffix before embedding.
+                        text_for_embed = current_gemini_text
+                        if getattr(args, "extract_prediction_only", False):
+                            suffix, _status = extract_prediction_suffix(current_gemini_text)
+                            text_for_embed = suffix
+
                         # Embed Gemini text
-                        current_hidden = embedder.embed(current_gemini_text)
+                        current_hidden = embedder.embed(text_for_embed)
                         hidden_norm = float(np.linalg.norm(current_hidden))
 
                         ep_gemini_log.append({
@@ -920,6 +941,15 @@ def main():
                     help="Which model embeds the Gemini text (default: qwen3_gen)")
     p.add_argument("--hidden-dim", type=int, default=0,
                     help="Override embedding hidden dim (0 = use EMBED_HIDDEN_DIM=4096)")
+    p.add_argument("--extract-prediction-only", action="store_true",
+                    help="At eval time, embed only the Prediction: suffix of Gemini output "
+                         "(matches predonly-trained policies).")
+    p.add_argument("--prompt-template-path", type=str, default=None,
+                    help="Override the Gemini prompt template (default: built-in concise).")
+    p.add_argument("--gemini-thinking-budget", type=int, default=None,
+                    help="If set, override Gemini thinking budget at inference (0=off, "
+                         "N>0=cap, -1=dynamic). Required for policies trained with a "
+                         "thinking prompt.")
     args = p.parse_args()
     run_eval(args)
 

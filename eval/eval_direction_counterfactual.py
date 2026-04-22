@@ -50,18 +50,28 @@ from eval.eval_online import (
     call_gemini,
     make_embedder,
 )
+from pipeline.embed import extract_prediction_suffix
 
 def call_gemini_retry(prompt: str, api_key: str, model: str, use_thinking: bool,
-                      max_attempts: int = 4) -> dict:
-    """Gemini occasionally returns an empty completion — retry until we get text."""
+                      max_attempts: int = 6) -> dict:
+    """Gemini occasionally returns an empty completion or HTTP 5xx — retry with backoff."""
     import time as _t
+    from urllib.error import HTTPError, URLError
     last = None
+    last_exc = None
     for attempt in range(max_attempts):
-        last = call_gemini(prompt, api_key, model=model, use_thinking=use_thinking)
-        if last.get("text", "").strip():
-            return last
+        try:
+            last = call_gemini(prompt, api_key, model=model, use_thinking=use_thinking)
+            if last.get("text", "").strip():
+                return last
+            last_exc = None
+        except (HTTPError, URLError, TimeoutError) as exc:
+            last_exc = exc
+            print(f"  call_gemini attempt {attempt+1}/{max_attempts} failed: {exc}")
         if attempt < max_attempts - 1:
-            _t.sleep(1 + attempt)
+            _t.sleep(2 ** attempt)  # 1, 2, 4, 8, 16, 32s
+    if last_exc is not None:
+        raise last_exc
     raise RuntimeError(f"Gemini returned empty text after {max_attempts} attempts")
 
 MOVE_ACTIONS = [1, 2, 3, 4]  # LEFT, RIGHT, UP, DOWN
@@ -106,7 +116,16 @@ def main():
     ap.add_argument("--gemini-model", default=None)
     ap.add_argument("--dropout", type=float, default=0.0)
     ap.add_argument("--device", default="cuda")
+    ap.add_argument("--extract-prediction-only", action="store_true",
+                    help="Embed only the Prediction: suffix of Gemini output "
+                         "(matches predonly-trained policies).")
     args = ap.parse_args()
+
+    def _maybe_slice(text: str) -> str:
+        if getattr(args, "extract_prediction_only", False):
+            suffix, _ = extract_prediction_suffix(text)
+            return suffix
+        return text
 
     out_dir = Path(args.output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -172,9 +191,9 @@ def main():
         narr_orig = g_orig["text"]
         narr_flipped = g_flipped["text"]
 
-        # Embed both
-        hid_orig_raw = embedder.embed(narr_orig)
-        hid_flipped_raw = embedder.embed(narr_flipped)
+        # Embed both (slice to Prediction: suffix if requested)
+        hid_orig_raw = embedder.embed(_maybe_slice(narr_orig))
+        hid_flipped_raw = embedder.embed(_maybe_slice(narr_flipped))
         hid_orig = (hid_orig_raw - hidden_mean) / hidden_std
         hid_flipped = (hid_flipped_raw - hidden_mean) / hidden_std
 

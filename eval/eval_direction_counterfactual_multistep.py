@@ -54,6 +54,7 @@ from eval.eval_direction_counterfactual import (
     MOVE_ACTIONS,
     MOVE_NAMES,
 )
+from pipeline.embed import extract_prediction_suffix
 
 
 def main():
@@ -75,7 +76,16 @@ def main():
     ap.add_argument("--gemini-model", default=None)
     ap.add_argument("--dropout", type=float, default=0.0)
     ap.add_argument("--device", default="cuda")
+    ap.add_argument("--extract-prediction-only", action="store_true",
+                    help="Embed only the Prediction: suffix of Gemini output "
+                         "(matches predonly-trained policies).")
     args = ap.parse_args()
+
+    def _maybe_slice(text: str) -> str:
+        if getattr(args, "extract_prediction_only", False):
+            suffix, _ = extract_prediction_suffix(text)
+            return suffix
+        return text
 
     intervention_steps = sorted(int(x) for x in args.intervention_steps.split(","))
     intervention_set = set(intervention_steps)
@@ -147,7 +157,7 @@ def main():
                 prompt_orig = template.replace("{current_state_filtered}", filter_text_obs(text_orig))
                 g_orig = call_gemini_retry(prompt_orig, api_key, model=gemini_model, use_thinking=use_thinking)
                 current_narrative_orig = g_orig["text"]
-                current_hidden_raw = embedder.embed(current_narrative_orig)
+                current_hidden_raw = embedder.embed(_maybe_slice(current_narrative_orig))
 
             hidden_orig_normed = (current_hidden_raw - hidden_mean) / hidden_std
             obs_t = torch.tensor(obs_np, dtype=torch.float32, device=args.device).unsqueeze(0)
@@ -159,7 +169,7 @@ def main():
                 prompt_flipped = template.replace("{current_state_filtered}", filter_text_obs(text_flipped))
                 g_flipped = call_gemini_retry(prompt_flipped, api_key, model=gemini_model, use_thinking=use_thinking)
                 narr_flipped = g_flipped["text"]
-                hid_flipped_raw = embedder.embed(narr_flipped)
+                hid_flipped_raw = embedder.embed(_maybe_slice(narr_flipped))
                 hid_flipped_normed = (hid_flipped_raw - hidden_mean) / hidden_std
 
                 flip_t = torch.tensor(flipped_np, dtype=torch.float32, device=args.device).unsqueeze(0)

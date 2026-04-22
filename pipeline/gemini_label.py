@@ -189,6 +189,7 @@ def call_gemini(
                 "text": text,
                 "prompt_tokens": usage.get("promptTokenCount"),
                 "completion_tokens": usage.get("candidatesTokenCount"),
+                "thoughts_tokens": usage.get("thoughtsTokenCount"),
                 "attempt": attempt,
                 "latency_s": time.perf_counter() - t0,
             }
@@ -222,6 +223,7 @@ def build_prompt(
     template: str,
     predict_only: bool = False,
     history_steps: int = 0,
+    future_offset: int = 0,
 ) -> Dict:
     """Build a Gemini prompt for one call.
 
@@ -231,10 +233,14 @@ def build_prompt(
         call_info: dict with sample_idx, future_end_idx, n_future_steps, episode_start
         template: oracle prompt template string
         history_steps: number of prior timesteps to include as history (0 = none)
+        future_offset: if > 0 and template contains {future_state_filtered},
+            substitute obs at (idx + min(future_offset, n_future_steps)).
+            Used by the grounded-as-if-predicting prompt.
     """
     idx = call_info["sample_idx"]
     end_idx = call_info["future_end_idx"]
     ep_start = call_info.get("episode_start", 0)
+    n_future = int(call_info.get("n_future_steps", 0))
 
     try:
         # Current state (t+0) — use filtered text (not compact) for concise prompt
@@ -242,6 +248,17 @@ def build_prompt(
         filtered = filter_text_obs(raw)
 
         prompt = template.replace("{current_state_filtered}", filtered)
+
+        # Grounded prompt: substitute {future_state_filtered} with obs at +future_offset
+        # steps in the same episode (capped at n_future_steps).
+        if future_offset > 0 and "{future_state_filtered}" in prompt:
+            if n_future > 0:
+                off = min(future_offset, n_future)
+                future_idx = idx + off
+                future_filtered = filter_text_obs(obs_to_text(obs[future_idx]))
+            else:
+                future_filtered = "(episode ended -- no future state available)"
+            prompt = prompt.replace("{future_state_filtered}", future_filtered)
 
         # History block (t-N through t-1)
         if history_steps > 0 and "{history_block}" in template:
@@ -318,10 +335,12 @@ def _worker(
     use_thinking: bool = True,
     history_steps: int = 0,
     thinking_budget: Optional[int] = None,
+    future_offset: int = 0,
 ) -> Dict:
     """Build prompt and call Gemini for one sample (runs in thread pool)."""
     pr = build_prompt(obs, action, reward, done_f32, call_info, template,
-                      predict_only=predict_only, history_steps=history_steps)
+                      predict_only=predict_only, history_steps=history_steps,
+                      future_offset=future_offset)
     if "error" in pr:
         return {"sample_idx": int(call_info["sample_idx"]),
                 "ok": False, "error": f"prompt_build: {pr['error']}"}
@@ -357,6 +376,7 @@ def process_file(
     use_thinking: bool = True,
     history_steps: int = 0,
     thinking_budget: Optional[int] = None,
+    future_offset: int = 0,
 ) -> Dict:
     """Process all Gemini calls for one filtered trajectory file (concurrent)."""
     _output_dir = output_dir or GEMINI_OUTPUT_DIR
@@ -410,6 +430,7 @@ def process_file(
                 use_thinking=use_thinking,
                 history_steps=history_steps,
                 thinking_budget=thinking_budget,
+                future_offset=future_offset,
             ): ci
             for ci in pending
         }
@@ -451,6 +472,7 @@ def run(
     predict_only: bool = False,
     history_steps: int = 0,
     thinking_budget: Optional[int] = None,
+    future_offset: int = 0,
 ):
     """Main Gemini labelling entry point.
 
@@ -542,6 +564,7 @@ def run(
             use_thinking=_use_thinking,
             history_steps=history_steps,
             thinking_budget=_thinking_budget,
+            future_offset=future_offset,
         )
         total_processed += result["processed"]
         total_errors += result["errors"]
@@ -582,6 +605,10 @@ def main():
                         help="Predict-state-only mode (no future block)")
     parser.add_argument("--history-steps", type=int, default=0,
                         help="Number of prior timesteps to include as history context (0=none)")
+    parser.add_argument("--future-offset", type=int, default=0,
+                        help="If >0 and template contains {future_state_filtered}, "
+                             "substitute obs at t+future_offset (capped at episode end). "
+                             "Used by the grounded-as-if-predicting prompt.")
     args = parser.parse_args()
 
     api_key = args.api_key or os.getenv("GEMINI_API_KEY", "")
@@ -598,7 +625,8 @@ def main():
         template_path=args.template_path,
         predict_only=args.predict_only,
         history_steps=args.history_steps,
-        thinking_budget=args.thinking_budget)
+        thinking_budget=args.thinking_budget,
+        future_offset=args.future_offset)
 
 
 if __name__ == "__main__":

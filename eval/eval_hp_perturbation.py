@@ -58,6 +58,7 @@ from eval.eval_online import (
     OBS_DIM,
     PREDICT_TEMPLATE_PATH,
 )
+from pipeline.embed import extract_prediction_suffix
 
 
 # ---------------------------------------------------------------------------
@@ -108,7 +109,16 @@ def main():
     p.add_argument("--arch-hidden-only", action="store_true")
     p.add_argument("--no-layernorm", action="store_true")
     p.add_argument("--dropout", type=float, default=0.0)
+    p.add_argument("--extract-prediction-only", action="store_true",
+                   help="Embed only the Prediction: suffix of Gemini output "
+                        "(matches predonly-trained policies).")
     args = p.parse_args()
+
+    def _maybe_slice(text: str) -> str:
+        if getattr(args, "extract_prediction_only", False):
+            suffix, _ = extract_prediction_suffix(text)
+            return suffix
+        return text
 
     device = args.device
     api_key = os.environ.get("GEMINI_API_KEY", "")
@@ -204,7 +214,7 @@ def main():
                                       use_thinking=use_thinking)
                     total_gemini_calls += 1
                     current_text = gem["text"]
-                    current_hidden = embedder.embed(current_text)
+                    current_hidden = embedder.embed(_maybe_slice(current_text))
                     real_latency = time.perf_counter() - t0
 
                     # Probe run at every `probe_every` Gemini call.
@@ -224,7 +234,7 @@ def main():
                                     use_thinking=use_thinking)
                                 total_gemini_calls += 1
                                 pert_text = gem_p["text"]
-                                pert_hidden = embedder.embed(pert_text)
+                                pert_hidden = embedder.embed(_maybe_slice(pert_text))
 
                                 v_p, probs_p, arg_p = forward(obs_np, pert_hidden)
 
