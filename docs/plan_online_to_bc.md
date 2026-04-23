@@ -1,177 +1,213 @@
-# Plan — strong online base → BC/AWR on Gemini-conditioned dataset
+# Plan — online base → BC/AWR on Gemini-conditioned dataset
 
 **Motivation.** The current stack trains an augmented policy from a small
-PSF (predict-state-filtered) dataset via offline BC/AWR with Gemini-conditioned
-hidden inputs. Observed ceiling at top-2M is ~18 return (A_full) to ~15
-(C_grounded). Meanwhile a plain PPO-RNN at 1e8 steps reaches 27.87 raw
-return and 1B-scale PPO-GTrXL hits 18.3% of max (~41 return). The
-augmentation work has been mechanistic — content-reading probes improve
-with fidelity, but absolute performance doesn't.
+PSF dataset via offline BC/AWR with Gemini-conditioned hidden inputs.
+Observed ceiling at top-2M is ~18 return (A_full) to ~15 (C_grounded).
+Every augmented policy we have is **stateless per-step** — a feedforward
+MLP on `(current_obs, current_gemini_hidden) → action`, no trailing
+trajectory. Meanwhile every Craftax scoreboard entry worth comparing
+against — PPO-RNN, PPO-GTrXL, and the better model-based methods —
+carries a recurrent/transformer state across steps. Efficient MBRL
+(arXiv:2502.01591) and Simulus (arXiv:2502.11537) are included as
+**inspiration** for what Craftax-competitive architectures look like;
+they are not candidate base models here.
 
-The hypothesis is that the BC/AWR optimization + small dataset caps what
-the model can learn, and that a policy initialized from strong online RL
-and then *fine-tuned* on Gemini-conditioned data can (a) inherit the
-online-RL performance floor and (b) still pick up Gemini-content-following
-from the fine-tune step.
+The hypothesis is that the BC/AWR optimization + small dataset + stateless
+architecture jointly cap what the model can learn, and that a policy
+initialized from a same-scale online RL run (which has matching
+recurrence) and then fine-tuned on Gemini-conditioned data can (a) match
+the online base on raw return and (b) still pick up Gemini-content-
+following from the fine-tune step.
 
 ## Research question
 
-**Q.** If we start from a strong non-augmented policy (online RL) and
-fine-tune on the Gemini-conditioned dataset, can we get a policy that is
-both (a) competitive with the online base on raw return and (b)
-responsive to Gemini content in the same way our BC/AWR policies are?
+**Q.** If we start from a non-augmented policy trained online at a
+data/compute scale matched to our BC/AWR top-2M set, and fine-tune on
+the Gemini-conditioned dataset, can we get a policy that is both (a)
+at parity with its online base on raw return and (b) responsive to
+Gemini content in the same way our BC/AWR policies are?
 
 Anchor axes: **performance**, **steerability**, **robustness**,
-**generalization**. (See `feedback_research_goals_anchor.md`.)
+**generalization**. (`feedback_research_goals_anchor.md`.)
+
+## Baselines — picking a *comparable-scale* online base
+
+1e8-step PPO-RNN (27.87 return) is **not** a fair base: it consumed 100×
+the interactions we gave BC/AWR. A fair base should be matched to the
+~2M offline transitions our augmented policies see.
+
+Options, in rough priority order:
+
+1. **PPO-RNN at 2-5M env steps** — the "small-data" PPO-RNN, which based
+   on the training curves should sit close to our augmented policies'
+   return (the user's recall: PPO-RNN at 1M env steps was "terrible").
+   Cheap to produce (~15 min on L40S). Gives an RNN-carrying base with
+   return near our own. **This is the right pilot baseline.**
+2. **PPO-MLP stateless** at matched steps — feedforward PPO trained on
+   the same 2-5M env steps, no recurrence. Matches our architecture
+   exactly. Use this as a *second* base to isolate what the RNN state
+   buys vs what the online interaction buys.
+3. **PPO-RNN at scale** (1e8 at 27.87, or smaller e.g. 1e7 at some
+   intermediate return). Kept as an upper reference but not the pilot
+   base; the goal isn't to match scoreboard, it's to measure the
+   online→BC transfer delta.
+4. **PPO-GTrXL** — only if PPO-RNN pilot shows the online init pays off
+   and we want to push the base higher. Not part of the pilot.
+
+Note on statefulness: every scoreboard number we've cited (PPO-RNN,
+GTrXL, MBRL approaches) uses trailing state. If we keep our augmented
+policies stateless, we're handicapped by construction against those
+reference numbers. The online→BC experiment is where that handicap
+shows up — a stateful base *could* transfer its sequential reasoning
+into the fine-tuned policy, but only if our architecture and eval loop
+preserve RNN state.
 
 ## Architecture plan
 
-### Stage 1 — strong base policy (cheap online RL)
+### Stage 1 — pilot base policies
 
-Target: raw return ≥ 25 on Craftax-Symbolic-v1 in ≤ 12h of 1×L40S.
+Produce two checkpoints:
 
-Candidates, in priority order:
+- **PPO-RNN small**: 2e6 and 5e6 env steps. Saves to
+  `/data/group_data/rl/geney/checkpoints/ppo_rnn_{2M,5M}_baseline/policies`.
+  Quick to run (< 1h each on L40S).
+- **PPO-MLP small**: same 2e6 and 5e6 steps, stateless backbone. If
+  `online_rl/ppo.py` supports MLP config, use it; else write a minimal
+  feedforward variant.
 
-1. **PPO-RNN 1e8** (`online_rl/ppo_rnn.py`). We just completed one run at
-   27.87 raw (job 7397006, no saved policy). Checkpoint-saving rerun is
-   now queued as **job 7429017**. Pre-baked in repo, known to reach scale.
-2. **PPO-GTrXL** (GRU-replaced-with-transformer). Needs implementation
-   port (`online_rl/ppo_gtrxl.py` doesn't exist). Craftax scoreboard has
-   this at 18.3% / ~41 return at 1B. Not needed for stage 1 if PPO-RNN
-   suffices.
-3. **Efficient MBRL** ([arXiv:2502.01591](https://arxiv.org/abs/2502.01591))
-   — sample-efficient world-model-based. Good if we want a base that
-   matches published ≥35 return for fewer env steps. Higher integration
-   cost (needs a dream-rollout infrastructure).
-4. **Simulus** ([arXiv:2502.11537](https://arxiv.org/abs/2502.11537)) —
-   Craftax-specific architecture. Also needs port. Defer.
+Report raw 50-ep return for each on fresh seeds. Expected: both sit
+near our BC/AWR range (12-18), with RNN ≥ MLP at matched steps.
 
-**Plan.** Use PPO-RNN as stage 1 for the pilot. The save-enabled rerun
-(7429017) gives us a checkpoint at `/data/group_data/rl/geney/checkpoints/
-ppo_rnn_1e8_baseline/policies`.
+(The already-queued 1e8-save run — job 7429017 — stays useful as an
+*upper* reference. Not the pilot base.)
 
-**Deliverable:** one JAX/Flax orbax checkpoint + a JAX eval script that
-reports 50-ep raw return on fresh seeds, matched-protocol to our
-`eval_online.py` sampling.
+### Stage 2 — RNN-aware eval_online
 
-### Stage 2 — fine-tune on Gemini-conditioned dataset
+Before Stage 3, `eval_online.py` must be able to run a stateful policy.
+Add an `--rnn-arch {none, gru, lstm}` flag plus a per-episode hidden-state
+buffer that is carried across steps and reset on episode boundaries.
+This is a small addition (~30 lines) — the eval loop already iterates
+per-step.
 
-Two sub-variants, both start from Stage 1's weights:
+Deliverable: a run-smoke test showing PPO-RNN-small checkpoint loaded,
+rolled out for 50 eps, matches within noise the training-time
+episode_return curve on the same seed distribution.
 
-**(A) PyTorch port + BC head on Gemini hidden.** Port the Flax ActorCritic
-with GRU/LSTM state into PyTorch (just the inference graph — no backward
-pass on JAX), initialize the obs-only trunk with the PPO-RNN weights,
-**add** the hidden-branch MLP (dim-4096 Gemini hidden) used by
-`ActorCriticAug`, and BC on PSF-top-2M `(obs, hidden) → action` pairs.
-Freeze options: {none, obs trunk, partial}. Loss options: {BC, BC + AWR,
-BC + PPO online fine-tune, BC + KL to base}.
+### Stage 3 — fine-tune on Gemini-conditioned dataset
 
-Quickest: **BC + KL-to-base** — minimizes BC loss on Gemini-conditioned
-data subject to the policy not drifting far from the PPO-RNN prior.
-Prevents catastrophic forgetting of the strong base behavior.
+From each pilot base (PPO-RNN-small, PPO-MLP-small):
 
-**(B) JAX continued-training with hidden branch.** Modify
-`online_rl/ppo_rnn.py` (or write `online_rl/ppo_rnn_aug.py`) to accept a
-hidden_state input channel, initialize hidden-branch weights to zeros
-(so initial policy = PPO-RNN base), and run a short online+offline mixed
-pass: replay-buffer BC on PSF data *and* on-policy PPO rollouts with
-Gemini hidden plugged in during rollout. More complex but avoids the
-port step.
+**(A) Port backbone to PyTorch** (see "Porting" below), add a
+`HiddenBranch` head that zero-inits its final projection so the initial
+fine-tuned model = the base, and fine-tune with:
 
-**Plan.** Go with (A). PyTorch BC+AWR is where our existing imagination
-code lives, so we can reuse the training loop, eval framework, probe
-suite, and all six-axes measurements. The port is limited to the
-ActorCriticRNN inference graph; we keep the PyTorch model as the trained
-policy.
+- **BC** on PSF-top-2M `(obs, hidden) → action`.
+- **BC + AWR** using PSF advantages (already computed).
+- **BC + KL-to-base**, **λ ∈ {0.01, 0.1, 1.0}** — user-confirmed sweep.
+  Lower λ = faster adaptation, higher drift. Higher λ = stays close to
+  base, less Gemini pickup.
 
-### Stage 3 — eval on the full probe battery
+**Incremental rollout.** Run {BC-only, BC+KL λ=0.1} first on PPO-RNN-2M
+base → eval → monitor → only then run the λ sweep and the PPO-MLP arm.
+"Do some and monitor them and then do others" — keep the sweep tight
+until one cell clearly beats regular BC/AWR.
 
-Once Stage 2 gives us a fine-tuned policy:
+### Stage 4 — probe battery on fine-tuned policies
 
-- 50-ep raw return (regular, constant, random, die_v2, adversarial_v2,
-  avoid_water_v2, avoid_animals_v2).
-- Direction-CF step-0 and multistep.
-- HP/Food perturbation (check food_low ΔV sign).
-- Held-out Δ_shuf NLL on the track's own val data.
+Incremental again. Start with a **small** probe set per fine-tuned
+policy:
 
-Expected outcomes to differentiate:
+- 50-ep regular
+- die_v2 (content-robustness)
+- direction-CF step-0 (steerability)
 
-| Outcome | Interpretation |
-|---|---|
-| Raw ≈ 25, die_v2 ≈ 20 | Strong base + weak content-reading — obs-only is doing the work; Gemini hidden is ignored. |
-| Raw ≈ 25, die_v2 ≈ 10 | Strong base + *strong* content-reading — best case. The policy follows Gemini content into failure when prompted to, and otherwise plays near the online baseline. Means online init + BC on conditioned data can combine both axes. |
-| Raw ≈ 18, die_v2 ≈ 10 | Strong content-reading but forgot the base — BC overwrote the online prior. KL-to-base was too weak. |
-| Raw ≈ 25, die_v2 ≈ 25 | No content-reading at all — BC didn't integrate Gemini. Architecture or loss issue. |
+Expand to the full battery (constant, random, adversarial_v2,
+avoid_water_v2, avoid_animals_v2, multistep CF, HP perturbation,
+held-out Δ_shuf) only if the small set shows an interesting delta vs
+the plain BC/AWR policies.
 
-## Concrete task list
+## Porting ActorCriticRNN (Flax → PyTorch)
 
-1. (In flight) PPO-RNN 1e8 rerun with `--save_policy` (job 7429017).
-2. (NEW) Port `online_rl/ppo_rnn.py::ActorCriticRNN` inference graph to
-   PyTorch. Single GRU cell + MLP head. Write a weight-transfer function
-   `load_jax_into_torch(jax_params) -> torch_state_dict`.
-3. (NEW) Add a `HiddenBranch` head module (reuse `ActorCriticAug`'s
-   hidden branch) on top of the ported backbone: `logits = head_obs(obs
-   features) + head_hidden(gemini_hidden)` (additive — zero-init on hidden
-   side so initial behavior matches PPO-RNN).
-4. (NEW) Training loop variants, all in `offline_rl/train_online_to_bc.py`:
-   - BC on PSF-top-2M `(obs, hidden) → action`.
-   - BC + AWR using PSF advantage estimates (already computed in the
-     offline stack).
-   - BC + KL-to-base λ sweep {0.01, 0.1, 1.0}.
-5. Eval on full probe battery (Stage 3).
-6. Journal the results with the six-axes table.
+Realistic effort: **a few hours**, not a day. The inference graph is:
+
+```
+obs → Linear(obs_dim, 512) → tanh
+      → GRUCell(512)
+      → Linear(512, 512) → tanh
+      → [ LinearHead(512, action_dim)   # actor logits
+          LinearHead(512, 1) ]           # critic
+```
+
+Steps:
+1. Read the Flax module and weight shapes from `online_rl/ppo_rnn.py`.
+2. Mirror in PyTorch (`torch.nn.GRUCell`, `torch.nn.Linear`).
+3. Weight transfer: Flax GRU weight layout (`update/reset/candidate`
+   stacks) into PyTorch's fused `W_ir/W_iz/W_in + W_hr/W_hz/W_hn`. One
+   one-off permutation; verify with 100 obs that action logits match
+   Flax within 1e-4 L1.
+4. Wrap in a `torch.nn.Module` that exposes `forward(obs, h) -> logits,
+   value, h'` so `eval_online.py`'s new `--rnn-arch` path can call it.
+
+## Concrete task list (revised, user-confirmed incremental plan)
+
+- [x] PPO-RNN 1e8 save-enabled rerun queued (job 7429017) — kept as
+      upper reference only.
+- [ ] PPO-RNN 2M and 5M save-enabled runs (new, matched-scale pilot bases).
+- [ ] PPO-MLP 2M and 5M save-enabled runs (stateless comparison).
+- [ ] Port ActorCriticRNN + weight transfer to PyTorch. Unit test.
+- [ ] Extend `eval_online.py` with `--rnn-arch` flag + per-step hidden
+      state carry.
+- [ ] Smoke-test: PPO-RNN-2M 50-ep eval from the PyTorch port.
+- [ ] Fine-tune PPO-RNN-2M: BC-only, then BC+KL λ=0.1. **Monitor.**
+- [ ] If interesting, run λ sweep {0.01, 0.1, 1.0} and PPO-MLP arm.
+- [ ] Small probe set (regular / die_v2 / dir-CF step-0) on every
+      fine-tuned policy.
+- [ ] Expand to full battery only on promising cells.
+- [ ] Journal.
 
 ## Sizing & cost
 
-- Stage 1: PPO-RNN 1e8, 10h L40S — already in flight, free.
-- Stage 2: fine-tune = BC on top-2M dataset, should be ≤ 4h on A100/L40S.
-- Stage 3: 50 eps × (7 probe types) × (PPO-RNN-init policy) ≈ 2-3h per
-  probe × 7 = 14-20 GPU-hours. Comparable to the v2 die/adv array
-  (7412177) we already ran overnight — fits in one 18h window.
+- 2M+5M PPO-{RNN,MLP} training: 4× ≤1h ≈ 3-4 GPU-hours total.
+- Port + eval extension: a few hours human time; no compute.
+- Fine-tune on PSF-top-2M: ≤ 4h per config. Pilot (2 configs) = ~8 GPU-h.
+  Full λ×arch sweep (6 configs) = ~24 GPU-h.
+- Small probe set on pilot: ~3 GPU-h per policy × 2 = ~6 GPU-h.
+- Full probe battery (if triggered): ~15 GPU-h per policy.
 
-Total: ≤ 40 GPU-hours for a well-powered pilot answer. Acceptable.
+Pilot-only end-to-end: ≤ 20 GPU-h. Fits in one overnight.
 
 ## Risks and caveats
 
-- **JAX→PyTorch port fidelity.** GRU weight layouts differ (JAX uses
-  stacked W_z/W_r/W_h, PyTorch uses fused W_ir/W_iz/W_in + W_hr/W_hz/W_hn).
-  Unit-test the port by comparing action distributions on held-out obs
-  between JAX and PyTorch implementations. Target: KL < 1e-4 per step on
-  100 obs.
-- **RNN state management.** `eval_online.py` is stateless per step.
-  RNN-based policies need per-step hidden state. Either: (a) keep RNN
-  state in the eval loop (already done for ppo_rnn during training); (b)
-  squash RNN state into the hidden embedding pathway. Easier: (a), add
-  RNN-state support to `eval_online.py`.
-- **BC on PSF-top-2M overwrites base.** The PSF data is ~half noise and
-  ~half fragment of "random exploration"; BC on it could push a strong
-  base back toward the weaker BC-level policy. KL-to-base is the guard,
-  and we should sweep λ.
-- **Checkpoint format.** Orbax checkpoints are not trivially
-  self-contained; we'll need the Flax model class available at load time
-  to restore. Wrap the load in `eval/load_ppo_rnn_ckpt.py` once.
-- **Gemini cost.** Nothing new on the training-data side (reuse existing
-  PSF-top-2M embedded shards). Gemini costs only at eval-time, same as
-  existing stack.
+- **Porting fidelity.** GRU weight layouts differ. Mitigation: compare
+  JAX vs PyTorch logits on 100 obs; fail loudly if L1 > 1e-4.
+- **RNN state handoff in eval.** `eval_online.py` is stateless per step
+  today. The `--rnn-arch` addition must reset state on done/truncated.
+- **PSF-top-2M data OODness for an online-trained policy.** The online
+  base has never seen these obs distributions directly; BC on them may
+  push it away from the trajectories that earned it return. KL-to-base
+  is the lever; sweep λ.
+- **Checkpoint format.** Orbax checkpoint ↔ Flax model class at load
+  time. One `eval/load_ppo_rnn_ckpt.py` helper.
+- **Gemini cost.** Reuses existing embedded PSF-top-2M shards. No new
+  Gemini calls at training time; same eval-time cost as current stack.
 
 ## What I am NOT planning yet
 
-- Simulus / efficient MBRL / PPO-GTrXL ports. We pick these up only if
-  PPO-RNN-init pilot shows the online init pays off and we want to push
-  the base higher.
-- End-to-end joint BC + online PPO fine-tune. Too much moving. Only
-  consider if the simpler (BC + KL-to-base) variant fails to preserve
-  raw return.
+- **PPO-GTrXL / MBRL / Simulus ports.** Only as upper references if the
+  PPO-RNN-small pilot pays off and we want to push base return higher.
+- **End-to-end joint BC + online PPO fine-tune.** Only if (BC + KL-to-
+  base) fails to preserve raw return at every λ.
 
 ---
 
-## Open for user decision before I start coding
+## User-confirmed decisions
 
-- **GO / NO-GO on the port.** Porting ActorCriticRNN from Flax to
-  PyTorch is ~1 day of careful work. Alternative is JAX-native
-  offline_rl pipeline, but our probe infrastructure is PyTorch.
-- **λ sweep scope.** Do we want the sweep in Stage 2, or just pick the
-  middle value and iterate?
-- **Which probes at Stage 3.** The v2 probe battery is ~7 items; if you
-  want a quick pilot, maybe just {regular, die_v2, direction-CF-step0}
-  first and expand only if the pilot is interesting.
+- λ sweep: yes, confirmed.
+- Incremental rollout: yes — run pilot fine-tunes (BC-only + one λ),
+  monitor, then expand.
+- Base-model papers: kept as **inspiration** in motivation; removed
+  from base-model candidate list.
+- Porting effort: revised down to a few hours.
+- Stateless baseline acceptance: not yet decided — plan covers both
+  (PPO-MLP stateless *and* PPO-RNN with RNN-aware eval) so we can
+  measure the stateful delta directly.
