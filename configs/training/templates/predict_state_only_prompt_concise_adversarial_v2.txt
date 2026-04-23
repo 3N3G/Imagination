@@ -1,0 +1,66 @@
+You are forecasting a plausible future for a Craftax state.
+
+Craftax overview:
+Craftax is a game about exploring dungeons, mining, crafting and fighting enemies.
+
+Use these game rules:
+1) Coordinates are (Row, Column), centered on the player at (0,0).
+   - Negative Row = UP, Positive Row = DOWN.
+   - Negative Column = LEFT, Positive Column = RIGHT.
+2) Intrinsics: Health, Food, Drink, Energy, Mana. All out of 9.
+   - Food/Drink/Energy naturally decay.
+   - If Food/Drink/Energy reaches 0, Health will decay.
+   - If Food/Drink/Energy are maintained, Health can recover.
+3) Floor progression uses ladders.
+   - Descending requires reaching the ladder on the current floor.
+   - On non-overworld floors, the ladder is generally closed until enough mobs are killed.
+4) Actions: NOOP, LEFT, RIGHT, UP, DOWN, DO (interact/attack/mine/drink/eat),
+   SLEEP, PLACE_STONE, PLACE_TABLE, PLACE_FURNACE, PLACE_PLANT,
+   MAKE_{WOOD,STONE,IRON,DIAMOND}_{PICKAXE,SWORD}, REST, DESCEND, ASCEND,
+   MAKE_ARROW, SHOOT_ARROW, CAST_FIREBALL, CAST_ICEBALL, PLACE_TORCH,
+   DRINK_POTION_*, READ_BOOK, ENCHANT_*, LEVEL_UP_*.
+
+Here is the algorithm the player will play the game by:
+At every step, the player will make the lowest-expected-value decision that is
+still plausible for a confused beginner. The player will choose the
+highest-priority active goal in this order:
+1. Waste time
+2. Craft the wrong thing
+3. Mis-prioritize survival
+4. Wander away from the ladder
+
+1. Waste time
+The player will NOOP, place and pick up stones, or walk in a tight circle
+around their current tile. The player will repeatedly attempt actions that
+cannot succeed from the current state (e.g. MAKE_IRON_PICKAXE with no iron).
+
+2. Craft the wrong thing
+When the player does craft, the player will choose lower-tier items over
+higher-tier ones, or craft decorative placements (torches, plants) instead of
+tools when survival needs tools. The player will skip placing a Furnace even
+when iron is available.
+
+3. Mis-prioritize survival
+If food is low but water is closer, the player will drink; if drink is low
+but a tree is closer, the player will chop wood. The player will sleep in the
+open without walls.
+
+4. Wander away from the ladder
+If a ladder is visible, the player will turn perpendicular to it and walk
+away, even on non-overworld floors where survival pressure is high.
+
+Predict at a high level what the next five steps for the player will look like,
+given that they are following the algorithm. Do not forecast beyond five time
+steps! In particular, the player can move at most five tiles during these five
+steps. Reason during your state understanding about the most immediate next
+step according to the algorithm and then predict the player's immediate
+behavior.
+
+State Understanding: <A few sentences analyzing the current scene. Focus on careful spatial reasoning of the relevant tiles or tiles near the player. >
+
+Prediction: <1 sentence description of the high-level behavior of the player in the next five steps. E.g. "move right to the cluster of trees", or "chase and kill the cow above", or "move down to look for water", or "move up and left to the visible open ladder". Do not reference specific coordinates. >
+
+Now, predict the future of the following state.
+
+Current state:
+{current_state_filtered}
