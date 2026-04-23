@@ -167,10 +167,10 @@ def transfer_flax_to_torch(flax_params: dict, model: ActorCriticRNNTorch) -> Non
     scanned = flax_params.get("ScannedRNN_0") or flax_params.get("ScannedRNN")
     if scanned is None:
         raise RuntimeError(f"No ScannedRNN_0 key in {list(flax_params.keys())}")
-    gru_params = scanned.get("GRUCell_0") or scanned.get("GRUCell")
-    if gru_params is None:
+    gru_key = next((k for k in scanned.keys() if k.startswith("GRUCell")), None)
+    if gru_key is None:
         raise RuntimeError(f"No GRUCell under ScannedRNN: {list(scanned.keys())}")
-    _flax_gru_to_torch(gru_params, model.gru)
+    _flax_gru_to_torch(scanned[gru_key], model.gru)
 
 
 # --------------------------------------------------------------------------
@@ -198,10 +198,14 @@ def load_from_orbax(ckpt_dir: Path, action_dim: int, obs_dim: int,
         raise FileNotFoundError(f"No checkpoint step under {ckpt_dir}")
 
     restored = mgr.restore(step)
-    # TrainState layout: {params: {...}, opt_state: ..., ...}
-    params = restored.get("params") or restored.get("0", {}).get("params")
+    # TrainState layout: {opt_state, params, step} where params = {'params': {Dense_0, ...}}
+    params = restored.get("params")
     if params is None:
         raise RuntimeError(f"No 'params' in restored state (keys={list(restored.keys())})")
+    if isinstance(params, dict) and "params" in params and all(
+        k.startswith(("Dense", "GRUCell", "ScannedRNN")) for k in params["params"].keys()
+    ):
+        params = params["params"]
 
     model = ActorCriticRNNTorch(obs_dim=obs_dim, action_dim=action_dim, layer_size=layer_size)
     transfer_flax_to_torch(params, model)
@@ -229,7 +233,12 @@ def _verify(ckpt_dir: Path, obs_dim: int, action_dim: int, layer_size: int) -> N
     mgr = CheckpointManager(str(ckpt_dir_p), PyTreeCheckpointer(),
                             CheckpointManagerOptions(max_to_keep=5, create=False))
     restored = mgr.restore(mgr.latest_step())
-    flax_params = restored.get("params") or restored["0"]["params"]
+    flax_params = restored.get("params")
+    if isinstance(flax_params, dict) and "params" in flax_params and all(
+        k.startswith(("Dense", "GRUCell", "ScannedRNN"))
+        for k in flax_params["params"].keys()
+    ):
+        flax_params = flax_params["params"]
 
     rng = np.random.default_rng(0)
     obs_np = rng.standard_normal((32, obs_dim), dtype=np.float32)
@@ -243,22 +252,23 @@ def _verify(ckpt_dir: Path, obs_dim: int, action_dim: int, layer_size: int) -> N
     obs_j = jnp.asarray(obs_np)[None]  # (1, 32, obs_dim)
     dones_j = jnp.asarray(dones_np)[None]  # (1, 32)
     _, pi, value_j = flax_model.apply({"params": flax_params}, init_hidden, (obs_j, dones_j))
-    logits_flax = np.asarray(pi.logits[0])
+    # distrax.Categorical.logits returns log-softmax(raw_logits), not raw.
+    logprob_flax = np.asarray(pi.logits[0])
     value_flax = np.asarray(value_j[0])
 
-    # PyTorch forward.
+    # PyTorch forward — raw logits. Convert to log-softmax for comparison.
     obs_t = torch.from_numpy(obs_np)
     h_t = torch_model.initial_state(32)
     logits_t, value_t, _ = torch_model(obs_t, h_t)
-    logits_t = logits_t.detach().cpu().numpy()
+    logprob_t = torch.log_softmax(logits_t, dim=-1).detach().cpu().numpy()
     value_t = value_t.detach().cpu().numpy()
 
-    max_logit_diff = np.abs(logits_flax - logits_t).max()
+    max_logprob_diff = np.abs(logprob_flax - logprob_t).max()
     max_value_diff = np.abs(value_flax - value_t).max()
-    print(f"max |logit diff| = {max_logit_diff:.3e}")
-    print(f"max |value diff| = {max_value_diff:.3e}")
-    if max_logit_diff > 1e-3:
-        print("WARN: logit diff > 1e-3 — port is NOT numerically faithful.")
+    print(f"max |log-prob diff| = {max_logprob_diff:.3e}")
+    print(f"max |value diff|    = {max_value_diff:.3e}")
+    if max_logprob_diff > 1e-3:
+        print("WARN: log-prob diff > 1e-3 — port is NOT numerically faithful.")
         sys.exit(1)
     print("PyTorch port matches Flax within 1e-3. OK.")
 
