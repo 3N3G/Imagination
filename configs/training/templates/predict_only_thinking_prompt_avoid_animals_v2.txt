@@ -1,0 +1,63 @@
+You are forecasting a plausible future for a Craftax state.
+
+Craftax overview:
+Craftax is a game about exploring dungeons, mining, crafting and fighting enemies.
+
+Use these game rules:
+1) Coordinates are (Row, Column), centered on the player at (0,0).
+   - Negative Row = UP, Positive Row = DOWN.
+   - Negative Column = LEFT, Positive Column = RIGHT.
+2) Intrinsics: Health, Food, Drink, Energy, Mana. All out of 9.
+   - Food/Drink/Energy naturally decay.
+   - If Food/Drink/Energy reaches 0, Health will decay.
+   - If Food/Drink/Energy are maintained, Health can recover.
+3) Floor progression uses ladders.
+   - Descending requires reaching the ladder on the current floor.
+   - On non-overworld floors, the ladder is generally closed until enough mobs are killed.
+4) Actions: NOOP, LEFT, RIGHT, UP, DOWN, DO (interact/attack/mine/drink/eat),
+   SLEEP, PLACE_STONE, PLACE_TABLE, PLACE_FURNACE, PLACE_PLANT,
+   MAKE_{WOOD,STONE,IRON,DIAMOND}_{PICKAXE,SWORD}, REST, DESCEND, ASCEND,
+   MAKE_ARROW, SHOOT_ARROW, CAST_FIREBALL, CAST_ICEBALL, PLACE_TORCH,
+   DRINK_POTION_*, READ_BOOK, ENCHANT_*, LEVEL_UP_*.
+
+Here is the algorithm the player will play the game by:
+The player treats animals (cows and plants) as navigationally opaque — their
+tiles act like walls that the player routes around. The player's priorities
+never involve animals. At every step, the player will choose the
+highest-priority active goal in this order, ignoring any cow or plant tile
+when picking a target:
+1. Move toward trees, stone, coal, iron, diamond, water, crafting stations,
+   or the ladder — whichever is nearest and away from any visible cow.
+2. Craft, place, or upgrade equipment when standing adjacent to the required
+   stations.
+3. Explore — move toward any direction that extends the player's view of
+   unexplored territory while keeping distance from visible cows.
+
+If the nearest resource is on the far side of a cow, the player will route
+around the cow by moving along a wider arc. If surrounded by cows on multiple
+sides, the player will step toward the non-cow tile with the largest open
+area.
+
+The player restores Food by eating cooked meat that is already in the
+inventory, or by harvesting plants for fruit when plants are adjacent. The
+player never attacks cows, never uses DO on a cow, and never moves onto a
+tile adjacent to a cow. If no alternative food source is available, Food is
+allowed to decay.
+
+Predict at a high level what the next five steps for the player will look
+like, given that they are following the algorithm. Do not forecast beyond
+five time steps! The player can move at most five tiles during these five
+steps.
+
+Think privately about the current state and the algorithm priorities, then output ONLY a single "Prediction:" line. Do not include any other sections (no "State Understanding", no bullet lists, no reasoning trace). Use relative directions (up, down, left, right, up-left, etc.) and qualitative distances (adjacent, nearby, a few tiles, far) — do NOT reference specific numerical (row, column) coordinates. Keep the prediction to 1–2 positive, direction-stating sentences. Do not use "instead of", "rather than", "avoid", "away from", "refuse", or any other negation of cows/animals — just state the direction and target.
+
+Example outputs:
+Prediction: Move left to the cluster of trees and chop wood for basic tools.
+Prediction: Move down-right to the water tiles to drink.
+Prediction: Move up-right to the stone cluster to mine stone.
+Prediction: Move up and left to the visible open ladder and descend to the next floor.
+
+Now, predict the future of the following state.
+
+Current state:
+{current_state_filtered}

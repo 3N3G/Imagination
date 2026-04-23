@@ -93,31 +93,43 @@ engage monsters without weapons, descend floors without preparation, and take ev
 possible action that leads to rapid death."""
 
 # v2: full-template swap instead of suffix. The v2 templates replace the
-# "Here is a good algorithm…" section with a death-seeking / worst-player
-# algorithm. Same voice, same sections, no "Instead of" / "override"
-# phrasing, no bulleted Worst Possible Future structure.
+# "Here is a good algorithm…" section with an alternative algorithm.
+# Same voice, same sections, no "Instead of" / "override" phrasing, no
+# bulleted Worst Possible Future structure.
 # Two flavors per mode: concise-base (for Track A / Track C inference) and
 # thinking-base (for Track B inference). eval_online.py picks the matching
 # flavor based on the caller's --prompt-template-path basename.
-# See journals/log_2026-04-22.md for probe justification.
+# See journals/log_2026-04-22.md and log_2026-04-23.md for probe justification.
 _TEMPLATE_DIR = (
     Path(__file__).resolve().parent.parent / "configs/training/templates"
 )
-DIE_V2_CONCISE = _TEMPLATE_DIR / "predict_state_only_prompt_concise_die_v2.txt"
-ADVERSARIAL_V2_CONCISE = _TEMPLATE_DIR / "predict_state_only_prompt_concise_adversarial_v2.txt"
-DIE_V2_THINKING = _TEMPLATE_DIR / "predict_only_thinking_prompt_die_v2.txt"
-ADVERSARIAL_V2_THINKING = _TEMPLATE_DIR / "predict_only_thinking_prompt_adversarial_v2.txt"
+_V2_TEMPLATES = {
+    "die_v2": {
+        "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_die_v2.txt",
+        "thinking": _TEMPLATE_DIR / "predict_only_thinking_prompt_die_v2.txt",
+    },
+    "adversarial_v2": {
+        "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_adversarial_v2.txt",
+        "thinking": _TEMPLATE_DIR / "predict_only_thinking_prompt_adversarial_v2.txt",
+    },
+    "avoid_water_v2": {
+        "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_avoid_water_v2.txt",
+        "thinking": _TEMPLATE_DIR / "predict_only_thinking_prompt_avoid_water_v2.txt",
+    },
+    "avoid_animals_v2": {
+        "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_avoid_animals_v2.txt",
+        "thinking": _TEMPLATE_DIR / "predict_only_thinking_prompt_avoid_animals_v2.txt",
+    },
+}
 
 
 def _pick_v2_template(base_template_path: Path, mode: str) -> Path:
     """Pick thinking- or concise-flavored v2 template to match caller's base."""
     base = base_template_path.name
-    is_thinking_base = "thinking" in base
-    if mode == "die_v2":
-        return DIE_V2_THINKING if is_thinking_base else DIE_V2_CONCISE
-    if mode == "adversarial_v2":
-        return ADVERSARIAL_V2_THINKING if is_thinking_base else ADVERSARIAL_V2_CONCISE
-    raise ValueError(f"unexpected v2 mode: {mode}")
+    flavor = "thinking" if "thinking" in base else "concise"
+    if mode not in _V2_TEMPLATES:
+        raise ValueError(f"unexpected v2 mode: {mode}")
+    return _V2_TEMPLATES[mode][flavor]
 
 
 FEW_SHOT_EXAMPLES = [
@@ -432,15 +444,15 @@ def run_eval(args):
         or _gemini_model.startswith("gemini-3")
     )
     _embedding_mode = args.embedding_mode
-    _needs_gemini = _embedding_mode in ("gemini", "adversarial", "die",
-                                        "die_v2", "adversarial_v2")
+    _v2_modes = tuple(_V2_TEMPLATES.keys())
+    _needs_gemini = _embedding_mode in ("gemini", "adversarial", "die") + _v2_modes
     _needs_api_key = _needs_gemini
 
     # Load prompt template. v2 modes pick their template based on the caller's
     # base template (thinking vs concise); for other modes --prompt-template-path
     # is honored (else the default PREDICT_TEMPLATE_PATH).
     base_template = Path(args.prompt_template_path) if args.prompt_template_path else PREDICT_TEMPLATE_PATH
-    if _embedding_mode in ("die_v2", "adversarial_v2"):
+    if _embedding_mode in _v2_modes:
         template_path = _pick_v2_template(base_template, _embedding_mode)
         print(f"v2 mode: base={base_template.name} -> {template_path.name}")
     else:
@@ -957,7 +969,8 @@ def main():
                     help="Override Gemini model (default: config GEMINI_MODEL)")
     p.add_argument("--embedding-mode", type=str, default="gemini",
                     choices=["gemini", "constant", "random", "adversarial", "die",
-                             "die_v2", "adversarial_v2"],
+                             "die_v2", "adversarial_v2",
+                             "avoid_water_v2", "avoid_animals_v2"],
                     help="How to generate hidden state embeddings: "
                          "gemini=normal Gemini+Qwen, constant=embed fixed string, "
                          "random=embed random text, adversarial=Gemini bad futures, "

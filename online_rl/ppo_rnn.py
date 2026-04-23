@@ -482,7 +482,8 @@ def run_ppo(config):
             train_state = jax.tree.map(lambda x: x[0], train_states)
             orbax_checkpointer = PyTreeCheckpointer()
             options = CheckpointManagerOptions(max_to_keep=1, create=True)
-            path = os.path.join(wandb.run.dir, dir_name)
+            base = config.get("SAVE_OUTPUT_DIR") or wandb.run.dir
+            path = os.path.join(base, dir_name)
             checkpoint_manager = CheckpointManager(path, orbax_checkpointer, options)
             print(f"saved runner state to {path}")
             save_args = orbax_utils.save_args_from_target(train_state)
@@ -528,6 +529,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--save_policy", action=argparse.BooleanOptionalAction, default=False
     )
+    parser.add_argument("--save_output_dir", type=str, default=None,
+                        help="If set, orbax save path = <dir>/policies (overrides wandb.run.dir)")
     parser.add_argument("--num_repeats", type=int, default=1)
     parser.add_argument("--layer_size", type=int, default=512)
     parser.add_argument("--wandb_project", type=str)

@@ -1,0 +1,59 @@
+You are forecasting a plausible future for a Craftax state.
+
+Craftax overview:
+Craftax is a game about exploring dungeons, mining, crafting and fighting enemies.
+
+Use these game rules:
+1) Coordinates are (Row, Column), centered on the player at (0,0).
+   - Negative Row = UP, Positive Row = DOWN.
+   - Negative Column = LEFT, Positive Column = RIGHT.
+2) Intrinsics: Health, Food, Drink, Energy, Mana. All out of 9.
+   - Food/Drink/Energy naturally decay.
+   - If Food/Drink/Energy reaches 0, Health will decay.
+   - If Food/Drink/Energy are maintained, Health can recover.
+3) Floor progression uses ladders.
+   - Descending requires reaching the ladder on the current floor.
+   - On non-overworld floors, the ladder is generally closed until enough mobs are killed.
+4) Actions: NOOP, LEFT, RIGHT, UP, DOWN, DO (interact/attack/mine/drink/eat),
+   SLEEP, PLACE_STONE, PLACE_TABLE, PLACE_FURNACE, PLACE_PLANT,
+   MAKE_{WOOD,STONE,IRON,DIAMOND}_{PICKAXE,SWORD}, REST, DESCEND, ASCEND,
+   MAKE_ARROW, SHOOT_ARROW, CAST_FIREBALL, CAST_ICEBALL, PLACE_TORCH,
+   DRINK_POTION_*, READ_BOOK, ENCHANT_*, LEVEL_UP_*.
+
+Here is the algorithm the player will play the game by:
+The player treats water as navigationally opaque — water tiles act like walls
+that the player routes around. The player's priorities never involve water.
+At every step, the player will choose the highest-priority active goal in
+this order, ignoring any water tile when picking a target:
+1. Move toward trees, stone, coal, iron, diamond, animals, crafting stations,
+   or the ladder — whichever is nearest and on the landward side.
+2. Craft, place, or upgrade equipment when standing adjacent to the required
+   stations.
+3. Explore inland — move toward any dry-tile direction that extends the
+   player's view of unexplored territory.
+
+If the nearest resource is on the far side of a water body, the player will
+route around the water by moving along the shore. If surrounded by water on
+multiple sides, the player will step onto the driest available tile that is
+farthest from water.
+
+The player restores Drink by drinking potions rather than by drinking from
+water tiles. If no potion is available, Drink is allowed to decay.
+
+Predict at a high level what the next five steps for the player will look
+like, given that they are following the algorithm. Do not forecast beyond
+five time steps! The player can move at most five tiles during these five
+steps.
+
+Think privately about the current state and the algorithm priorities, then output ONLY a single "Prediction:" line. Do not include any other sections (no "State Understanding", no bullet lists, no reasoning trace). Use relative directions (up, down, left, right, up-left, etc.) and qualitative distances (adjacent, nearby, a few tiles, far) — do NOT reference specific numerical (row, column) coordinates. Keep the prediction to 1–2 positive, direction-stating sentences. Do not use "instead of", "rather than", "avoid", "away from", "refuse", or any other negation of water — just state the landward direction and target.
+
+Example outputs:
+Prediction: Move left to the cluster of trees and chop wood for basic tools.
+Prediction: Move down-right to the stone cluster to mine stone.
+Prediction: Chase and kill the cow directly above to restore food.
+Prediction: Move up and left to the visible open ladder and descend to the next floor.
+
+Now, predict the future of the following state.
+
+Current state:
+{current_state_filtered}
