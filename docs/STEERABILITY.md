@@ -25,7 +25,7 @@ and the JSON files under `probe_results/`.
 
 ---
 
-## TL;DR — three killer results
+## TL;DR — four killer results
 
 1. **Synthetic embedding arithmetic reproduces the prompt-based effect.**
    On `C_grounded_2M`, adding α=+2 × d_die to the regular embedding (Gemini
@@ -46,6 +46,16 @@ and the JSON files under `probe_results/`.
    0.24 → 0.34 (**+41% relative**), return drops −6.72 (z=−5.7). The policy
    commits to left-walking past survival utility. The steering *works at
    the action level* even when it destroys productivity.
+
+4. **Patch-by-prompt closes the targeted deficit on C.** A clearer base
+   prompt (`v2_long_tail`) explicitly listing the long-tail loop (sleep
+   when energy low, plant saplings, place torches, descend on ladder
+   sight) produces **Δret +2.14 (z=+1.4, n=30)** on `C_grounded_2M`,
+   patching the EXACT achievements identified as deficient in
+   `docs/TRACK_ANALYSIS.md`: **wake_up 0.52 → 0.90 (+38pp)**, eat_plant
+   0.00 → 0.13 (+13pp), place_torch 0.52 → 0.67 (+15pp). On `B_thinking_2M`
+   the matched basic-coverage prompt fails (Δret −2.35) — B's failure is at
+   the policy level, not the instruction-clarity level.
 
 **Every probe agrees on the track ordering**: `C_grounded_2M` (high
 fidelity) > `A_full` (low fidelity) on steerability; the opposite on
