@@ -511,6 +511,22 @@ def run_eval(args):
     template = raw_template
     print(f"Prompt template: {template_path.name} (with {len(FEW_SHOT_EXAMPLES)} real few-shot examples)")
 
+    # Mid-episode switch: if --switch-mode is set, after --switch-step env steps,
+    # the embedding mode (and template) flip to the switch_mode. Both templates
+    # are pre-loaded.
+    _switch_mode = getattr(args, "switch_mode", None)
+    _switch_step = int(getattr(args, "switch_step", 0))
+    _switch_template = None
+    if _switch_mode:
+        if _switch_mode in _v2_modes:
+            _switch_template_path = _pick_v2_template(base_template, _switch_mode)
+        else:
+            _switch_template_path = base_template
+        _switch_template = _switch_template_path.read_text()
+        print(f"Switch enabled: at step >= {_switch_step}, mode -> {_switch_mode} "
+              f"(template {_switch_template_path.name})")
+    _initial_mode = _embedding_mode
+
     # Load policy
     layer_width = args.layer_width
     if args.arch_hidden_only:
@@ -639,6 +655,14 @@ def run_eval(args):
 
             # --- Every STEP_CADENCE steps: generate hidden state embedding ---
             if step % STEP_CADENCE == 0:
+                # Apply mid-episode switch if configured
+                if _switch_mode and step >= _switch_step:
+                    _embedding_mode = _switch_mode
+                    if _switch_template is not None:
+                        template = _switch_template
+                else:
+                    _embedding_mode = _initial_mode
+                    template = raw_template
                 try:
                     if _embedding_mode == "constant":
                         # Embed a fixed constant string (no Gemini needed)
@@ -1046,6 +1070,11 @@ def main():
                     help="(embed_arith mode) Path to .npy direction vector to add to embedding.")
     p.add_argument("--embed-arith-alpha", type=float, default=0.0,
                     help="(embed_arith mode) Scalar multiplier for direction vector.")
+    p.add_argument("--switch-mode", type=str, default=None,
+                    help="If set, after --switch-step env steps the embedding "
+                         "mode flips to this mode for the rest of each episode.")
+    p.add_argument("--switch-step", type=int, default=0,
+                    help="Env step at which to switch mode (only if --switch-mode set).")
     p.add_argument("--no-layernorm", action="store_true",
                     help="Use ActorCriticAug (no LayerNorm) instead of ActorCriticAugLN")
     p.add_argument("--arch-v2", action="store_true",
