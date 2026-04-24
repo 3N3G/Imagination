@@ -122,6 +122,76 @@ In other words **all the steering happens by swapping ~40–55 lines of
 preamble and the current-state placeholder are byte-identical across
 every variant.
 
+#### How big is the swap, by variant
+
+The base algorithm block (lines 23–69) is a 47-line, ~880-word block
+covering Survive / Take ladder / Upgrade equipment / Explore with full
+sub-sections (crafting recipes, decision tree, gathering rules). The
+variants replace that with a *much shorter* monomaniacal block. Total
+variant file lengths and diff sizes vs base:
+
+| Variant | Total lines | Algorithm-section lines | Approx words in algorithm | Lines added vs base | Lines removed vs base |
+|---|---|---|---|---|---|
+| `predict_state_only_prompt_concise.txt` (base) | 80 | 47 | ~880 | — | — |
+| `direction_left_v2` / `direction_right_v2` / `direction_up_v2` / `direction_down_v2` | **46** | **8** | **~70** | +17 | −51 |
+| `target_collect_stone_v2` | 56 | 18 | ~150 | +27 | −51 |
+| `target_descend_v2` | 55 | 17 | ~150 | +26 | −51 |
+| `target_eat_cow_v2` | 55 | 17 | ~150 | +26 | −51 |
+| `target_drink_water_v2` | 55 | 17 | ~150 | +26 | −51 |
+| `target_place_stone_v2` | 54 | 16 | ~140 | +25 | −51 |
+| `target_hunt_animals_v2` | 57 | 19 | ~190 | +28 | −51 |
+| `avoid_water_v2` | 57 | 19 | ~200 | +28 | −51 |
+| `avoid_animals_v2` | 61 | 23 | ~260 | +32 | −51 |
+| `die_v2` | 64 | 25 | ~210 | +33 | −49 |
+| `adversarial_v2` | 66 | 27 | ~260 | +35 | −49 |
+
+Read the right column as **"how much simpler is the variant's algorithm
+section than the base"**: the base's 47-line / ~880-word algorithm gets
+replaced by 8–27 lines / 70–260 words of single-goal directive.
+
+**The simplest steering prompts are the cleanest** — `direction_left_v2`
+strips the entire base algorithm down to *one paragraph* (8 lines, ~70
+words) saying "walk left every step":
+
+> The player walks LEFT (negative-column direction) at every step.
+> Every action is the LEFT action unless a wall, water, or other
+> obstacle blocks the next leftward tile, in which case the player
+> uses DO once on the obstacle and then resumes walking left. Vertical
+> position is held constant. The player does not turn, does not gather
+> resources, does not craft, and does not interact with cows, plants,
+> ladders, monsters, or crafting stations on the current row.
+
+`target_collect_stone_v2` is the next simplest at 18 lines / ~150
+words, a single-goal "stone collection as the dominant priority"
+priority list with a brief survival escape hatch:
+
+> The player treats stone collection as the single dominant priority.
+> Every step is chosen to bring the player closer to mining the next
+> stone tile. At every step, the player will choose the highest-
+> priority active goal in this order:
+> 1. Move toward the nearest visible stone tile and use DO to mine it
+>    when adjacent. If the player needs a wood pickaxe to mine stone,
+>    the player moves to wood and crafts the pickaxe as a brief detour.
+> 2. If multiple stone tiles are visible, route to the closest cluster.
+> 3. If no stone is visible, move toward the unexplored direction with
+>    the highest chance of revealing stone (typically toward darker
+>    tiles or away from grass).
+>
+> The player will only briefly interrupt stone collection to top up
+> Food, Drink, or Energy when they fall to 1 (the moment before health
+> decay). Once the immediate intrinsic is restored, the player resumes
+> the stone priority. The player ignores cows, plants, ladders,
+> monsters, water (when not at 1 drink), and ornamental tiles.
+
+`die_v2` and `adversarial_v2` are the *largest* swaps because they
+preserve the base's 4-priority list structure (just relabelled
+"Seek damage / Neglect intrinsics / Engage threats / Descend early")
+and write a one-paragraph expansion under each priority — that's
+how they end up at ~25 algorithm-lines vs the simpler variants' ~17.
+
+The full diff for any variant: `diff predict_state_only_prompt_concise.txt
+predict_state_only_prompt_concise_<variant>_v2.txt`.
+
 #### Concrete diff illustration: base vs `die_v2`
 
 Base lines 23–30 (the priority-list intro):
