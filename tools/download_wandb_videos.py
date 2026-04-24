@@ -17,7 +17,7 @@ ENTITY_PROJECT = "iris-sobolmark/craftax-offline-awr"
 
 TARGETS = [
     ("w21fwecj", 50),
-    ("w21fwecj", 48),
+    ("6phz27zr", 48),
     ("y09770mm", 45),
     ("y09770mm", 39),
 ]
