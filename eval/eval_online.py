@@ -143,6 +143,10 @@ _V2_TEMPLATES = {
         "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_target_place_stone_v2.txt",
         "thinking": _TEMPLATE_DIR / "predict_state_only_prompt_concise_target_place_stone_v2.txt",
     },
+    "target_hunt_animals_v2": {
+        "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_target_hunt_animals_v2.txt",
+        "thinking": _TEMPLATE_DIR / "predict_only_thinking_prompt_target_hunt_animals_v2.txt",
+    },
     # Pure direction steering
     "direction_left_v2": {
         "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_direction_left_v2.txt",
@@ -1058,6 +1062,7 @@ def main():
                              "target_collect_stone_v2", "target_descend_v2",
                              "target_eat_cow_v2", "target_drink_water_v2",
                              "target_place_stone_v2",
+                             "target_hunt_animals_v2",
                              "direction_left_v2", "direction_right_v2",
                              "direction_up_v2", "direction_down_v2",
                              "embed_arith"],

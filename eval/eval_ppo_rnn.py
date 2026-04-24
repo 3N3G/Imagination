@@ -247,6 +247,17 @@ def run_eval(args):
                     ep_log[f"actions/{aname}"] = int(ep_action_counts[ai])
             wandb.log(ep_log, step=global_step)
 
+            video_path = ep_dir / "gameplay.mp4"
+            if video_path.exists():
+                try:
+                    wandb.log({
+                        f"video/episode_{ep+1:02d}": wandb.Video(
+                            str(video_path), fps=15, format="mp4",
+                        ),
+                    }, step=global_step)
+                except Exception as e:
+                    print(f"  wandb video upload failed: {e}")
+
     # Summary
     print(f"\n{'='*60}\nEVALUATION SUMMARY\n{'='*60}")
     returns = [r["return"] for r in all_results]

@@ -1,0 +1,56 @@
+You are forecasting a plausible future for a Craftax state.
+
+Craftax overview:
+Craftax is a game about exploring dungeons, mining, crafting and fighting enemies.
+
+Use these game rules:
+1) Coordinates are (Row, Column), centered on the player at (0,0).
+   - Negative Row = UP, Positive Row = DOWN.
+   - Negative Column = LEFT, Positive Column = RIGHT.
+2) Intrinsics: Health, Food, Drink, Energy, Mana. All out of 9.
+   - Food/Drink/Energy naturally decay.
+   - If Food/Drink/Energy reaches 0, Health will decay.
+   - If Food/Drink/Energy are maintained, Health can recover.
+3) Floor progression uses ladders.
+   - Descending requires reaching the ladder on the current floor.
+   - On non-overworld floors, the ladder is generally closed until enough mobs are killed.
+4) Actions: NOOP, LEFT, RIGHT, UP, DOWN, DO (interact/attack/mine/drink/eat),
+   SLEEP, PLACE_STONE, PLACE_TABLE, PLACE_FURNACE, PLACE_PLANT,
+   MAKE_{WOOD,STONE,IRON,DIAMOND}_{PICKAXE,SWORD}, REST, DESCEND, ASCEND,
+   MAKE_ARROW, SHOOT_ARROW, CAST_FIREBALL, CAST_ICEBALL, PLACE_TORCH,
+   DRINK_POTION_*, READ_BOOK, ENCHANT_*, LEVEL_UP_*.
+
+Here is the algorithm the player will play the game by:
+The player treats ALL visible animals (cows and plants) as immediate hunt
+targets. The moment any animal is visible, the player redirects to attack
+or harvest it. At every step, the player will choose the highest-priority
+active goal in this order:
+1. If any cow is visible, move directly toward the nearest cow and use DO
+   to attack it repeatedly until it drops meat. Step onto the meat and
+   use DO to eat.
+2. If any plant with fruit is visible (not a sapling), move directly toward
+   it and use DO to harvest.
+3. If no animals are visible, move toward the unexplored direction most
+   likely to reveal grassland or plant tiles (typically toward open green
+   tiles).
+
+After each animal is eaten, the player immediately searches for the next
+visible animal and repeats. The player will briefly interrupt hunting
+only to top up Drink or Energy when they fall to 1. The player ignores
+stones, ladders, crafting stations, and ornamental tiles. Wood is gathered
+only if needed to craft a wood sword for more efficient hunting.
+
+Predict at a high level what the next five steps for the player will look like, given that they are following the algorithm. Do not forecast beyond five time steps! In particular, the player can move at most five tiles during these five steps.
+
+Think privately about the current state and the algorithm priorities, then output ONLY a single "Prediction:" line. Do not include any other sections (no "State Understanding", no bullet lists, no reasoning trace). Use relative directions (up, down, left, right, up-left, etc.) and qualitative distances (adjacent, nearby, a few tiles, far) — do NOT reference specific numerical (row, column) coordinates. Keep the prediction to 1–2 positive, direction-stating sentences. Do not use "instead of", "rather than", "avoid", "away from", "refuse", or any other negation — just state the direction and target.
+
+Example outputs:
+Prediction: Chase the adjacent cow to the left and attack it with DO until it drops meat.
+Prediction: Move up-right toward the nearest cow a few tiles away and attack it.
+Prediction: Harvest the fruit-bearing plant directly above with DO.
+Prediction: Attack the adjacent cow then move right toward the next visible cow.
+
+Now, predict the future of the following state.
+
+Current state:
+{current_state_filtered}
