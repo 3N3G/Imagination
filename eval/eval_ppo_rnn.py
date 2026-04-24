@@ -26,6 +26,11 @@ try:
 except ImportError:
     wandb = None
 
+try:
+    import cv2
+except ImportError:
+    cv2 = None
+
 os.environ.setdefault("XLA_PYTHON_CLIENT_PREALLOCATE", "false")
 os.environ.setdefault("JAX_PLATFORM_NAME", "cpu")
 os.environ.setdefault("OMP_NUM_THREADS", "1")
@@ -36,6 +41,47 @@ import torch
 
 from models.ppo_rnn_torch import ActorCriticRNNTorch, load_from_orbax
 from pipeline.config import ACTION_NAMES
+
+
+def _render_frame(env_state) -> np.ndarray:
+    from craftax.craftax.renderer import render_craftax_pixels
+    pixels = render_craftax_pixels(env_state, block_pixel_size=16, do_night_noise=False)
+    return np.array(pixels, dtype=np.uint8)
+
+
+def _make_video_frame(game_frame, values, rewards, step, action_name):
+    """Simpler composition for PPO baselines — game + value graph + action name bar."""
+    if cv2 is None:
+        return game_frame
+    target_w = 600
+    h, w = game_frame.shape[:2]
+    scale = target_w / w
+    target_h = int(h * scale)
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    graph_h = 50
+    footer_h = graph_h + 60
+    canvas = np.zeros((target_h + footer_h, target_w, 3), dtype=np.uint8)
+    resized = cv2.resize(game_frame, (target_w, target_h), interpolation=cv2.INTER_NEAREST)
+    canvas[:target_h, :target_w] = resized
+    y0 = target_h + 10
+    # value-over-time graph
+    if values:
+        vs = np.array(values, dtype=np.float32)
+        lo, hi = float(vs.min()), float(vs.max())
+        if hi - lo < 1e-6: hi = lo + 1.0
+        n = min(len(vs), target_w - 20)
+        xs = np.linspace(0, len(vs) - 1, n).astype(int)
+        ys = y0 + graph_h - ((vs[xs] - lo) / (hi - lo) * graph_h).astype(int)
+        for i in range(n - 1):
+            cv2.line(canvas, (10 + int(i * (target_w - 20) / max(n - 1, 1)), int(ys[i])),
+                     (10 + int((i + 1) * (target_w - 20) / max(n - 1, 1)), int(ys[i + 1])),
+                     (120, 200, 120), 1)
+    # Text footer: step, return, action
+    total_ret = float(np.sum(rewards)) if rewards else 0.0
+    cur_v = values[-1] if values else 0.0
+    cv2.putText(canvas, f"step={step}  return={total_ret:.1f}  value={cur_v:.2f}  action={action_name}",
+                (10, target_h + graph_h + 35), font, 0.5, (230, 230, 230), 1)
+    return canvas
 
 ACTION_DIM = 43
 OBS_DIM = 8268
@@ -93,6 +139,7 @@ def run_eval(args):
         ep_rewards = []; ep_values = []
         ep_achievements = {}
         ep_action_counts = np.zeros(ACTION_DIM, dtype=np.int32)
+        ep_frames = []
 
         while not done and step < 10000:
             obs_np = np.array(obs, dtype=np.float32)
@@ -128,6 +175,15 @@ def run_eval(args):
                            "step/action": action, "step/episode": ep + 1,
                            "step/ep_step": step}, step=global_step)
 
+            if args.save_video and cv2 is not None:
+                try:
+                    game_frame = _render_frame(env_state)
+                    aname = ACTION_NAMES[action] if action < len(ACTION_NAMES) else str(action)
+                    frame = _make_video_frame(game_frame, ep_values, ep_rewards, step, aname)
+                    ep_frames.append(frame)
+                except Exception:
+                    pass
+
             step += 1
             global_step += 1
             if step % 500 == 0:
@@ -148,6 +204,37 @@ def run_eval(args):
         ep_dir.mkdir(exist_ok=True)
         with open(ep_dir / "summary.json", "w") as f:
             json.dump(result, f, indent=2)
+
+        if args.save_video and cv2 is not None and ep_frames:
+            video_path = ep_dir / "gameplay.mp4"
+            max_h = max(f.shape[0] for f in ep_frames)
+            w = ep_frames[0].shape[1]
+            fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+            writer = cv2.VideoWriter(str(video_path), fourcc, 15.0, (w, max_h))
+            for f_ in ep_frames:
+                if f_.shape[0] < max_h:
+                    pad = np.zeros((max_h - f_.shape[0], w, 3), dtype=np.uint8)
+                    f_ = np.vstack([f_, pad])
+                writer.write(cv2.cvtColor(f_, cv2.COLOR_RGB2BGR))
+            writer.release()
+            # Re-encode to H.264 for browser compatibility
+            import subprocess, shutil
+            if shutil.which("ffmpeg"):
+                h264_path = ep_dir / "gameplay_h264.mp4"
+                ret = subprocess.run(
+                    ["ffmpeg", "-y", "-i", str(video_path),
+                     "-c:v", "libx264", "-preset", "fast", "-crf", "23",
+                     "-vf", "pad=ceil(iw/2)*2:ceil(ih/2)*2",
+                     "-pix_fmt", "yuv420p", str(h264_path)],
+                    capture_output=True, timeout=120,
+                )
+                if ret.returncode == 0 and h264_path.exists():
+                    h264_path.rename(video_path)
+                    print(f"  Video saved (H.264): {video_path}")
+                else:
+                    print(f"  Video saved (mp4v fallback): {video_path}")
+            else:
+                print(f"  Video saved (mp4v): {video_path}")
 
         if use_wandb:
             ep_log = {"episode/return": ep_return, "episode/length": step,
@@ -200,6 +287,9 @@ def main():
                    default="cuda" if torch.cuda.is_available() else "cpu")
     p.add_argument("--no-wandb", action="store_true")
     p.add_argument("--wandb-name", type=str, default=None)
+    p.add_argument("--save-video", action="store_true", default=True,
+                   help="Save gameplay.mp4 per episode (default on).")
+    p.add_argument("--no-video", dest="save_video", action="store_false")
     run_eval(p.parse_args())
 
 
