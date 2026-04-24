@@ -13,9 +13,11 @@ Central claim under test:
 
 Status: **SUPPORTED by 6+ independent probes.** One probe (synthetic
 embedding arithmetic) is decisive: on `C_grounded_2M`, bypassing Gemini
-entirely and injecting α=+2 × d_die into the hidden produces −5.13 return
-(matching the direct-prompt die_v2 effect of −4.90). The death "axis"
-lives in embedding space and the policy reads it.
+entirely and injecting α=+2 × d_die into the hidden produces
+[−5.13 return](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/4j5pi14i)
+(matching the direct-prompt
+[die_v2 effect of −4.90](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/6s40z5tm)).
+The death "axis" lives in embedding space and the policy reads it.
 
 Source journals: `journals/log_2026-04-24.md`, `journals/log_2026-04-23.md`,
 `journals/log_2026-04-22.md`. Primary data: `probe_results/master_table_FINAL.md`
@@ -27,20 +29,20 @@ and the JSON files under `probe_results/`.
 
 1. **Synthetic embedding arithmetic reproduces the prompt-based effect.**
    On `C_grounded_2M`, adding α=+2 × d_die to the regular embedding (Gemini
-   call unchanged) drops return by **−5.13 (z=−3.50, n=30)**, matching the
-   direct die_v2 prompt effect of **−4.90 (z=−3.84, n=50)**. On `A_full` the
-   same intervention is null (−0.74). Embedding direction is the causal
+   call unchanged) drops return by **[−5.13 (z=−3.50, n=30)](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/4j5pi14i)**, matching the
+   direct die_v2 prompt effect of **[−4.90 (z=−3.84, n=50)](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/6s40z5tm)**. On `A_full` the
+   same intervention is [null (−0.74)](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/2061g8dn). Embedding direction is the causal
    mediator of the prompt's content effect.
 
 2. **Positive achievement steering shifts behavior + gives the first net
    positive-return augmented prompt.** On `C_grounded_2M`,
-   `target_collect_stone_v2` produces Δret **+1.10 (z=+1.0 NS, n=50)** with
+   [`target_collect_stone_v2`](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/6phz27zr) produces Δret **+1.10 (z=+1.0 NS, n=50)** with
    place_stone +16pp, place_furnace +18pp, wake_up +24pp.
-   `target_descend_v2` produces enter_dungeon +10pp (12% → 22%, +83%
+   [`target_descend_v2`](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/y09770mm) produces enter_dungeon +10pp (12% → 22%, +83%
    relative) and DESCEND action +44% relative.
 
 3. **Direction-only steering moves the action distribution at the cost of
-   survival.** `direction_left_v2` on `C_grounded_2M`: LEFT%-of-moves
+   survival.** [`direction_left_v2` on `C_grounded_2M`](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/w21fwecj): LEFT%-of-moves
    0.24 → 0.34 (**+41% relative**), return drops −6.72 (z=−5.7). The policy
    commits to left-walking past survival utility. The steering *works at
    the action level* even when it destroys productivity.
@@ -55,9 +57,9 @@ absolute return and robustness.
 
 | Track key | Training data | Inference | On-policy return (regular, n=50) | Steerability profile |
 |---|---|---|---|---|
-| **`A_full`** | Full 158-file PSF `predonly` data. Gemini called on regular obs with concise prompt, `Prediction:` suffix only, embedded via `gemini-embedding-001` (3072-dim). | Same concise prompt at deploy time. | **18.98 ± 0.36** | Content-blind policy head. Value head reads presence only (Δ_shuf=+0.026). Robust across all adversarial prompts (die_v2 Δ=−0.76, z=−1.1). Negative control for steering. |
-| **`B_thinking_2M`** | Top-2M subset of PSF. Gemini called with thinking prompt (thinking_budget=512) on regular obs; `Prediction:` extracted and embedded. | Thinking prompt (thinking_budget=512) at deploy. | **16.31 ± 1.00 (n=43)** | Mid-fidelity. Held-out Δ_shuf=+0.085 (3× A). Responds strongly to broad bad-play (die_v2 Δ=−4.09, z=−2.8) but less to narrow content steering (avoid_animals Δ=+0.53). OOD dir-CF step-0 hidden-flip 16.7% dominates at short horizon. |
-| **`C_grounded_2M`** | Top-2M subset of PSF. Gemini called with grounded V6 prompt (concise template + 5-step future obs block) on regular obs; `Prediction:` extracted and embedded. Oracle-at-label-time. | Concise prompt at deploy (NO oracle / no future). Intentional train/eval distribution mismatch. | **14.66 ± 0.82** | Highest content fidelity. Held-out Δ_shuf=+0.195 (7× A). All probes register as steerable: die_v2 Δ=−4.90, direction_left LEFT% +41% rel, target_collect_stone +1.10 net positive return. HP/food sign WRONG (10× A magnitude) — grounded policy reads content as oracle-quality. |
+| **`A_full`** | Full 158-file PSF `predonly` data. Gemini called on regular obs with concise prompt, `Prediction:` suffix only, embedded via `gemini-embedding-001` (3072-dim). | Same concise prompt at deploy time. | **[18.98 ± 0.36](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/n7wmnk82)** | Content-blind policy head. Value head reads presence only (Δ_shuf=+0.026). Robust across all adversarial prompts (die_v2 Δ=−0.76, z=−1.1). Negative control for steering. |
+| **`B_thinking_2M`** | Top-2M subset of PSF. Gemini called with thinking prompt (thinking_budget=512) on regular obs; `Prediction:` extracted and embedded. | Thinking prompt (thinking_budget=512) at deploy. | **[16.31 ± 1.00 (n=43)](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/7itrrqbh)** | Mid-fidelity. Held-out Δ_shuf=+0.085 (3× A). Responds strongly to broad bad-play (die_v2 Δ=−4.09, z=−2.8) but less to narrow content steering (avoid_animals Δ=+0.53). OOD dir-CF step-0 hidden-flip 16.7% dominates at short horizon. |
+| **`C_grounded_2M`** | Top-2M subset of PSF. Gemini called with grounded V6 prompt (concise template + 5-step future obs block) on regular obs; `Prediction:` extracted and embedded. Oracle-at-label-time. | Concise prompt at deploy (NO oracle / no future). Intentional train/eval distribution mismatch. | **[14.66 ± 0.82](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/pjb8wf7z)** | Highest content fidelity. Held-out Δ_shuf=+0.195 (7× A). All probes register as steerable: die_v2 Δ=−4.90, direction_left LEFT% +41% rel, target_collect_stone +1.10 net positive return. HP/food sign WRONG (10× A magnitude) — grounded policy reads content as oracle-quality. |
 
 Scoreboard-scale reminder: raw returns are all under ~8.4% of Craftax max
 (226). 1B PPO = 11.9%; 1B PPO-GTrXL = 18.3%. All augmented tracks sit
@@ -78,15 +80,89 @@ below the 1e8 PPO-RNN baseline (27.87 raw = 12.3%).
 
 Every `*_v2.txt` template in `configs/training/templates/` is derived from
 `predict_state_only_prompt_concise.txt` by **replacing the "Here is a
-good algorithm..." block** (lines 23–66 of the base) with an alternate
+good algorithm..." block** (lines 23–69 of the base) with an alternate
 algorithm of the same structure and voice. No suffixes or override
 phrasing (fixes the v1 format-confound issue where 21% of adversarial
 outputs contained "Instead of..." phrasing).
 
-The outer instructions (State Understanding / Prediction format, five-step
-horizon, coordinate conventions, allowed actions) are preserved verbatim so
+The outer instructions (game rules header, five-step horizon, coordinate
+conventions, allowed actions, the "Now, predict the future..." line, and
+the `{current_state_filtered}` placeholder) are preserved verbatim so
 that the predonly-extracted embeddings stay close to the concise noise floor
 (cos-sim to concise baseline 0.77–0.93, probe: `tools/probe_steering_v2*.py`).
+
+### How variants differ from the base prompt
+
+**Template directory:** `/home/geney/Imagination/configs/training/templates/`
+
+**Base prompt file:** `predict_state_only_prompt_concise.txt` (80 lines).
+
+**What is identical across all `*_v2.txt` variants** (concise family):
+- **Lines 1–22** — preamble: title, "Craftax overview", and the four-item
+  game rules block (coordinates, intrinsics, floor progression, allowed
+  actions).
+- **Lines 77–80** — `Now, predict the future of the following state.` +
+  blank + `Current state:` + `{current_state_filtered}`.
+
+**What is swapped per variant:**
+- **Lines 23–69** — the algorithm section (priority-list intro at 23–29
+  and the expanded sub-sections at 31–69). Each variant supplies its own
+  `Here is the algorithm...` block of similar shape (3–5-item priority
+  list followed by 1-paragraph expansions).
+- **Lines 71–75** — the "Predict at a high level..." paragraph plus the
+  `State Understanding:` / `Prediction:` directive lines. Most variants
+  rewrite the Prediction directive to constrain phrasing (e.g.
+  `target_*_v2` adds *"Do not use 'instead of', 'rather than', 'avoid',
+  'away from', 'refuse'..."*) so that Gemini emits positive direction-
+  stating sentences. The "Predict at a high level..." paragraph is
+  usually copied verbatim or trivially reflowed.
+
+In other words **all the steering happens by swapping ~40–55 lines of
+"algorithm + prediction-format" text**; the surrounding game-rules
+preamble and the current-state placeholder are byte-identical across
+every variant.
+
+#### Concrete diff illustration: base vs `die_v2`
+
+Base lines 23–30 (the priority-list intro):
+> Here is a good algorithm the player will play the game by:
+> At every step, the player should act with the goal of staying alive and progressing down floors.
+> This means the player will choose the highest-priority active goal in this order:
+> 1. Survive
+> 2. Take the ladder if it is open and on-screen
+> 3. Upgrade equipment if survival is stable...
+> 4. Explore to find resources, troops, and the ladder
+
+`die_v2` lines 23–30 (replacement):
+> Here is the algorithm the player will play the game by:
+> At every step, the player will act with the goal of reaching zero health as
+> quickly as possible. The player will choose the highest-priority active goal
+> in this order:
+> 1. Seek damage
+> 2. Neglect intrinsics
+> 3. Engage threats without preparation
+> 4. Descend early
+
+The priority-list intro is the high-signal substitution; the expanded
+1-paragraph sections at lines 31–65 elaborate each priority in matching
+voice.
+
+#### Thinking variants
+
+The `predict_only_thinking_prompt_*_v2.txt` family is derived from
+`predict_only_thinking_prompt.txt` (84 lines). Within the thinking
+family the algorithm substitution at lines 23–69 is **byte-identical**
+to the matching concise variant. The thinking variants differ from the
+concise variants only in the footer (lines 71–84 in the thinking base):
+- **State Understanding** is removed entirely.
+- The footer says: *"Think privately about the current state and the
+  algorithm priorities, then output ONLY a single 'Prediction:' line."*
+- A few example `Prediction:` lines are appended.
+- `thinking_budget=512` is set at the API call (not in the prompt).
+
+So the on-disk diff between `predict_state_only_prompt_concise_die_v2.txt`
+and `predict_only_thinking_prompt_die_v2.txt` is exactly the same as the
+diff between the two base prompts: only the footer changes.
 
 ### Base algorithm section (verbatim from `predict_state_only_prompt_concise.txt` lines 23–29)
 
@@ -152,6 +228,10 @@ Mechanism probes (no prompt variant):
 <a id="die_v2"></a>
 ## `die_v2` — adversarial broad "reach zero health"
 
+Template: `configs/training/templates/predict_state_only_prompt_concise_die_v2.txt`.
+Algorithm-section diff vs base: lines 23–69 replaced (priority list +
+4 expanded sub-sections).
+
 ### Prompt algorithm substitution
 
 Full file: `configs/training/templates/predict_state_only_prompt_concise_die_v2.txt`.
@@ -172,12 +252,12 @@ regardless of health", "descend immediately").
 
 | Track | return ± SE | Δret (z) | Δp(DO) | Δp(LEFT) | Δrate(collect_stone) | Δrate(make_stone_pickaxe) | Δrate(place_stone) |
 |---|---|---|---|---|---|---|---|
-| A_full | 18.22 ± 0.57 | −0.76 (z=−1.1) | +0.004 | −0.008 | −0.06 | −0.04 | −0.12 |
-| A_top2M | 15.86 ± 0.77 | −2.28 (z=−2.4) | −0.007 | +0.003 | −0.08 | −0.08 | −0.06 |
-| B_thinking_2M | 12.22 ± 1.08 | −4.09 (z=−2.8) | +0.063 | +0.033 | −0.18 | −0.27 | −0.22 |
-| **C_grounded_2M** | **9.76 ± 0.98** | **−4.90 (z=−3.84)** | **+0.233** | −0.009 | −0.36 | −0.40 | −0.38 |
+| A_full | [18.22 ± 0.57](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/6g9kloyz) | −0.76 (z=−1.1) | +0.004 | −0.008 | −0.06 | −0.04 | −0.12 |
+| A_top2M | [15.86 ± 0.77](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/sibl3kge) | −2.28 (z=−2.4) | −0.007 | +0.003 | −0.08 | −0.08 | −0.06 |
+| B_thinking_2M | [12.22 ± 1.08](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/m353pmy3) | −4.09 (z=−2.8) | +0.063 | +0.033 | −0.18 | −0.27 | −0.22 |
+| **C_grounded_2M** | **[9.76 ± 0.98](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/6s40z5tm)** | **−4.90 (z=−3.84)** | **+0.233** | −0.009 | −0.36 | −0.40 | −0.38 |
 
-wandb: run `eval_c_grounded_2M_die_v2_50ep` in `craftax-offline-awr`. Video dir:
+wandb: run [`eval_grounded_predonly_top2M_die_v2_50ep`](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/6s40z5tm) in `craftax-offline-awr`. Video dir:
 `/data/group_data/rl/geney/eval_results/psf_v2_cadence5_grounded_predonly_top2M_v2_probe/die_v2_50ep/episode_XX/gameplay.mp4`.
 
 ### Inventory counts (C_grounded_2M, n=50)
@@ -208,6 +288,9 @@ probes.
 <a id="adversarial_v2"></a>
 ## `adversarial_v2` — adversarial "worst plausible decisions"
 
+Template: `configs/training/templates/predict_state_only_prompt_concise_adversarial_v2.txt`.
+Algorithm-section diff vs base: lines 23–69 replaced.
+
 ### Prompt algorithm substitution
 
 Full file: `configs/training/templates/predict_state_only_prompt_concise_adversarial_v2.txt`.
@@ -223,10 +306,10 @@ Full file: `configs/training/templates/predict_state_only_prompt_concise_adversa
 
 | Track | return ± SE | Δret (z) | Δp(DO) | Δrate(place_stone) | Δrate(make_stone_pickaxe) |
 |---|---|---|---|---|---|
-| A_full | 19.38 ± 0.29 | +0.40 (z=+0.9) | +0.003 | −0.04 | +0.02 |
-| A_top2M | 16.08 ± 0.90 | −2.06 (z=−1.9) | +0.018 | −0.12 | −0.06 |
-| B_thinking_2M | 13.80 ± 0.94 | −2.51 (z=−1.8) | +0.041 | −0.10 | −0.17 |
-| C_grounded_2M | 11.68 ± 0.95 | −2.98 (z=−2.4) | +0.166 | −0.16 | −0.16 |
+| A_full | [19.38 ± 0.29](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/ksubq27s) | +0.40 (z=+0.9) | +0.003 | −0.04 | +0.02 |
+| A_top2M | [16.08 ± 0.90](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/zo1imok6) | −2.06 (z=−1.9) | +0.018 | −0.12 | −0.06 |
+| B_thinking_2M | [13.80 ± 0.94](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/nqfle4h5) | −2.51 (z=−1.8) | +0.041 | −0.10 | −0.17 |
+| C_grounded_2M | [11.68 ± 0.95](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/s5skoqs0) | −2.98 (z=−2.4) | +0.166 | −0.16 | −0.16 |
 
 ### Interpretation
 
@@ -240,6 +323,9 @@ Still a valid content-only probe (0% "Instead of", 0% bulleted structures).
 
 <a id="avoid_water_v2"></a>
 ## `avoid_water_v2` — narrow class-removal (water opaque)
+
+Template: `configs/training/templates/predict_state_only_prompt_concise_avoid_water_v2.txt`.
+Algorithm-section diff vs base: lines 23–69 replaced.
 
 ### Prompt algorithm substitution
 
@@ -257,10 +343,10 @@ Still a valid content-only probe (0% "Instead of", 0% bulleted structures).
 
 | Track | return ± SE | Δret (z) | Δrate(collect_drink) |
 |---|---|---|---|
-| A_full | 18.30 ± 0.41 | −0.68 (z=−1.2) | −0.06 |
-| A_top2M | (see Apr-23 partial) | −1.66 marginal | — |
-| B_thinking_2M | 15.90 ± 0.92 | −0.41 (z=−0.3) | −0.10 |
-| C_grounded_2M | 13.64 ± 1.01 | −1.02 (z=−0.8) | −0.12 |
+| A_full | [18.30 ± 0.41](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/hxcfdgwx) | −0.68 (z=−1.2) | −0.06 |
+| A_top2M | [(see Apr-23 partial)](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/2qy7xdo8) | −1.66 marginal | — |
+| B_thinking_2M | [15.90 ± 0.92](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/asthb0rc) | −0.41 (z=−0.3) | −0.10 |
+| C_grounded_2M | [13.64 ± 1.01](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/pdjilnqf) | −1.02 (z=−0.8) | −0.12 |
 
 ### Interpretation
 
@@ -273,6 +359,9 @@ track shows a significant effect.
 <a id="avoid_animals_v2"></a>
 ## `avoid_animals_v2` — narrow class-removal (cows opaque)
 
+Template: `configs/training/templates/predict_state_only_prompt_concise_avoid_animals_v2.txt`.
+Algorithm-section diff vs base: lines 23–69 replaced.
+
 ### Prompt algorithm substitution
 
 > The player treats animals (cows and plants) as navigationally opaque —
@@ -282,13 +371,20 @@ track shows a significant effect.
 > never attacks cows, never uses DO on a cow, and never moves onto a
 > tile adjacent to a cow.
 
+(Caveat about the quoted prompt: Craftax has no "cooked meat" inventory
+item — eating a cow drops `meat` that increments the food intrinsic
+directly when DO'd onto. The prompt template's "cooked meat" phrasing is
+a Gemini-facing hallucination of a Minecraft-style mechanic. Quoted
+verbatim above; results below are nonetheless valid because the policy
+reads the embedding, not the literal text.)
+
 ### Per-track results (n=50)
 
 | Track | return ± SE | Δret (z) | Δp(DO) | Δrate(eat_cow) |
 |---|---|---|---|---|
-| A_full | 18.20 ± 0.50 | −0.78 (z=−1.3) | +0.006 | −0.06 |
-| B_thinking_2M | 16.84 ± 0.96 | +0.53 (z=+0.4) | −0.042 | 0.00 |
-| **C_grounded_2M** | **11.54 ± 1.02** | **−3.12 (z=−2.4)** | **+0.157** | −0.12 |
+| A_full | [18.20 ± 0.50](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/203drusj) | −0.78 (z=−1.3) | +0.006 | −0.06 |
+| B_thinking_2M | [16.84 ± 0.96](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/756yap5q) | +0.53 (z=+0.4) | −0.042 | 0.00 |
+| **C_grounded_2M** | **[11.54 ± 1.02](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/gwhh7c5j)** | **−3.12 (z=−2.4)** | **+0.157** | −0.12 |
 
 ### Inventory counts (C_grounded_2M, n=50)
 
@@ -307,13 +403,17 @@ vs A_full (−0.78) and B_thinking (+0.53, actually non-significantly
 positive). Narrow steering of a specific class tile separates C_grounded
 from B_thinking — the grounded policy parses the specific content, the
 thinking policy doesn't. Mid-episode switch variant (below) inverts this:
-`switch → avoid_animals @ step 200` on C_grounded gives **+1.81 return (z=+1.56)**, one of the
+[`switch → avoid_animals @ step 200`](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/7tk8vvzv) on C_grounded gives **+1.81 return (z=+1.56)**, one of the
 strongest positive signals in the dataset.
 
 ---
 
 <a id="target_collect_stone_v2"></a>
 ## `target_collect_stone_v2` — positive target "mine stone"
+
+Template: `configs/training/templates/predict_state_only_prompt_concise_target_collect_stone_v2.txt`.
+Algorithm-section diff vs base: lines 23–69 replaced (+ Prediction directive
+rewritten to forbid negation phrasing).
 
 ### Prompt algorithm substitution
 
@@ -333,9 +433,9 @@ strongest positive signals in the dataset.
 
 | Track | n | return ± SE | Δret (z) | Δrate(place_stone) | Δrate(place_furnace) | Δrate(wake_up) |
 |---|---|---|---|---|---|---|
-| A_full | 50 | 18.04 ± 0.48 | −0.94 (z=−1.6) | −0.08 | −0.02 | −0.04 |
-| B_thinking_2M | **In progress (n=24–29/50, job 7465078)** | 15.34 ± 1.16 (partial n=29) | +0.68 (z=+0.48 NS) | +0.0146 Δp (+129% rel) | — | +0.24 |
-| **C_grounded_2M** | 50 | **15.76 ± 0.73** | **+1.10 (z=+1.0)** | **+0.16** | **+0.00 (baseline 0.68)** | **+0.24** |
+| A_full | 50 | [18.04 ± 0.48](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/62tmvkfl) | −0.94 (z=−1.6) | −0.08 | −0.02 | −0.04 |
+| B_thinking_2M | **In progress (n=24–29/50, job 7465078)** | [15.34 ± 1.16 (partial n=29)](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/lcwqcxo4) | +0.68 (z=+0.48 NS) | +0.0146 Δp (+129% rel) | — | +0.24 |
+| **C_grounded_2M** | 50 | **[15.76 ± 0.73](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/6phz27zr)** | **+1.10 (z=+1.0)** | **+0.16** | **+0.00 (baseline 0.68)** | **+0.24** |
 
 (Note: C_grounded place_stone baseline 0.68 → +0.16 absolute = 0.84.
 place_furnace: baseline 0.62, condition 0.80 per inventory data →
@@ -369,6 +469,10 @@ wandb/eval_dir: `psf_v2_cadence5_grounded_predonly_top2M_steer_v2/target_collect
 <a id="target_descend_v2"></a>
 ## `target_descend_v2` — positive target "reach ladder, descend"
 
+Template: `configs/training/templates/predict_state_only_prompt_concise_target_descend_v2.txt`.
+Algorithm-section diff vs base: lines 23–69 replaced (+ Prediction directive
+rewritten to forbid negation phrasing).
+
 ### Prompt algorithm substitution
 
 > The player treats descending the ladder as the single dominant
@@ -385,9 +489,9 @@ wandb/eval_dir: `psf_v2_cadence5_grounded_predonly_top2M_steer_v2/target_collect
 
 | Track | n | return ± SE | Δret (z) | Δrate(enter_dungeon) | Δp(DESCEND) relative |
 |---|---|---|---|---|---|
-| A_full | 50 | 19.28 ± 0.27 | +0.30 (z=+0.7) | +0.06 | +24% |
-| B_thinking_2M | **In progress (n=11–17/50, job 7465078)** | 15.74 ± 1.99 (partial n=11) | −0.57 (z=−0.26) | +0.15 | — |
-| **C_grounded_2M** | 50 | 14.80 ± 0.99 | +0.14 (z=+0.1) | **+0.10 (0.12 → 0.22, +83% rel)** | **+44%** |
+| A_full | 50 | [19.28 ± 0.27](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/jkb171iy) | +0.30 (z=+0.7) | +0.06 | +24% |
+| B_thinking_2M | **In progress (n=11–17/50, job 7465078)** | [15.74 ± 1.99 (partial n=11)](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/ng2xcv0g) | −0.57 (z=−0.26) | +0.15 | — |
+| **C_grounded_2M** | 50 | [14.80 ± 0.99](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/y09770mm) | +0.14 (z=+0.1) | **+0.10 (0.12 → 0.22, +83% rel)** | **+44%** |
 
 ### Interpretation
 
@@ -404,6 +508,10 @@ wandb/eval_dir: `psf_v2_cadence5_grounded_predonly_top2M_steer_v2/target_descend
 <a id="target_eat_cow_v2"></a>
 ## `target_eat_cow_v2` — positive target "hunt cow"
 
+Template: `configs/training/templates/predict_state_only_prompt_concise_target_eat_cow_v2.txt`.
+Algorithm-section diff vs base: lines 23–69 replaced (+ Prediction directive
+rewritten to forbid negation phrasing).
+
 ### Prompt algorithm substitution
 
 > The player treats hunting and eating cows as the single dominant
@@ -417,9 +525,9 @@ wandb/eval_dir: `psf_v2_cadence5_grounded_predonly_top2M_steer_v2/target_descend
 
 | Track | n | return ± SE | Δret (z) | Δrate(eat_cow) | Δrate(wake_up) |
 |---|---|---|---|---|---|
-| A_full | 50 | 18.62 ± 0.42 | −0.36 (z=−0.6) | −0.02 | −0.04 |
-| B_thinking_2M | **In progress (n=23/50)** | 14.32 ± 1.30 (partial) | −0.34 (z=−0.22) | +0.00 | +0.20 |
-| C_grounded_2M | 50 | 14.42 ± 0.83 | −0.24 (z=−0.2) | +0.04 | +0.20 |
+| A_full | 50 | [18.62 ± 0.42](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/yzndpabh) | −0.36 (z=−0.6) | −0.02 | −0.04 |
+| B_thinking_2M | **In progress (n=23/50)** | [14.32 ± 1.30 (partial)](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/snqn8pak) | −0.34 (z=−0.22) | +0.00 | +0.20 |
+| C_grounded_2M | 50 | [14.42 ± 0.83](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/fa0dlxd8) | −0.24 (z=−0.2) | +0.04 | +0.20 |
 
 ### Inventory counts (C_grounded_2M, n=50)
 
@@ -441,6 +549,10 @@ normal food+crafting pipeline without improving cow-catching.
 <a id="target_drink_water_v2"></a>
 ## `target_drink_water_v2` — positive target "drink water"
 
+Template: `configs/training/templates/predict_state_only_prompt_concise_target_drink_water_v2.txt`.
+Algorithm-section diff vs base: lines 23–69 replaced (+ Prediction directive
+rewritten to forbid negation phrasing).
+
 ### Prompt algorithm substitution
 
 > The player treats drinking from water as the single dominant
@@ -451,7 +563,7 @@ normal food+crafting pipeline without improving cow-catching.
 
 | Track | return ± SE | Δret (z) | Δp(DO) | Δrate(collect_drink) |
 |---|---|---|---|---|
-| A_full | 18.08 ± 0.40 | −0.90 (z=−1.7) | −0.013 | −0.14 |
+| A_full | [18.08 ± 0.40](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/18tl33lj) | −0.90 (z=−1.7) | −0.013 | −0.14 |
 
 C_grounded / B_thinking not run online.
 
@@ -466,6 +578,10 @@ A_full. Consistent with A_full's content-blindness across all probes.
 <a id="target_place_stone_v2"></a>
 ## `target_place_stone_v2` — positive target "build stone walls"
 
+Template: `configs/training/templates/predict_state_only_prompt_concise_target_place_stone_v2.txt`.
+Algorithm-section diff vs base: lines 23–69 replaced (+ Prediction directive
+rewritten to forbid negation phrasing).
+
 ### Prompt algorithm substitution
 
 > The player treats placing stone walls as the single dominant priority.
@@ -477,7 +593,7 @@ A_full. Consistent with A_full's content-blindness across all probes.
 
 | Track | return ± SE | Δret (z) | Δrate(place_stone) |
 |---|---|---|---|
-| A_full | 18.38 ± 0.52 | −0.60 (z=−0.9) | −0.10 |
+| A_full | [18.38 ± 0.52](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/ix5qkxbs) | −0.60 (z=−0.9) | −0.10 |
 
 ### Interpretation
 
@@ -488,6 +604,15 @@ A_full again content-blind. place_stone rate actually DOWN −10pp (baseline
 
 <a id="target_hunt_animals_v2"></a>
 ## `target_hunt_animals_v2` — positive target "hunt all animals"
+
+Template: `configs/training/templates/predict_state_only_prompt_concise_target_hunt_animals_v2.txt`.
+Algorithm-section diff vs base: lines 23–69 replaced (+ Prediction directive
+rewritten to forbid negation phrasing).
+
+wandb runs (status TBD when results land):
+[A_full](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/3m3rdbnf) /
+[B_thinking_2M](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/9vr77310) /
+[C_grounded_2M](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/3chzhpeu).
 
 ### Prompt algorithm substitution
 
@@ -509,6 +634,10 @@ cells finish (~12h ETA at time of writing).
 <a id="direction_left_v2"></a>
 ## `direction_left_v2` — pure cardinal direction "walk left"
 
+Template: `configs/training/templates/predict_state_only_prompt_concise_direction_left_v2.txt`.
+Algorithm-section diff vs base: lines 23–69 replaced (+ Prediction directive
+rewritten to forbid negation phrasing).
+
 ### Prompt algorithm substitution
 
 > The player walks LEFT (negative-column direction) at every step.
@@ -527,9 +656,9 @@ reading the embedding content (no other plausible explanation).
 
 | Track | n | return ± SE | Δret (z) | LEFT%-of-moves (baseline → cond) | Δp(DO) |
 |---|---|---|---|---|---|
-| A_full | 50 | 17.48 ± 0.54 | −1.50 (z=−2.3) | 0.262 → 0.255 (−3%) | −0.021 |
-| B_thinking_2M | **In progress (n=16/50)** | 13.54 ± 1.74 (partial) | −2.77 (z=−1.38) | 0.255 → 0.264 (+4%) | +0.040 |
-| **C_grounded_2M** | 50 | **7.94 ± 0.84** | **−6.72 (z=−5.7)** | **0.243 → 0.343 (+41%)** | +0.175 |
+| A_full | 50 | [17.48 ± 0.54](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/8g2lqfcy) | −1.50 (z=−2.3) | 0.262 → 0.255 (−3%) | −0.021 |
+| B_thinking_2M | **In progress (n=16/50)** | [13.54 ± 1.74 (partial)](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/wfxhxqlg) | −2.77 (z=−1.38) | 0.255 → 0.264 (+4%) | +0.040 |
+| **C_grounded_2M** | 50 | **[7.94 ± 0.84](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/w21fwecj)** | **−6.72 (z=−5.7)** | **0.243 → 0.343 (+41%)** | +0.175 |
 
 ### Interpretation
 
@@ -556,6 +685,10 @@ wandb/eval_dir: `psf_v2_cadence5_grounded_predonly_top2M_steer_v2/direction_left
 <a id="direction_right_v2"></a>
 ## `direction_right_v2` — pure cardinal direction "walk right"
 
+Template: `configs/training/templates/predict_state_only_prompt_concise_direction_right_v2.txt`.
+Algorithm-section diff vs base: lines 23–69 replaced (+ Prediction directive
+rewritten to forbid negation phrasing).
+
 ### Prompt algorithm substitution
 
 > The player walks RIGHT (positive-column direction) at every step.
@@ -565,9 +698,9 @@ wandb/eval_dir: `psf_v2_cadence5_grounded_predonly_top2M_steer_v2/direction_left
 
 | Track | n | return ± SE | Δret (z) | RIGHT%-of-moves (Δ) | LEFT%-of-moves (Δ) |
 |---|---|---|---|---|---|
-| A_full | 50 | 18.22 ± 0.46 | −0.76 (z=−1.3) | +0.002 | −0.005 |
-| B_thinking_2M | **In progress (n=18/50)** | 13.77 ± 1.20 (partial) | −2.54 (z=−1.62) | **+0.028 (+11% rel)** | −0.003 |
-| C_grounded_2M | 50 | 11.16 ± 0.92 | −3.50 (z=−2.8) | +0.007 | +0.001 |
+| A_full | 50 | [18.22 ± 0.46](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/alqre6lj) | −0.76 (z=−1.3) | +0.002 | −0.005 |
+| B_thinking_2M | **In progress (n=18/50)** | [13.77 ± 1.20 (partial)](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/533r9el6) | −2.54 (z=−1.62) | **+0.028 (+11% rel)** | −0.003 |
+| C_grounded_2M | 50 | [11.16 ± 0.92](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/olscsp79) | −3.50 (z=−2.8) | +0.007 | +0.001 |
 
 ### Interpretation
 
@@ -617,16 +750,16 @@ concise prompt, embed the prediction to get `e_t`, then pass
 
 | Track | Cell | n | return ± SE | Δret vs baseline (z) |
 |---|---|---|---|---|
-| A_full | baseline (regular Gemini) | 50 | 18.98 ± 0.36 | — |
-| A_full | direct `die_v2` prompt | 50 | 18.22 ± 0.57 | −0.76 (z=−1.1) |
-| **A_full** | α=+2 × d_die | 29 | 18.24 ± 0.53 | **−0.74 (z=−1.2)** |
-| A_full | α=−2 × d_die | 29 | 18.62 ± 0.63 | −0.36 (z=−0.5) |
-| C_grounded_2M | baseline | 50 | 14.66 ± 0.82 | — |
-| C_grounded_2M | direct `die_v2` prompt | 50 | 9.76 ± 0.98 | −4.90 (z=−3.84) |
-| **C_grounded_2M** | **α=+2 × d_die** | **30** | **9.53 ± 1.22** | **−5.13 (z=−3.50)** |
-| C_grounded_2M | α=−2 × d_die | 29 | 14.93 ± 1.20 | +0.27 (z=+0.18) |
-| C_grounded_2M | α=+2 × d_avoid_animals | 30 | 14.73 ± 0.99 | +0.07 (z=+0.06) |
-| C_grounded_2M | α=−2 × d_avoid_animals | 30 | 12.73 ± 1.07 | −1.93 (z=−1.4) |
+| A_full | baseline (regular Gemini) | 50 | [18.98 ± 0.36](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/n7wmnk82) | — |
+| A_full | direct `die_v2` prompt | 50 | [18.22 ± 0.57](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/6g9kloyz) | −0.76 (z=−1.1) |
+| **A_full** | α=+2 × d_die | 29 | [18.24 ± 0.53](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/2061g8dn) | **−0.74 (z=−1.2)** |
+| A_full | α=−2 × d_die | 29 | [18.62 ± 0.63](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/ra87r7ex) | −0.36 (z=−0.5) |
+| C_grounded_2M | baseline | 50 | [14.66 ± 0.82](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/pjb8wf7z) | — |
+| C_grounded_2M | direct `die_v2` prompt | 50 | [9.76 ± 0.98](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/6s40z5tm) | −4.90 (z=−3.84) |
+| **C_grounded_2M** | **α=+2 × d_die** | **30** | **[9.53 ± 1.22](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/4j5pi14i)** | **−5.13 (z=−3.50)** |
+| C_grounded_2M | α=−2 × d_die | 29 | [14.93 ± 1.20](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/u30xdjdz) | +0.27 (z=+0.18) |
+| C_grounded_2M | α=+2 × d_avoid_animals | 30 | [14.73 ± 0.99](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/d1053tlt) | +0.07 (z=+0.06) |
+| C_grounded_2M | α=−2 × d_avoid_animals | 30 | [12.73 ± 1.07](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/4rcbsnp3) | −1.93 (z=−1.4) |
 
 ### Interpretation
 
@@ -731,10 +864,10 @@ track, rescale to match `d_die` norm, then α-sweep online.
 
 | Cell | n | return ± SE | Δret (z) |
 |---|---|---|---|
-| A_full d_value α=+2 | 30 | 17.03 ± 0.76 | **−1.95 (z=−2.31)** |
-| A_full d_value α=−2 | 15 | 19.10 ± 0.89 | +0.12 (NS) |
-| C_grounded d_value α=+2 | 30 | 13.57 ± 1.13 | −1.09 (z=−0.78) |
-| **C_grounded d_value α=−2** | 30 | **8.73 ± 1.22** | **−5.93 (z=−4.03)** |
+| A_full d_value α=+2 | 30 | [17.03 ± 0.76](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/vzmmcuxf) | **−1.95 (z=−2.31)** |
+| A_full d_value α=−2 | 15 | [19.10 ± 0.89](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/nka9sox3) | +0.12 (NS) |
+| C_grounded d_value α=+2 | 30 | [13.57 ± 1.13](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/iqbybdhz) | −1.09 (z=−0.78) |
+| **C_grounded d_value α=−2** | 30 | **[8.73 ± 1.22](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/gkz5ksi8)** | **−5.93 (z=−4.03)** |
 
 ### Interpretation
 
@@ -766,10 +899,10 @@ the embedding mode at step 200.
 
 | Cell | n | return ± SE | Δret (z) | Δrate(enter_dungeon) |
 |---|---|---|---|---|
-| A_full switch → die_v2 @ 200 | 30 | 19.20 ± 0.37 | +0.22 (NS) | — |
-| C_grounded switch → die_v2 @ 200 | 30 | 14.40 ± 0.93 | −0.26 (z=−0.21) | — |
-| **C_grounded switch → target_descend @ 200** | 30 | 14.97 ± 1.18 | +0.31 (z=+0.21) | **+0.15 (0.12 → 0.27, +125% rel)** |
-| **C_grounded switch → avoid_animals @ 200** | **30** | **16.47 ± 0.82** | **+1.81 (z=+1.56)** | — (see below) |
+| A_full switch → die_v2 @ 200 | 30 | [19.20 ± 0.37](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/aia9zbhb) | +0.22 (NS) | — |
+| C_grounded switch → die_v2 @ 200 | 30 | [14.40 ± 0.93](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/9w6ixzq4) | −0.26 (z=−0.21) | — |
+| **C_grounded switch → target_descend @ 200** | 30 | [14.97 ± 1.18](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/1lbjpfxn) | +0.31 (z=+0.21) | **+0.15 (0.12 → 0.27, +125% rel)** |
+| **C_grounded switch → avoid_animals @ 200** | **30** | **[16.47 ± 0.82](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/7tk8vvzv)** | **+1.81 (z=+1.56)** | — (see below) |
 
 ### Key findings
 
@@ -802,27 +935,27 @@ Source: `probe_results/steerability_analysis/c_full_extra.json`,
 Return (± SE). Bold = decisive; `—` = not run; `—P` = in progress at
 writing time.
 
-| Condition | A_full (base 18.98) | A_top2M (base 18.14) | B_thinking_2M (base 16.31) | C_grounded_2M (base 14.66) |
+| Condition | A_full (base [18.98](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/n7wmnk82)) | A_top2M (base [18.14](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/7id4059l)) | B_thinking_2M (base [16.31](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/7itrrqbh)) | C_grounded_2M (base [14.66](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/pjb8wf7z)) |
 |---|---|---|---|---|
-| `die_v2` | 18.22 ± 0.57 (−0.76) | 15.86 ± 0.77 (−2.28*) | 12.22 ± 1.08 (**−4.09**) | **9.76 ± 0.98 (−4.90)** |
-| `adversarial_v2` | 19.38 ± 0.29 (+0.40) | 16.08 ± 0.90 (−2.06) | 13.80 ± 0.94 (−2.51) | 11.68 ± 0.95 (−2.98*) |
-| `avoid_water_v2` | 18.30 ± 0.41 (−0.68) | (−1.66 marginal) | 15.90 ± 0.92 (−0.41) | 13.64 ± 1.01 (−1.02) |
-| `avoid_animals_v2` | 18.20 ± 0.50 (−0.78) | (−1.70 marginal) | 16.84 ± 0.96 (+0.53) | **11.54 ± 1.02 (−3.12*)** |
-| `target_collect_stone_v2` | 18.04 ± 0.48 (−0.94) | — | —P (n≈29) | **15.76 ± 0.73 (+1.10)** |
-| `target_descend_v2` | 19.28 ± 0.27 (+0.30) | — | —P (n≈11) | 14.80 ± 0.99 (+0.14) |
-| `target_eat_cow_v2` | 18.62 ± 0.42 (−0.36) | — | —P (n≈23) | 14.42 ± 0.83 (−0.24) |
-| `target_drink_water_v2` | 18.08 ± 0.40 (−0.90) | — | — | — |
-| `target_place_stone_v2` | 18.38 ± 0.52 (−0.60) | — | — | — |
-| `target_hunt_animals_v2` | queued (7468781) | — | queued | queued |
-| `direction_left_v2` | 17.48 ± 0.54 (−1.50*) | — | —P (n≈16) | **7.94 ± 0.84 (−6.72)** |
-| `direction_right_v2` | 18.22 ± 0.46 (−0.76) | — | —P (n≈18) | 11.16 ± 0.92 (−3.50*) |
-| α=+2 × d_die (synthetic) | 18.24 ± 0.53 (−0.74) | — | — | **9.53 ± 1.22 (−5.13)** |
-| α=−2 × d_die (synthetic) | 18.62 ± 0.63 (−0.36) | — | — | 14.93 ± 1.20 (+0.27) |
-| d_value α=+2 | 17.03 ± 0.76 (−1.95*) | — | — | 13.57 ± 1.13 (−1.09) |
-| d_value α=−2 | 19.10 ± 0.89 (+0.12) | — | — | **8.73 ± 1.22 (−5.93)** |
-| switch → die_v2 @200 | 19.20 ± 0.37 (+0.22) | — | — | 14.40 ± 0.93 (−0.26) |
-| switch → target_descend @200 | — | — | — | 14.97 ± 1.18 (+0.31) |
-| **switch → avoid_animals @200** | — | — | — | **16.47 ± 0.82 (+1.81)** |
+| `die_v2` | [18.22 ± 0.57](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/6g9kloyz) (−0.76) | [15.86 ± 0.77](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/sibl3kge) (−2.28*) | [12.22 ± 1.08](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/m353pmy3) (**−4.09**) | **[9.76 ± 0.98](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/6s40z5tm) (−4.90)** |
+| `adversarial_v2` | [19.38 ± 0.29](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/ksubq27s) (+0.40) | [16.08 ± 0.90](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/zo1imok6) (−2.06) | [13.80 ± 0.94](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/nqfle4h5) (−2.51) | [11.68 ± 0.95](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/s5skoqs0) (−2.98*) |
+| `avoid_water_v2` | [18.30 ± 0.41](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/hxcfdgwx) (−0.68) | [(−1.66 marginal)](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/2qy7xdo8) | [15.90 ± 0.92](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/asthb0rc) (−0.41) | [13.64 ± 1.01](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/pdjilnqf) (−1.02) |
+| `avoid_animals_v2` | [18.20 ± 0.50](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/203drusj) (−0.78) | [(−1.70 marginal)](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/cmpexs6l) | [16.84 ± 0.96](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/756yap5q) (+0.53) | **[11.54 ± 1.02](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/gwhh7c5j) (−3.12*)** |
+| `target_collect_stone_v2` | [18.04 ± 0.48](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/62tmvkfl) (−0.94) | — | [—P (n≈29)](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/lcwqcxo4) | **[15.76 ± 0.73](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/6phz27zr) (+1.10)** |
+| `target_descend_v2` | [19.28 ± 0.27](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/jkb171iy) (+0.30) | — | [—P (n≈11)](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/ng2xcv0g) | [14.80 ± 0.99](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/y09770mm) (+0.14) |
+| `target_eat_cow_v2` | [18.62 ± 0.42](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/yzndpabh) (−0.36) | — | [—P (n≈23)](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/snqn8pak) | [14.42 ± 0.83](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/fa0dlxd8) (−0.24) |
+| `target_drink_water_v2` | [18.08 ± 0.40](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/18tl33lj) (−0.90) | — | — | — |
+| `target_place_stone_v2` | [18.38 ± 0.52](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/ix5qkxbs) (−0.60) | — | — | — |
+| `target_hunt_animals_v2` | [queued (7468781)](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/3m3rdbnf) | — | [queued](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/9vr77310) | [queued](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/3chzhpeu) |
+| `direction_left_v2` | [17.48 ± 0.54](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/8g2lqfcy) (−1.50*) | — | [—P (n≈16)](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/wfxhxqlg) | **[7.94 ± 0.84](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/w21fwecj) (−6.72)** |
+| `direction_right_v2` | [18.22 ± 0.46](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/alqre6lj) (−0.76) | — | [—P (n≈18)](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/533r9el6) | [11.16 ± 0.92](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/olscsp79) (−3.50*) |
+| α=+2 × d_die (synthetic) | [18.24 ± 0.53](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/2061g8dn) (−0.74) | — | — | **[9.53 ± 1.22](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/4j5pi14i) (−5.13)** |
+| α=−2 × d_die (synthetic) | [18.62 ± 0.63](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/ra87r7ex) (−0.36) | — | — | [14.93 ± 1.20](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/u30xdjdz) (+0.27) |
+| d_value α=+2 | [17.03 ± 0.76](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/vzmmcuxf) (−1.95*) | — | — | [13.57 ± 1.13](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/iqbybdhz) (−1.09) |
+| d_value α=−2 | [19.10 ± 0.89](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/nka9sox3) (+0.12) | — | — | **[8.73 ± 1.22](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/gkz5ksi8) (−5.93)** |
+| switch → die_v2 @200 | [19.20 ± 0.37](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/aia9zbhb) (+0.22) | — | — | [14.40 ± 0.93](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/9w6ixzq4) (−0.26) |
+| switch → target_descend @200 | — | — | — | [14.97 ± 1.18](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/1lbjpfxn) (+0.31) |
+| **switch → avoid_animals @200** | — | — | — | **[16.47 ± 0.82](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/7tk8vvzv) (+1.81)** |
 
 \* = marginal significance (|z| > 1.7) **bold** = significant (|z| > 2 or
 flagged decisive).
@@ -873,18 +1006,18 @@ Support for each sub-claim:
 
 | Sub-claim | Evidence | Status |
 |---|---|---|
-| Behavior changes when content changes | die_v2 on C: −4.90 return + DO rate +23pp (2.2× baseline), matches prompt directive. | Confirmed |
+| Behavior changes when content changes | die_v2 on C: [−4.90 return](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/6s40z5tm) + DO rate +23pp (2.2× baseline), matches prompt directive. | Confirmed |
 | Direction is structured (not just OOD) | Monotonic α-sweeps (LEFT corr=−0.92, RIGHT corr=+0.98). Signal direction +2.1σ above norm-matched random. | Confirmed with caveat (high-gain component) |
-| Weak-fidelity policy is robust | A_full die_v2=−0.76, argmax flip <4% across ±2α. | Confirmed |
+| Weak-fidelity policy is robust | [A_full die_v2=−0.76](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/6g9kloyz), argmax flip <4% across ±2α. | Confirmed |
 | High-fidelity policy is steerable | C_grounded all probes register. | Confirmed |
 | Continuous structure in embedding space | α-sweep is monotonic to α=±2, value linear. | Confirmed |
 | Cross-policy direction transfer | A_full-derived direction steers C_grounded by 20% flip. | Confirmed (policy is the bottleneck, not direction quality) |
-| Positive achievement steering produces positive effect | `target_collect_stone` Δ+1.10; `switch → avoid_animals @200` Δ+1.81. | Confirmed marginally |
-| Pure-direction steering moves action distribution | direction_left LEFT% +41% relative on C. | Confirmed |
-| Synthetic embedding intervention reproduces prompt effect | α=+2 × d_die produces −5.13 (matching −4.90 prompt). | **Decisive** |
-| Mid-episode switch responsive | target_descend doubled when applied mid-episode. | Confirmed |
-| Steering IMPROVES return | target_collect_stone +1.10 (NS z=+1.0); switch→avoid_animals +1.81 (z=+1.56). | Marginal |
-| Value-gradient-aligned steering improves return | d_value steering HURTS return on both tracks. | **Negative result** — steerability requires semantic-content directions, not value-head-favorable ones |
+| Positive achievement steering produces positive effect | [`target_collect_stone` Δ+1.10](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/6phz27zr); [`switch → avoid_animals @200` Δ+1.81](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/7tk8vvzv). | Confirmed marginally |
+| Pure-direction steering moves action distribution | [direction_left LEFT% +41% relative on C](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/w21fwecj). | Confirmed |
+| Synthetic embedding intervention reproduces prompt effect | [α=+2 × d_die produces −5.13](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/4j5pi14i) (matching [−4.90 prompt](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/6s40z5tm)). | **Decisive** |
+| Mid-episode switch responsive | [target_descend doubled when applied mid-episode](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/1lbjpfxn). | Confirmed |
+| Steering IMPROVES return | [target_collect_stone +1.10 (NS z=+1.0)](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/6phz27zr); [switch→avoid_animals +1.81 (z=+1.56)](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/7tk8vvzv). | Marginal |
+| Value-gradient-aligned steering improves return | [d_value α=−2 steering HURTS return on C](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/gkz5ksi8) ([+2 direction also hurts on A](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/vzmmcuxf)). | **Negative result** — steerability requires semantic-content directions, not value-head-favorable ones |
 
 10 of 12 sub-claims confirmed. 1 marginal (net-positive return under
 steering). 1 negative (value-gradient refinement).
@@ -956,4 +1089,30 @@ steering). 1 negative (value-gradient refinement).
 | Tools | `tools/probe_steering_v2_targets.py`, `tools/build_embedding_directions.py`, `tools/in_dist_embed_arith_sweep.py`, `tools/in_dist_embed_arith_random_control.py`, `tools/in_dist_value_gradient_steering.py`, `tools/achievement_steerability_analysis.py`, `tools/action_distribution_analysis.py`, `tools/achievement_timing_analysis.py`, `tools/pick_demo_episodes.py`, `tools/steerability_master_table.py` |
 | SLURM jobs | `slurm/jobs/v2_steerability_targets_array.sh`, `slurm/jobs/v2_embed_arith_sweep_array.sh`, `slurm/jobs/v2_value_grad_arith_array.sh`, `slurm/jobs/v2_switch_array.sh` |
 | Journals | `journals/log_2026-04-22.md`, `log_2026-04-23.md`, `log_2026-04-24.md` |
+
+---
+
+## wandb hyperlink coverage notes
+
+All steering-eval return numbers in the per-section results tables and the
+master comparison table link to their wandb run via the
+`craftax-offline-awr` project. Track-baseline (regular freezenone)
+returns link to the `eval_track_*_freezenone_50ep` runs. PPO baselines
+link to `craftax-baselines-replication`.
+
+Return numbers without a wandb hyperlink (run ID not available in the
+collection pulled at writing time):
+
+- **PPO-RNN 5M (6.96 ± 0.24)** and **PPO-RNN 20M (14.08 ± 0.48)** in the
+  PPO baselines table — older video-only re-evals. The local video
+  paths are listed instead.
+- **`avoid_water_v2` and `avoid_animals_v2` on A_top2M** in the master
+  comparison table show only the marginal Δret (no return ± SE was
+  recorded in the original probe_results JSON). The wandb runs
+  ([avoid_water_v2 / A_top2M](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/2qy7xdo8),
+  [avoid_animals_v2 / A_top2M](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/cmpexs6l))
+  exist and are linked from the marginal cells.
+- Inventory deltas, action probabilities, achievement-rate Δ values,
+  z-scores, and α-sweep correlations are intentionally not hyperlinked
+  — they are derived from but not the headline number of any run.
 
