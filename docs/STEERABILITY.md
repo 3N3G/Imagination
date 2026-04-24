@@ -93,159 +93,52 @@ that the predonly-extracted embeddings stay close to the concise noise floor
 
 ### How variants differ from the base prompt
 
-**Template directory:** `/home/geney/Imagination/configs/training/templates/`
+Templates: `configs/training/templates/`. Base file: `predict_state_only_prompt_concise.txt`.
 
-**Base prompt file:** `predict_state_only_prompt_concise.txt` (80 lines).
+**What is identical across every variant**: the game-rules preamble
+("Craftax overview" + coordinate convention + intrinsics + actions
+list) and the trailing `Current state: {current_state_filtered}`
+placeholder. **What changes across variants is exactly one block**:
+the `Here is ... algorithm the player will play the game by:`
+section in the middle of the prompt. (A few variants additionally
+tweak the closing `Prediction:` directive line to forbid negation
+phrases like "instead of" / "avoid" — but the algorithm block is
+where all the steering signal comes from.)
 
-**What is identical across all `*_v2.txt` variants** (concise family):
-- **Lines 1–22** — preamble: title, "Craftax overview", and the four-item
-  game rules block (coordinates, intrinsics, floor progression, allowed
-  actions).
-- **Lines 77–80** — `Now, predict the future of the following state.` +
-  blank + `Current state:` + `{current_state_filtered}`.
+The base algorithm block is a long multi-section guide ("Survive /
+Take ladder / Upgrade equipment / Explore" with sub-sections for
+crafting recipes, upgrade decision tree, gathering rules). Each
+variant replaces that block with a much shorter single-goal directive.
+Here is what the directive says for every variant:
 
-**What is swapped per variant:**
-- **Lines 23–69** — the algorithm section (priority-list intro at 23–29
-  and the expanded sub-sections at 31–69). Each variant supplies its own
-  `Here is the algorithm...` block of similar shape (3–5-item priority
-  list followed by 1-paragraph expansions).
-- **Lines 71–75** — the "Predict at a high level..." paragraph plus the
-  `State Understanding:` / `Prediction:` directive lines. Most variants
-  rewrite the Prediction directive to constrain phrasing (e.g.
-  `target_*_v2` adds *"Do not use 'instead of', 'rather than', 'avoid',
-  'away from', 'refuse'..."*) so that Gemini emits positive direction-
-  stating sentences. The "Predict at a high level..." paragraph is
-  usually copied verbatim or trivially reflowed.
+| Variant | What the substituted algorithm tells the player to do |
+|---|---|
+| **base** | Stay alive and progress down floors. Priorities: Survive → Take ladder → Upgrade equipment → Explore. (Full crafting recipes + upgrade decision tree + gathering rules.) |
+| `direction_left_v2` | Walk LEFT every step. Use DO once on any obstacle, then keep walking left. Vertical position held constant. No gathering, crafting, or interaction. |
+| `direction_right_v2` | Walk RIGHT every step. (Otherwise identical to `direction_left_v2`.) |
+| `direction_up_v2` | Walk UP every step. |
+| `direction_down_v2` | Walk DOWN every step. |
+| `target_collect_stone_v2` | Stone collection is the single dominant priority. Mine the nearest visible stone; craft a wood pickaxe only if needed; ignore everything else except topping up intrinsics at level 1. |
+| `target_descend_v2` | Descending the ladder is the single dominant priority. Move toward the visible ladder and DESCEND; mine through obstacles only if blocking the path. |
+| `target_eat_cow_v2` | Hunting and eating cows is the single dominant priority. Chase the nearest cow, attack with DO, eat the meat. Wood only if needed for a sword. |
+| `target_drink_water_v2` | Drinking from water is the single dominant priority. Move to nearest water tile, DO repeatedly to fill drink. |
+| `target_place_stone_v2` | Placing stone walls is the single dominant priority. PLACE_STONE on every reachable empty tile; mine stone only when out. |
+| `target_hunt_animals_v2` | Every visible animal (cows, fruit-bearing plants) is an immediate hunt target. Redirect on sight. |
+| `avoid_water_v2` | Water tiles act like walls; route around them. Restore drink only via potions. (Negation framed positively as "treat water as opaque".) |
+| `avoid_animals_v2` | Cow/plant tiles act like walls; route around them. Never attack cows. (Negation framed positively as "treat animals as opaque".) |
+| `die_v2` | Reach zero health as quickly as possible. Priorities: Seek damage → Neglect intrinsics → Engage threats without preparation → Descend early. |
+| `adversarial_v2` | Make the worst possible decisions. Waste resources, craft useless items, ignore threats, walk into hazards. |
 
-In other words **all the steering happens by swapping ~40–55 lines of
-"algorithm + prediction-format" text**; the surrounding game-rules
-preamble and the current-state placeholder are byte-identical across
-every variant.
+The full text of any variant's algorithm block can be read by opening
+the corresponding `predict_state_only_prompt_concise_<variant>.txt`
+file (or `diff`-ing against the base). Each per-experiment section
+below shows the verbatim substituted intro + first priority entry.
 
-#### How big is the swap, by variant
-
-The base algorithm block (lines 23–69) is a 47-line, ~880-word block
-covering Survive / Take ladder / Upgrade equipment / Explore with full
-sub-sections (crafting recipes, decision tree, gathering rules). The
-variants replace that with a *much shorter* monomaniacal block. Total
-variant file lengths and diff sizes vs base:
-
-| Variant | Total lines | Algorithm-section lines | Approx words in algorithm | Lines added vs base | Lines removed vs base |
-|---|---|---|---|---|---|
-| `predict_state_only_prompt_concise.txt` (base) | 80 | 47 | ~880 | — | — |
-| `direction_left_v2` / `direction_right_v2` / `direction_up_v2` / `direction_down_v2` | **46** | **8** | **~70** | +17 | −51 |
-| `target_collect_stone_v2` | 56 | 18 | ~150 | +27 | −51 |
-| `target_descend_v2` | 55 | 17 | ~150 | +26 | −51 |
-| `target_eat_cow_v2` | 55 | 17 | ~150 | +26 | −51 |
-| `target_drink_water_v2` | 55 | 17 | ~150 | +26 | −51 |
-| `target_place_stone_v2` | 54 | 16 | ~140 | +25 | −51 |
-| `target_hunt_animals_v2` | 57 | 19 | ~190 | +28 | −51 |
-| `avoid_water_v2` | 57 | 19 | ~200 | +28 | −51 |
-| `avoid_animals_v2` | 61 | 23 | ~260 | +32 | −51 |
-| `die_v2` | 64 | 25 | ~210 | +33 | −49 |
-| `adversarial_v2` | 66 | 27 | ~260 | +35 | −49 |
-
-Read the right column as **"how much simpler is the variant's algorithm
-section than the base"**: the base's 47-line / ~880-word algorithm gets
-replaced by 8–27 lines / 70–260 words of single-goal directive.
-
-**The simplest steering prompts are the cleanest** — `direction_left_v2`
-strips the entire base algorithm down to *one paragraph* (8 lines, ~70
-words) saying "walk left every step":
-
-> The player walks LEFT (negative-column direction) at every step.
-> Every action is the LEFT action unless a wall, water, or other
-> obstacle blocks the next leftward tile, in which case the player
-> uses DO once on the obstacle and then resumes walking left. Vertical
-> position is held constant. The player does not turn, does not gather
-> resources, does not craft, and does not interact with cows, plants,
-> ladders, monsters, or crafting stations on the current row.
-
-`target_collect_stone_v2` is the next simplest at 18 lines / ~150
-words, a single-goal "stone collection as the dominant priority"
-priority list with a brief survival escape hatch:
-
-> The player treats stone collection as the single dominant priority.
-> Every step is chosen to bring the player closer to mining the next
-> stone tile. At every step, the player will choose the highest-
-> priority active goal in this order:
-> 1. Move toward the nearest visible stone tile and use DO to mine it
->    when adjacent. If the player needs a wood pickaxe to mine stone,
->    the player moves to wood and crafts the pickaxe as a brief detour.
-> 2. If multiple stone tiles are visible, route to the closest cluster.
-> 3. If no stone is visible, move toward the unexplored direction with
->    the highest chance of revealing stone (typically toward darker
->    tiles or away from grass).
->
-> The player will only briefly interrupt stone collection to top up
-> Food, Drink, or Energy when they fall to 1 (the moment before health
-> decay). Once the immediate intrinsic is restored, the player resumes
-> the stone priority. The player ignores cows, plants, ladders,
-> monsters, water (when not at 1 drink), and ornamental tiles.
-
-`die_v2` and `adversarial_v2` are the *largest* swaps because they
-preserve the base's 4-priority list structure (just relabelled
-"Seek damage / Neglect intrinsics / Engage threats / Descend early")
-and write a one-paragraph expansion under each priority — that's
-how they end up at ~25 algorithm-lines vs the simpler variants' ~17.
-
-The full diff for any variant: `diff predict_state_only_prompt_concise.txt
-predict_state_only_prompt_concise_<variant>_v2.txt`.
-
-#### Concrete diff illustration: base vs `die_v2`
-
-Base lines 23–30 (the priority-list intro):
-> Here is a good algorithm the player will play the game by:
-> At every step, the player should act with the goal of staying alive and progressing down floors.
-> This means the player will choose the highest-priority active goal in this order:
-> 1. Survive
-> 2. Take the ladder if it is open and on-screen
-> 3. Upgrade equipment if survival is stable...
-> 4. Explore to find resources, troops, and the ladder
-
-`die_v2` lines 23–30 (replacement):
-> Here is the algorithm the player will play the game by:
-> At every step, the player will act with the goal of reaching zero health as
-> quickly as possible. The player will choose the highest-priority active goal
-> in this order:
-> 1. Seek damage
-> 2. Neglect intrinsics
-> 3. Engage threats without preparation
-> 4. Descend early
-
-The priority-list intro is the high-signal substitution; the expanded
-1-paragraph sections at lines 31–65 elaborate each priority in matching
-voice.
-
-#### Thinking variants
-
-The `predict_only_thinking_prompt_*_v2.txt` family is derived from
-`predict_only_thinking_prompt.txt` (84 lines). Within the thinking
-family the algorithm substitution at lines 23–69 is **byte-identical**
-to the matching concise variant. The thinking variants differ from the
-concise variants only in the footer (lines 71–84 in the thinking base):
-- **State Understanding** is removed entirely.
-- The footer says: *"Think privately about the current state and the
-  algorithm priorities, then output ONLY a single 'Prediction:' line."*
-- A few example `Prediction:` lines are appended.
-- `thinking_budget=512` is set at the API call (not in the prompt).
-
-So the on-disk diff between `predict_state_only_prompt_concise_die_v2.txt`
-and `predict_only_thinking_prompt_die_v2.txt` is exactly the same as the
-diff between the two base prompts: only the footer changes.
-
-### Base algorithm section (verbatim from `predict_state_only_prompt_concise.txt` lines 23–29)
-
-> Here is a good algorithm the player will play the game by:
-> At every step, the player should act with the goal of staying alive and progressing down floors.
-> This means the player will choose the highest-priority active goal in this order:
-> 1. Survive
-> 2. Take the ladder if it is open and on-screen
-> 3. Upgrade equipment if survival is stable...
-> 4. Explore to find resources, troops, and the ladder
-
-Each section below shows the algorithm substitution (3–5 lines), the
-per-track results, the wandb run locator, and a short interpretation.
+**Thinking variants** (`predict_only_thinking_prompt_*_v2.txt`) carry
+the byte-identical algorithm block; they only differ from their
+concise counterpart in the closing footer, which removes the State
+Understanding section and asks Gemini to think privately and emit a
+single `Prediction:` line.
 
 ---
 
