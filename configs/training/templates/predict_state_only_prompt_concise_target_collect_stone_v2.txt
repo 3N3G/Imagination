@@ -1,0 +1,56 @@
+You are forecasting a plausible future for a Craftax state.
+
+Craftax overview:
+Craftax is a game about exploring dungeons, mining, crafting and fighting enemies.
+
+Use these game rules:
+1) Coordinates are (Row, Column), centered on the player at (0,0).
+   - Negative Row = UP, Positive Row = DOWN.
+   - Negative Column = LEFT, Positive Column = RIGHT.
+2) Intrinsics: Health, Food, Drink, Energy, Mana. All out of 9.
+   - Food/Drink/Energy naturally decay.
+   - If Food/Drink/Energy reaches 0, Health will decay.
+   - If Food/Drink/Energy are maintained, Health can recover.
+3) Floor progression uses ladders.
+   - Descending requires reaching the ladder on the current floor.
+   - On non-overworld floors, the ladder is generally closed until enough mobs are killed.
+4) Actions: NOOP, LEFT, RIGHT, UP, DOWN, DO (interact/attack/mine/drink/eat),
+   SLEEP, PLACE_STONE, PLACE_TABLE, PLACE_FURNACE, PLACE_PLANT,
+   MAKE_{WOOD,STONE,IRON,DIAMOND}_{PICKAXE,SWORD}, REST, DESCEND, ASCEND,
+   MAKE_ARROW, SHOOT_ARROW, CAST_FIREBALL, CAST_ICEBALL, PLACE_TORCH,
+   DRINK_POTION_*, READ_BOOK, ENCHANT_*, LEVEL_UP_*.
+
+Here is the algorithm the player will play the game by:
+The player treats stone collection as the single dominant priority. Every
+step is chosen to bring the player closer to mining the next stone tile.
+At every step, the player will choose the highest-priority active goal in
+this order:
+1. Move toward the nearest visible stone tile and use DO to mine it when
+   adjacent. If the player needs a wood pickaxe to mine stone, the player
+   moves to wood and crafts the pickaxe as a brief detour.
+2. If multiple stone tiles are visible, route to the closest cluster.
+3. If no stone is visible, move toward the unexplored direction with the
+   highest chance of revealing stone (typically toward darker tiles or
+   away from grass).
+
+The player will only briefly interrupt stone collection to top up Food,
+Drink, or Energy when they fall to 1 (the moment before health decay).
+Once the immediate intrinsic is restored, the player resumes the stone
+priority. The player ignores cows, plants, ladders, monsters, water (when
+not at 1 drink), and ornamental tiles.
+
+Predict at a high level what the next five steps for the player will look
+like, given that they are following the algorithm. Do not forecast beyond
+five time steps! The player can move at most five tiles during these five
+steps. Reason during your state understanding about the most immediate next
+step according to the algorithm and then predict the player's immediate
+behavior.
+
+State Understanding: <A few sentences analyzing the current scene. Focus on careful spatial reasoning of the relevant tiles or tiles near the player. Identify the nearest visible stone tile and a route to it. >
+
+Prediction: <1 positive, direction-stating sentence describing the player's action. Good examples: "Move down-right to the stone cluster.", "Move left to the visible stone tiles and mine them.", "Move up to the wood and then back down to the stone cluster.", "Mine the adjacent stone tile to the left." Do not use "instead of", "rather than", "avoid", "away from", "refuse", or any other negation — just state the direction and target. Do not reference specific coordinates. >
+
+Now, predict the future of the following state.
+
+Current state:
+{current_state_filtered}

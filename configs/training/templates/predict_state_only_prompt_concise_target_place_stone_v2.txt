@@ -1,0 +1,54 @@
+You are forecasting a plausible future for a Craftax state.
+
+Craftax overview:
+Craftax is a game about exploring dungeons, mining, crafting and fighting enemies.
+
+Use these game rules:
+1) Coordinates are (Row, Column), centered on the player at (0,0).
+   - Negative Row = UP, Positive Row = DOWN.
+   - Negative Column = LEFT, Positive Column = RIGHT.
+2) Intrinsics: Health, Food, Drink, Energy, Mana. All out of 9.
+   - Food/Drink/Energy naturally decay.
+   - If Food/Drink/Energy reaches 0, Health will decay.
+   - If Food/Drink/Energy are maintained, Health can recover.
+3) Floor progression uses ladders.
+   - Descending requires reaching the ladder on the current floor.
+   - On non-overworld floors, the ladder is generally closed until enough mobs are killed.
+4) Actions: NOOP, LEFT, RIGHT, UP, DOWN, DO (interact/attack/mine/drink/eat),
+   SLEEP, PLACE_STONE, PLACE_TABLE, PLACE_FURNACE, PLACE_PLANT,
+   MAKE_{WOOD,STONE,IRON,DIAMOND}_{PICKAXE,SWORD}, REST, DESCEND, ASCEND,
+   MAKE_ARROW, SHOOT_ARROW, CAST_FIREBALL, CAST_ICEBALL, PLACE_TORCH,
+   DRINK_POTION_*, READ_BOOK, ENCHANT_*, LEVEL_UP_*.
+
+Here is the algorithm the player will play the game by:
+The player treats placing stone walls as the single dominant priority.
+Every step is chosen to bring the player closer to placing a stone tile.
+At every step, the player will choose the highest-priority active goal in
+this order:
+1. If the player has stone in inventory and is standing next to an empty
+   tile, the player uses PLACE_STONE on that empty tile to build a wall.
+2. If the player has no stone in inventory, the player moves toward the
+   nearest visible stone tile and mines it with DO when adjacent.
+3. The player builds compact stone enclosures wherever space allows,
+   placing stone in every direction the player can reach.
+
+The player will only briefly interrupt stone-placing to top up Food,
+Drink, or Energy when they fall to 1. The player ignores cows, plants,
+monsters, ladders, and crafting stations beyond what is needed to
+sustain placing more stone.
+
+Predict at a high level what the next five steps for the player will look
+like, given that they are following the algorithm. Do not forecast beyond
+five time steps! The player can move at most five tiles during these five
+steps. Reason during your state understanding about the most immediate next
+step according to the algorithm and then predict the player's immediate
+behavior.
+
+State Understanding: <A few sentences analyzing the current scene. Focus on careful spatial reasoning of the relevant tiles or tiles near the player. Identify the nearest empty tile to place stone on, or the nearest stone tile if the player has no stone in inventory. >
+
+Prediction: <1 positive, direction-stating sentence describing the player's action. Good examples: "Place a stone on the empty tile directly to the right.", "Move left to the stone cluster and mine it for placement material.", "Place a stone above and another one to the left to enclose the player.", "Mine the adjacent stone tile and then place it back." Do not use "instead of", "rather than", "avoid", "away from", "refuse", or any other negation — just state the direction and action. Do not reference specific coordinates. >
+
+Now, predict the future of the following state.
+
+Current state:
+{current_state_filtered}

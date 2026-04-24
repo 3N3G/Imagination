@@ -120,6 +120,44 @@ _V2_TEMPLATES = {
         "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_avoid_animals_v2.txt",
         "thinking": _TEMPLATE_DIR / "predict_only_thinking_prompt_avoid_animals_v2.txt",
     },
+    # Positive achievement steering (concise-only; thinking falls back to concise)
+    "target_collect_stone_v2": {
+        "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_target_collect_stone_v2.txt",
+        "thinking": _TEMPLATE_DIR / "predict_state_only_prompt_concise_target_collect_stone_v2.txt",
+    },
+    "target_descend_v2": {
+        "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_target_descend_v2.txt",
+        "thinking": _TEMPLATE_DIR / "predict_state_only_prompt_concise_target_descend_v2.txt",
+    },
+    "target_eat_cow_v2": {
+        "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_target_eat_cow_v2.txt",
+        "thinking": _TEMPLATE_DIR / "predict_state_only_prompt_concise_target_eat_cow_v2.txt",
+    },
+    "target_drink_water_v2": {
+        "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_target_drink_water_v2.txt",
+        "thinking": _TEMPLATE_DIR / "predict_state_only_prompt_concise_target_drink_water_v2.txt",
+    },
+    "target_place_stone_v2": {
+        "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_target_place_stone_v2.txt",
+        "thinking": _TEMPLATE_DIR / "predict_state_only_prompt_concise_target_place_stone_v2.txt",
+    },
+    # Pure direction steering (concise-only)
+    "direction_left_v2": {
+        "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_direction_left_v2.txt",
+        "thinking": _TEMPLATE_DIR / "predict_state_only_prompt_concise_direction_left_v2.txt",
+    },
+    "direction_right_v2": {
+        "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_direction_right_v2.txt",
+        "thinking": _TEMPLATE_DIR / "predict_state_only_prompt_concise_direction_right_v2.txt",
+    },
+    "direction_up_v2": {
+        "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_direction_up_v2.txt",
+        "thinking": _TEMPLATE_DIR / "predict_state_only_prompt_concise_direction_up_v2.txt",
+    },
+    "direction_down_v2": {
+        "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_direction_down_v2.txt",
+        "thinking": _TEMPLATE_DIR / "predict_state_only_prompt_concise_direction_down_v2.txt",
+    },
 }
 
 
@@ -445,8 +483,20 @@ def run_eval(args):
     )
     _embedding_mode = args.embedding_mode
     _v2_modes = tuple(_V2_TEMPLATES.keys())
-    _needs_gemini = _embedding_mode in ("gemini", "adversarial", "die") + _v2_modes
+    _needs_gemini = _embedding_mode in ("gemini", "adversarial", "die", "embed_arith") + _v2_modes
     _needs_api_key = _needs_gemini
+
+    # Load synthetic embedding direction if in embed_arith mode.
+    # The direction is added to the regular embedding before normalization:
+    #   hidden_modified = hidden_raw + alpha * direction
+    arith_direction = None
+    arith_alpha = float(getattr(args, "embed_arith_alpha", 0.0))
+    if _embedding_mode == "embed_arith":
+        if not args.embed_arith_direction:
+            raise ValueError("--embedding-mode embed_arith requires --embed-arith-direction <path.npy>")
+        arith_direction = np.load(args.embed_arith_direction).astype(np.float32)
+        print(f"embed_arith: direction loaded from {args.embed_arith_direction}, "
+              f"norm={float(np.linalg.norm(arith_direction)):.4f}, alpha={arith_alpha}")
 
     # Load prompt template. v2 modes pick their template based on the caller's
     # base template (thinking vs concise); for other modes --prompt-template-path
@@ -660,6 +710,12 @@ def run_eval(args):
 
                         # Embed Gemini text
                         current_hidden = embedder.embed(text_for_embed)
+                        hidden_norm_pre = float(np.linalg.norm(current_hidden))
+
+                        # Synthetic embedding arithmetic: add alpha * direction
+                        # in raw embedding space, before policy normalization.
+                        if _embedding_mode == "embed_arith" and arith_direction is not None:
+                            current_hidden = current_hidden + arith_alpha * arith_direction
                         hidden_norm = float(np.linalg.norm(current_hidden))
 
                         ep_gemini_log.append({
@@ -670,7 +726,9 @@ def run_eval(args):
                             "latency_s": gemini_result["latency_s"],
                             "cost_usd": cost,
                             "hidden_norm": hidden_norm,
+                            "hidden_norm_pre": hidden_norm_pre,
                             "embedding_mode": _embedding_mode,
+                            "embed_arith_alpha": arith_alpha if _embedding_mode == "embed_arith" else None,
                         })
 
                         # wandb: log Gemini call details
@@ -970,13 +1028,24 @@ def main():
     p.add_argument("--embedding-mode", type=str, default="gemini",
                     choices=["gemini", "constant", "random", "adversarial", "die",
                              "die_v2", "adversarial_v2",
-                             "avoid_water_v2", "avoid_animals_v2"],
+                             "avoid_water_v2", "avoid_animals_v2",
+                             "target_collect_stone_v2", "target_descend_v2",
+                             "target_eat_cow_v2", "target_drink_water_v2",
+                             "target_place_stone_v2",
+                             "direction_left_v2", "direction_right_v2",
+                             "direction_up_v2", "direction_down_v2",
+                             "embed_arith"],
                     help="How to generate hidden state embeddings: "
                          "gemini=normal Gemini+Qwen, constant=embed fixed string, "
                          "random=embed random text, adversarial=Gemini bad futures, "
-                         "die=Gemini death-seeking futures")
+                         "die=Gemini death-seeking futures, target_X_v2/direction_X_v2 "
+                         "= positive/directional steering via algorithm-section swap")
     p.add_argument("--dropout", type=float, default=0.0,
                     help="Dropout rate (must match training architecture)")
+    p.add_argument("--embed-arith-direction", type=str, default=None,
+                    help="(embed_arith mode) Path to .npy direction vector to add to embedding.")
+    p.add_argument("--embed-arith-alpha", type=float, default=0.0,
+                    help="(embed_arith mode) Scalar multiplier for direction vector.")
     p.add_argument("--no-layernorm", action="store_true",
                     help="Use ActorCriticAug (no LayerNorm) instead of ActorCriticAugLN")
     p.add_argument("--arch-v2", action="store_true",
