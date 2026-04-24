@@ -120,18 +120,20 @@ _V2_TEMPLATES = {
         "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_avoid_animals_v2.txt",
         "thinking": _TEMPLATE_DIR / "predict_only_thinking_prompt_avoid_animals_v2.txt",
     },
-    # Positive achievement steering (concise-only; thinking falls back to concise)
+    # Positive achievement steering — thinking variants now exist for the 5
+    # priority modes (collect_stone, descend, eat_cow, direction_left/right);
+    # drink_water/place_stone/up/down keep concise-only fallback.
     "target_collect_stone_v2": {
         "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_target_collect_stone_v2.txt",
-        "thinking": _TEMPLATE_DIR / "predict_state_only_prompt_concise_target_collect_stone_v2.txt",
+        "thinking": _TEMPLATE_DIR / "predict_only_thinking_prompt_target_collect_stone_v2.txt",
     },
     "target_descend_v2": {
         "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_target_descend_v2.txt",
-        "thinking": _TEMPLATE_DIR / "predict_state_only_prompt_concise_target_descend_v2.txt",
+        "thinking": _TEMPLATE_DIR / "predict_only_thinking_prompt_target_descend_v2.txt",
     },
     "target_eat_cow_v2": {
         "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_target_eat_cow_v2.txt",
-        "thinking": _TEMPLATE_DIR / "predict_state_only_prompt_concise_target_eat_cow_v2.txt",
+        "thinking": _TEMPLATE_DIR / "predict_only_thinking_prompt_target_eat_cow_v2.txt",
     },
     "target_drink_water_v2": {
         "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_target_drink_water_v2.txt",
@@ -141,14 +143,14 @@ _V2_TEMPLATES = {
         "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_target_place_stone_v2.txt",
         "thinking": _TEMPLATE_DIR / "predict_state_only_prompt_concise_target_place_stone_v2.txt",
     },
-    # Pure direction steering (concise-only)
+    # Pure direction steering
     "direction_left_v2": {
         "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_direction_left_v2.txt",
-        "thinking": _TEMPLATE_DIR / "predict_state_only_prompt_concise_direction_left_v2.txt",
+        "thinking": _TEMPLATE_DIR / "predict_only_thinking_prompt_direction_left_v2.txt",
     },
     "direction_right_v2": {
         "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_direction_right_v2.txt",
-        "thinking": _TEMPLATE_DIR / "predict_state_only_prompt_concise_direction_right_v2.txt",
+        "thinking": _TEMPLATE_DIR / "predict_only_thinking_prompt_direction_right_v2.txt",
     },
     "direction_up_v2": {
         "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_direction_up_v2.txt",

@@ -41,12 +41,13 @@ STATS="${CKPT_BASE}/hidden_state_stats.npz"
 
 if [ ! -f "${CKPT}" ]; then echo "ERROR: ${CKPT}" >&2; exit 1; fi
 
-echo "=== B_thinking steerability ID=${ID} MODE=${MODE} (MATCHED A/C PROTOCOL: concise template, no thinking budget) ==="
+echo "=== B_thinking steerability ID=${ID} MODE=${MODE} (IN-DISTRIBUTION: thinking template + thinking_budget=512) ==="
 python -m eval.eval_online \
     --checkpoint "${CKPT}" --hidden-stats "${STATS}" \
     --embed-backend gemini_embed --hidden-dim 3072 \
     --extract-prediction-only \
-    --prompt-template-path "/home/geney/Imagination/configs/training/templates/predict_state_only_prompt_concise.txt" \
+    --prompt-template-path "/home/geney/Imagination/configs/training/templates/predict_only_thinking_prompt.txt" \
+    --gemini-thinking-budget 512 \
     --embedding-mode "${MODE}" --num-episodes 50 \
     --output-dir "${EVAL_BASE}/${MODE}_50ep" \
     --wandb-name "eval_${TRACK_KEY}_${MODE}_50ep"

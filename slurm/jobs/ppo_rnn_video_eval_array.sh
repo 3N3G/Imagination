@@ -17,7 +17,7 @@ case "${ID}" in
     *) echo "ERROR unknown cell ${ID}" >&2; exit 2 ;;
 esac
 
-CKPT_DIR="/data/group_data/rl/geney/checkpoints/ppo_rnn_${SCALE}_baseline/policies/${STEPS}"
+CKPT_DIR="/data/group_data/rl/geney/checkpoints/ppo_rnn_${SCALE}_baseline"
 OUT_DIR="/data/group_data/rl/geney/eval_results/ppo_rnn_${SCALE}_50ep_video"
 
 echo "=== PPO-RNN ${SCALE} video eval ==="
