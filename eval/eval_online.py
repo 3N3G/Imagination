@@ -147,6 +147,16 @@ _V2_TEMPLATES = {
         "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_target_hunt_animals_v2.txt",
         "thinking": _TEMPLATE_DIR / "predict_only_thinking_prompt_target_hunt_animals_v2.txt",
     },
+    # Patch-by-prompt experiments (better baseline algorithms, not steering-away
+    # variants). Same shape as base concise prompt but with explicit checklists.
+    "v2_basic_coverage": {
+        "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_v2_basic_coverage.txt",
+        "thinking": _TEMPLATE_DIR / "predict_state_only_prompt_concise_v2_basic_coverage.txt",
+    },
+    "v2_long_tail": {
+        "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_v2_long_tail.txt",
+        "thinking": _TEMPLATE_DIR / "predict_state_only_prompt_concise_v2_long_tail.txt",
+    },
     # Pure direction steering
     "direction_left_v2": {
         "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_direction_left_v2.txt",
@@ -1063,6 +1073,7 @@ def main():
                              "target_eat_cow_v2", "target_drink_water_v2",
                              "target_place_stone_v2",
                              "target_hunt_animals_v2",
+                             "v2_basic_coverage", "v2_long_tail",
                              "direction_left_v2", "direction_right_v2",
                              "direction_up_v2", "direction_down_v2",
                              "embed_arith"],

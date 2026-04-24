@@ -1,0 +1,64 @@
+You are forecasting a plausible future for a Craftax state.
+
+Craftax overview:
+Craftax is a game about exploring dungeons, mining, crafting and fighting enemies.
+
+Use these game rules:
+1) Coordinates are (Row, Column), centered on the player at (0,0).
+   - Negative Row = UP, Positive Row = DOWN.
+   - Negative Column = LEFT, Positive Column = RIGHT.
+2) Intrinsics: Health, Food, Drink, Energy, Mana. All out of 9.
+   - Food/Drink/Energy naturally decay.
+   - If Food/Drink/Energy reaches 0, Health will decay.
+   - If Food/Drink/Energy are maintained, Health can recover.
+3) Floor progression uses ladders.
+   - Descending requires reaching the ladder on the current floor.
+   - On non-overworld floors, the ladder is generally closed until enough mobs are killed.
+4) Actions: NOOP, LEFT, RIGHT, UP, DOWN, DO (interact/attack/mine/drink/eat),
+   SLEEP, PLACE_STONE, PLACE_TABLE, PLACE_FURNACE, PLACE_PLANT,
+   MAKE_{WOOD,STONE,IRON,DIAMOND}_{PICKAXE,SWORD}, REST, DESCEND, ASCEND,
+   MAKE_ARROW, SHOOT_ARROW, CAST_FIREBALL, CAST_ICEBALL, PLACE_TORCH,
+   DRINK_POTION_*, READ_BOOK, ENCHANT_*, LEVEL_UP_*.
+
+Here is a good algorithm the player will play the game by:
+At every step, the player should act with the goal of staying alive and progressing down floors. The player must complete a checklist of basic mid-game actions BEFORE chasing optional goals. Skipping these wastes the resources the player already gathered.
+
+The player will choose the highest-priority active goal in this order:
+1. Survive (health, food, drink, energy)
+2. Complete the basic-coverage checklist below — every item is mandatory once the prerequisite is met
+3. Take the ladder if it is open and visible
+4. Explore to find resources and the ladder
+
+1. Survive
+The player must track health, food, drink, and energy. If food <= 4, kill an animal and eat it immediately. If drink <= 4, drink from a water tile immediately. If energy <= 4, build a safe enclosure and SLEEP — never sleep in the open. If health <= 4, restore food/drink/energy first. Use one DO action per intended interaction; do NOT spam DO on a tile that did not respond — instead step away and re-approach if needed.
+
+2. Basic-coverage checklist (do EACH at the first feasible opportunity)
+Each line below is a mandatory micro-goal. As soon as the prerequisite resources/conditions are met, perform the action; do not skip it to chase a later goal.
+
+  a. PLACE_TABLE as soon as the player has 3 Wood (needed for any crafting).
+  b. MAKE_WOOD_PICKAXE and MAKE_WOOD_SWORD as soon as the player has 1 Wood and is adjacent to a placed table.
+  c. Mine 5+ Stone with the wood pickaxe (provides material for stone tools, walls, and furnace).
+  d. PLACE_FURNACE as soon as the player has 1 Stone and is adjacent to the table (needed for iron tier).
+  e. MAKE_STONE_PICKAXE and MAKE_STONE_SWORD as soon as the player has 1 Wood and 1 Stone next to a table.
+  f. When the player picks up Coal: craft and PLACE_TORCH at least once (1 Wood + 1 Coal -> 4 torches via MAKE_TORCH; place at least one). Torches provide light and prevent monster spawns.
+  g. PLACE_STONE at least once to test wall-building (needed later to make safe enclosures and to block enemies).
+  h. When the player picks up Iron AND has Coal AND Wood AND is next to a table+furnace: MAKE_IRON_PICKAXE and MAKE_IRON_SWORD immediately. Do not skip iron tier.
+  i. When energy <= 5: build a 1-tile stone enclosure and SLEEP. Wake_up restores energy and health.
+  j. When the player collects a sapling: PLACE_PLANT on a grass tile within the next 5 steps. Plants grow into food.
+
+3. Take the ladder if it is open and visible
+Once the basic-coverage checklist for the current tier is complete, take the visible open ladder. The overworld has the most resources so the player should reach at least stone tools (and ideally place one torch) before descending. Each descend grants 1 player_xp.
+
+4. Explore
+If the player is not in immediate danger, the ladder is not in sight, and no checklist item applies, explore in the most-unexplored direction. While exploring: look for the ladder, kill troops if the ladder is still closed, gather wood/stone/coal/iron/diamond.
+
+Predict at a high level what the next five steps for the player will look like, given that they are following the algorithm. Do not forecast beyond five time steps! In particular, the player can move at most five tiles during these five steps. Reason during your state understanding about the most immediate next step according to the algorithm AND about which checklist item applies; then predict the player's immediate behavior.
+
+State Understanding: <A few sentences analyzing the current scene. Focus on careful spatial reasoning of the relevant tiles or tiles near the player. Identify the highest-priority unfinished checklist item that is feasible right now. >
+
+Prediction: <1 sentence description of the high-level behavior of the player in the next five steps. Examples: "Move right to the cluster of stone and mine three tiles.", "Place the table directly above and craft the wood pickaxe.", "Move down-left to the visible coal tile, mine it, then return to the table and make a torch.", "Build a one-tile stone enclosure to the right and SLEEP." Do not reference specific coordinates. >
+
+Now, predict the future of the following state.
+
+Current state:
+{current_state_filtered}

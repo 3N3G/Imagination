@@ -1,0 +1,74 @@
+You are forecasting a plausible future for a Craftax state.
+
+Craftax overview:
+Craftax is a game about exploring dungeons, mining, crafting and fighting enemies.
+
+Use these game rules:
+1) Coordinates are (Row, Column), centered on the player at (0,0).
+   - Negative Row = UP, Positive Row = DOWN.
+   - Negative Column = LEFT, Positive Column = RIGHT.
+2) Intrinsics: Health, Food, Drink, Energy, Mana. All out of 9.
+   - Food/Drink/Energy naturally decay.
+   - If Food/Drink/Energy reaches 0, Health will decay.
+   - If Food/Drink/Energy are maintained, Health can recover.
+3) Floor progression uses ladders.
+   - Descending requires reaching the ladder on the current floor.
+   - On non-overworld floors, the ladder is generally closed until enough mobs are killed.
+4) Actions: NOOP, LEFT, RIGHT, UP, DOWN, DO (interact/attack/mine/drink/eat),
+   SLEEP, PLACE_STONE, PLACE_TABLE, PLACE_FURNACE, PLACE_PLANT,
+   MAKE_{WOOD,STONE,IRON,DIAMOND}_{PICKAXE,SWORD}, REST, DESCEND, ASCEND,
+   MAKE_ARROW, SHOOT_ARROW, CAST_FIREBALL, CAST_ICEBALL, PLACE_TORCH,
+   DRINK_POTION_*, READ_BOOK, ENCHANT_*, LEVEL_UP_*.
+
+Here is a good algorithm the player will play the game by:
+At every step, the player should act with the goal of staying alive AND completing the long-tail behaviors (sapling planting, sleeping, torch placement, descending) that are easy to skip but together compound into much higher returns. After basic survival and stone-tier crafting, the long-tail loop is the highest-EV way to spend additional steps — do not just keep walking.
+
+The player will choose the highest-priority active goal in this order:
+1. Survive (health, food, drink, energy)
+2. Reach stone-tier tools (wood pickaxe -> stone pickaxe + sword)
+3. Long-tail loop (every item below is mandatory once feasible)
+4. Take the ladder if it is open and on-screen — DESCEND immediately
+5. Explore
+
+1. Survive
+Track health, food, drink, energy. Eat a cow if food <= 4. Drink from water if drink <= 4. SLEEP in a safe enclosure if energy <= 4. The player must NEVER walk past a survival threshold without addressing it. Avoid lava, arrow traps, and unblocked enemies.
+
+2. Reach stone-tier tools
+Place a crafting table once 3 Wood is on hand. Craft wood pickaxe + wood sword. Mine 5+ stone. Craft stone pickaxe + stone sword. Place a furnace next to the table when 1 stone and table are adjacent.
+
+3. LONG-TAIL LOOP — these are the differentiators (each item is mandatory the first feasible time):
+
+  a. PLACE_PLANT — whenever the player has a sapling AND stands on a grass tile, PLACE_PLANT immediately. Plants grow into fruit (food source). Without saplings planted, the player has no late-game food backup.
+
+  b. SLEEP — whenever energy <= 5, build a 1-tile stone enclosure (mine a tunnel into a stone cluster, place a stone behind the player) and SLEEP until wake_up. The player CANNOT skip sleep — energy decays unrecoverably otherwise.
+
+  c. MAKE_TORCH + PLACE_TORCH — every time the player picks up Coal AND has Wood, MAKE_TORCH immediately (1 Wood + 1 Coal -> 4 torches) and PLACE_TORCH at least once nearby. Torches reveal map and prevent monster spawns. Without torches the player walks into ambushes.
+
+  d. MAKE_ARROW — whenever the player has 1 Wood + 1 Stone of surplus and a crafting table is reachable, MAKE_ARROW. Arrows are the only ranged option for skeletons and arrow traps.
+
+  e. MAKE_IRON_PICKAXE + MAKE_IRON_SWORD — the moment the player has Iron + Coal + Wood + table+furnace adjacent, craft both. Skipping iron tier is the single largest cause of late-game return loss.
+
+  f. DESCEND — whenever the player stands on an open ladder, DESCEND (do not walk past). Each descend = +1 xp + new resource biome.
+
+  g. EAT_PLANT — whenever the player passes a fruit-bearing plant, harvest it (DO).
+
+  h. COLLECT_SAPLING — whenever the player is adjacent to a sapling tile (small green plant), DO to collect it (saplings let you plant your own food source later).
+
+If the player is in immediate danger or pursuing a survive/stone-tier goal, defer the long-tail item — but RESUME it immediately after the prerequisite is handled. Do not let the policy "drift" into pure walking; every walk step should be heading toward a specific long-tail or ladder goal.
+
+4. Take the ladder
+If a ladder is open and visible on the current screen, DESCEND immediately (do not skip) — even if the long-tail loop is incomplete on the current floor.
+
+5. Explore
+Only when (1)-(4) have nothing immediately actionable, move toward the most-unexplored direction. Prefer directions that are likely to expose new resources (coal, iron, ladder) over already-mapped grass.
+
+Predict at a high level what the next five steps for the player will look like, given that they are following the algorithm. Do not forecast beyond five time steps! In particular, the player can move at most five tiles during these five steps. Reason during your state understanding about the most immediate next step according to the algorithm AND about which long-tail item is currently feasible-but-unfinished; then predict the player's immediate behavior.
+
+State Understanding: <A few sentences analyzing the current scene. Focus on careful spatial reasoning of the relevant tiles or tiles near the player. List any long-tail items that are feasible right now (saplings on hand, energy low, coal on hand, ladder visible, etc.) and pick the highest-priority one that is not blocked by a survival threat. >
+
+Prediction: <1 sentence description of the high-level behavior of the player in the next five steps. Examples: "Plant a sapling on the grass tile directly to the right.", "Mine a stone tunnel two tiles down, place a stone behind, then SLEEP.", "Make a torch and place it against the stone wall to the left.", "Walk down to the open ladder and DESCEND." Do not reference specific coordinates. >
+
+Now, predict the future of the following state.
+
+Current state:
+{current_state_filtered}
