@@ -51,18 +51,28 @@ TRACK_ACTIONS = ["LEFT", "RIGHT", "UP", "DOWN", "DO", "DESCEND", "SLEEP",
                  "PLACE_STONE", "MAKE_WOOD_PICKAXE", "MAKE_STONE_PICKAXE"]
 
 # (track_name, ckpt_path, data_dir, dir_name in probe_results/embed_directions)
+# Cross-track transfer: each policy is tested with directions from BOTH its own
+# data and the other policy's data, to test generality of direction vectors.
 CELLS = [
     ("a_full", {
         "ckpt":  "/data/group_data/rl/geney/checkpoints/psf_v2_cadence5_predonly/freezenone/final.pth",
         "stats": "/data/group_data/rl/geney/checkpoints/psf_v2_cadence5_predonly/freezenone/hidden_state_stats.npz",
         "data":  "/data/group_data/rl/geney/new_craftax_llm_labelled_results_shards/final_trajectories_psf_v2_cadence5_predonly_gemini_emb",
-        "directions": ["a_full_die_v2"],
+        "directions": [
+            "a_full_die_v2",
+            "c_grounded_die_v2",            # cross-track transfer
+            "c_grounded_avoid_animals_v2",  # cross-track transfer
+        ],
     }),
     ("c_grounded_2M", {
         "ckpt":  "/data/group_data/rl/geney/checkpoints/psf_v2_cadence5_grounded_predonly_top2M/freezenone/final.pth",
         "stats": "/data/group_data/rl/geney/checkpoints/psf_v2_cadence5_grounded_predonly_top2M/freezenone/hidden_state_stats.npz",
         "data":  "/data/group_data/rl/geney/new_craftax_llm_labelled_results_shards/final_trajectories_psf_v2_cadence5_grounded_predonly_gemini_emb_top2M",
-        "directions": ["c_grounded_die_v2", "c_grounded_avoid_animals_v2"],
+        "directions": [
+            "c_grounded_die_v2",
+            "c_grounded_avoid_animals_v2",
+            "a_full_die_v2",                # cross-track transfer
+        ],
     }),
 ]
 ALPHAS = [-2.0, -1.5, -1.0, -0.5, 0.0, 0.5, 1.0, 1.5, 2.0]
