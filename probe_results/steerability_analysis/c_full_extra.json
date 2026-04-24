@@ -1,0 +1,1230 @@
+{
+  "baseline_dir": "/data/group_data/rl/geney/eval_results/psf_v2_cadence5_grounded_predonly_top2M/freezenone_50ep",
+  "baseline_agg": {
+    "n": 50,
+    "mean_return": 14.659999988377095,
+    "se_return": 0.820321888173323,
+    "mean_length": 628.8,
+    "mean_num_ach": 15.08,
+    "achievement_counts": {
+      "collect_coal": 36,
+      "collect_drink": 41,
+      "collect_sapling": 19,
+      "collect_stone": 47,
+      "collect_wood": 50,
+      "defeat_zombie": 36,
+      "eat_cow": 43,
+      "make_wood_pickaxe": 47,
+      "make_wood_sword": 44,
+      "place_plant": 14,
+      "place_table": 48,
+      "collect_iron": 25,
+      "defeat_skeleton": 37,
+      "make_arrow": 36,
+      "make_stone_pickaxe": 38,
+      "make_stone_sword": 35,
+      "make_torch": 29,
+      "place_furnace": 31,
+      "place_stone": 34,
+      "place_torch": 26,
+      "wake_up": 26,
+      "collect_sapphire": 1,
+      "enter_dungeon": 6,
+      "find_bow": 1,
+      "open_chest": 1,
+      "defeat_orc_mage": 1,
+      "eat_snail": 2
+    }
+  },
+  "rows": [
+    {
+      "label": "C valgrad \u03b1=+2",
+      "dir": "/data/group_data/rl/geney/eval_results/psf_v2_cadence5_grounded_predonly_top2M_value_grad_arith/value_grad_alpha2_0_30ep",
+      "n": 30,
+      "mean_return": 13.566666656235855,
+      "se_return": 1.1281581189384993,
+      "delta_return": -1.0933333321412402,
+      "se_diff_return": 1.394872302952173,
+      "z_return": -0.783823243050463,
+      "mean_length": 612.1666666666666,
+      "mean_num_ach": 14.2,
+      "achievement_counts": {
+        "collect_coal": 18,
+        "collect_drink": 21,
+        "collect_stone": 24,
+        "collect_wood": 30,
+        "defeat_skeleton": 20,
+        "defeat_zombie": 18,
+        "eat_cow": 25,
+        "make_arrow": 19,
+        "make_stone_sword": 18,
+        "make_torch": 16,
+        "make_wood_pickaxe": 25,
+        "make_wood_sword": 24,
+        "place_furnace": 21,
+        "place_stone": 22,
+        "place_table": 28,
+        "place_torch": 16,
+        "wake_up": 27,
+        "collect_sapling": 13,
+        "place_plant": 13,
+        "collect_iron": 9,
+        "enter_dungeon": 4,
+        "make_stone_pickaxe": 15
+      },
+      "achievement_deltas": {
+        "collect_wood": {
+          "baseline_count": 50,
+          "cond_count": 30,
+          "baseline_rate": 1.0,
+          "cond_rate": 1.0,
+          "delta_rate": 0.0,
+          "ratio": 1.0
+        },
+        "collect_stone": {
+          "baseline_count": 47,
+          "cond_count": 24,
+          "baseline_rate": 0.94,
+          "cond_rate": 0.8,
+          "delta_rate": -0.1399999999999999,
+          "ratio": 0.8510638297872342
+        },
+        "collect_coal": {
+          "baseline_count": 36,
+          "cond_count": 18,
+          "baseline_rate": 0.72,
+          "cond_rate": 0.6,
+          "delta_rate": -0.12,
+          "ratio": 0.8333333333333334
+        },
+        "collect_iron": {
+          "baseline_count": 25,
+          "cond_count": 9,
+          "baseline_rate": 0.5,
+          "cond_rate": 0.3,
+          "delta_rate": -0.2,
+          "ratio": 0.6
+        },
+        "collect_drink": {
+          "baseline_count": 41,
+          "cond_count": 21,
+          "baseline_rate": 0.82,
+          "cond_rate": 0.7,
+          "delta_rate": -0.12,
+          "ratio": 0.8536585365853658
+        },
+        "collect_diamond": {
+          "baseline_count": 0,
+          "cond_count": 0,
+          "baseline_rate": 0.0,
+          "cond_rate": 0.0,
+          "delta_rate": 0.0,
+          "ratio": 1.0
+        },
+        "eat_cow": {
+          "baseline_count": 43,
+          "cond_count": 25,
+          "baseline_rate": 0.86,
+          "cond_rate": 0.8333333333333334,
+          "delta_rate": -0.026666666666666616,
+          "ratio": 0.9689922480620156
+        },
+        "eat_plant": {
+          "baseline_count": 0,
+          "cond_count": 0,
+          "baseline_rate": 0.0,
+          "cond_rate": 0.0,
+          "delta_rate": 0.0,
+          "ratio": 1.0
+        },
+        "make_wood_pickaxe": {
+          "baseline_count": 47,
+          "cond_count": 25,
+          "baseline_rate": 0.94,
+          "cond_rate": 0.8333333333333334,
+          "delta_rate": -0.10666666666666658,
+          "ratio": 0.8865248226950355
+        },
+        "make_stone_pickaxe": {
+          "baseline_count": 38,
+          "cond_count": 15,
+          "baseline_rate": 0.76,
+          "cond_rate": 0.5,
+          "delta_rate": -0.26,
+          "ratio": 0.6578947368421053
+        },
+        "make_iron_pickaxe": {
+          "baseline_count": 0,
+          "cond_count": 0,
+          "baseline_rate": 0.0,
+          "cond_rate": 0.0,
+          "delta_rate": 0.0,
+          "ratio": 1.0
+        },
+        "make_wood_sword": {
+          "baseline_count": 44,
+          "cond_count": 24,
+          "baseline_rate": 0.88,
+          "cond_rate": 0.8,
+          "delta_rate": -0.07999999999999996,
+          "ratio": 0.9090909090909092
+        },
+        "make_stone_sword": {
+          "baseline_count": 35,
+          "cond_count": 18,
+          "baseline_rate": 0.7,
+          "cond_rate": 0.6,
+          "delta_rate": -0.09999999999999998,
+          "ratio": 0.8571428571428572
+        },
+        "make_iron_sword": {
+          "baseline_count": 0,
+          "cond_count": 0,
+          "baseline_rate": 0.0,
+          "cond_rate": 0.0,
+          "delta_rate": 0.0,
+          "ratio": 1.0
+        },
+        "place_stone": {
+          "baseline_count": 34,
+          "cond_count": 22,
+          "baseline_rate": 0.68,
+          "cond_rate": 0.7333333333333333,
+          "delta_rate": 0.05333333333333323,
+          "ratio": 1.0784313725490196
+        },
+        "place_table": {
+          "baseline_count": 48,
+          "cond_count": 28,
+          "baseline_rate": 0.96,
+          "cond_rate": 0.9333333333333333,
+          "delta_rate": -0.026666666666666616,
+          "ratio": 0.9722222222222223
+        },
+        "place_furnace": {
+          "baseline_count": 31,
+          "cond_count": 21,
+          "baseline_rate": 0.62,
+          "cond_rate": 0.7,
+          "delta_rate": 0.07999999999999996,
+          "ratio": 1.129032258064516
+        },
+        "place_torch": {
+          "baseline_count": 26,
+          "cond_count": 16,
+          "baseline_rate": 0.52,
+          "cond_rate": 0.5333333333333333,
+          "delta_rate": 0.013333333333333308,
+          "ratio": 1.0256410256410255
+        },
+        "wake_up": {
+          "baseline_count": 26,
+          "cond_count": 27,
+          "baseline_rate": 0.52,
+          "cond_rate": 0.9,
+          "delta_rate": 0.38,
+          "ratio": 1.7307692307692308
+        },
+        "defeat_zombie": {
+          "baseline_count": 36,
+          "cond_count": 18,
+          "baseline_rate": 0.72,
+          "cond_rate": 0.6,
+          "delta_rate": -0.12,
+          "ratio": 0.8333333333333334
+        },
+        "defeat_skeleton": {
+          "baseline_count": 37,
+          "cond_count": 20,
+          "baseline_rate": 0.74,
+          "cond_rate": 0.6666666666666666,
+          "delta_rate": -0.07333333333333336,
+          "ratio": 0.9009009009009009
+        },
+        "enter_dungeon": {
+          "baseline_count": 6,
+          "cond_count": 4,
+          "baseline_rate": 0.12,
+          "cond_rate": 0.13333333333333333,
+          "delta_rate": 0.013333333333333336,
+          "ratio": 1.1111111111111112
+        },
+        "enter_gnomish_mines": {
+          "baseline_count": 0,
+          "cond_count": 0,
+          "baseline_rate": 0.0,
+          "cond_rate": 0.0,
+          "delta_rate": 0.0,
+          "ratio": 1.0
+        },
+        "descend_floor": {
+          "baseline_count": 0,
+          "cond_count": 0,
+          "baseline_rate": 0.0,
+          "cond_rate": 0.0,
+          "delta_rate": 0.0,
+          "ratio": 1.0
+        }
+      }
+    },
+    {
+      "label": "C valgrad \u03b1=-2",
+      "dir": "/data/group_data/rl/geney/eval_results/psf_v2_cadence5_grounded_predonly_top2M_value_grad_arith/value_grad_alpha-2_0_30ep",
+      "n": 30,
+      "mean_return": 8.733333317438762,
+      "se_return": 1.2224595722451512,
+      "delta_return": -5.926666670938333,
+      "se_diff_return": 1.472187286315856,
+      "z_return": -4.02575591164749,
+      "mean_length": 370.56666666666666,
+      "mean_num_ach": 9.033333333333333,
+      "achievement_counts": {
+        "collect_coal": 10,
+        "collect_iron": 7,
+        "collect_stone": 14,
+        "collect_wood": 29,
+        "defeat_skeleton": 14,
+        "defeat_zombie": 11,
+        "eat_cow": 20,
+        "make_arrow": 6,
+        "make_stone_pickaxe": 13,
+        "make_stone_sword": 13,
+        "make_wood_pickaxe": 14,
+        "make_wood_sword": 13,
+        "place_furnace": 5,
+        "place_stone": 10,
+        "place_table": 20,
+        "make_torch": 8,
+        "place_torch": 6,
+        "collect_drink": 17,
+        "collect_sapling": 12,
+        "wake_up": 10,
+        "place_plant": 10,
+        "defeat_orc_solider": 1,
+        "eat_snail": 1,
+        "enter_dungeon": 5,
+        "find_bow": 1,
+        "open_chest": 1
+      },
+      "achievement_deltas": {
+        "collect_wood": {
+          "baseline_count": 50,
+          "cond_count": 29,
+          "baseline_rate": 1.0,
+          "cond_rate": 0.9666666666666667,
+          "delta_rate": -0.033333333333333326,
+          "ratio": 0.9666666666666667
+        },
+        "collect_stone": {
+          "baseline_count": 47,
+          "cond_count": 14,
+          "baseline_rate": 0.94,
+          "cond_rate": 0.4666666666666667,
+          "delta_rate": -0.4733333333333333,
+          "ratio": 0.4964539007092199
+        },
+        "collect_coal": {
+          "baseline_count": 36,
+          "cond_count": 10,
+          "baseline_rate": 0.72,
+          "cond_rate": 0.3333333333333333,
+          "delta_rate": -0.38666666666666666,
+          "ratio": 0.46296296296296297
+        },
+        "collect_iron": {
+          "baseline_count": 25,
+          "cond_count": 7,
+          "baseline_rate": 0.5,
+          "cond_rate": 0.23333333333333334,
+          "delta_rate": -0.26666666666666666,
+          "ratio": 0.4666666666666667
+        },
+        "collect_drink": {
+          "baseline_count": 41,
+          "cond_count": 17,
+          "baseline_rate": 0.82,
+          "cond_rate": 0.5666666666666667,
+          "delta_rate": -0.2533333333333333,
+          "ratio": 0.6910569105691057
+        },
+        "collect_diamond": {
+          "baseline_count": 0,
+          "cond_count": 0,
+          "baseline_rate": 0.0,
+          "cond_rate": 0.0,
+          "delta_rate": 0.0,
+          "ratio": 1.0
+        },
+        "eat_cow": {
+          "baseline_count": 43,
+          "cond_count": 20,
+          "baseline_rate": 0.86,
+          "cond_rate": 0.6666666666666666,
+          "delta_rate": -0.19333333333333336,
+          "ratio": 0.7751937984496123
+        },
+        "eat_plant": {
+          "baseline_count": 0,
+          "cond_count": 0,
+          "baseline_rate": 0.0,
+          "cond_rate": 0.0,
+          "delta_rate": 0.0,
+          "ratio": 1.0
+        },
+        "make_wood_pickaxe": {
+          "baseline_count": 47,
+          "cond_count": 14,
+          "baseline_rate": 0.94,
+          "cond_rate": 0.4666666666666667,
+          "delta_rate": -0.4733333333333333,
+          "ratio": 0.4964539007092199
+        },
+        "make_stone_pickaxe": {
+          "baseline_count": 38,
+          "cond_count": 13,
+          "baseline_rate": 0.76,
+          "cond_rate": 0.43333333333333335,
+          "delta_rate": -0.32666666666666666,
+          "ratio": 0.5701754385964912
+        },
+        "make_iron_pickaxe": {
+          "baseline_count": 0,
+          "cond_count": 0,
+          "baseline_rate": 0.0,
+          "cond_rate": 0.0,
+          "delta_rate": 0.0,
+          "ratio": 1.0
+        },
+        "make_wood_sword": {
+          "baseline_count": 44,
+          "cond_count": 13,
+          "baseline_rate": 0.88,
+          "cond_rate": 0.43333333333333335,
+          "delta_rate": -0.44666666666666666,
+          "ratio": 0.49242424242424243
+        },
+        "make_stone_sword": {
+          "baseline_count": 35,
+          "cond_count": 13,
+          "baseline_rate": 0.7,
+          "cond_rate": 0.43333333333333335,
+          "delta_rate": -0.2666666666666666,
+          "ratio": 0.6190476190476191
+        },
+        "make_iron_sword": {
+          "baseline_count": 0,
+          "cond_count": 0,
+          "baseline_rate": 0.0,
+          "cond_rate": 0.0,
+          "delta_rate": 0.0,
+          "ratio": 1.0
+        },
+        "place_stone": {
+          "baseline_count": 34,
+          "cond_count": 10,
+          "baseline_rate": 0.68,
+          "cond_rate": 0.3333333333333333,
+          "delta_rate": -0.34666666666666673,
+          "ratio": 0.4901960784313725
+        },
+        "place_table": {
+          "baseline_count": 48,
+          "cond_count": 20,
+          "baseline_rate": 0.96,
+          "cond_rate": 0.6666666666666666,
+          "delta_rate": -0.29333333333333333,
+          "ratio": 0.6944444444444444
+        },
+        "place_furnace": {
+          "baseline_count": 31,
+          "cond_count": 5,
+          "baseline_rate": 0.62,
+          "cond_rate": 0.16666666666666666,
+          "delta_rate": -0.45333333333333337,
+          "ratio": 0.26881720430107525
+        },
+        "place_torch": {
+          "baseline_count": 26,
+          "cond_count": 6,
+          "baseline_rate": 0.52,
+          "cond_rate": 0.2,
+          "delta_rate": -0.32,
+          "ratio": 0.38461538461538464
+        },
+        "wake_up": {
+          "baseline_count": 26,
+          "cond_count": 10,
+          "baseline_rate": 0.52,
+          "cond_rate": 0.3333333333333333,
+          "delta_rate": -0.1866666666666667,
+          "ratio": 0.641025641025641
+        },
+        "defeat_zombie": {
+          "baseline_count": 36,
+          "cond_count": 11,
+          "baseline_rate": 0.72,
+          "cond_rate": 0.36666666666666664,
+          "delta_rate": -0.35333333333333333,
+          "ratio": 0.5092592592592592
+        },
+        "defeat_skeleton": {
+          "baseline_count": 37,
+          "cond_count": 14,
+          "baseline_rate": 0.74,
+          "cond_rate": 0.4666666666666667,
+          "delta_rate": -0.2733333333333333,
+          "ratio": 0.6306306306306306
+        },
+        "enter_dungeon": {
+          "baseline_count": 6,
+          "cond_count": 5,
+          "baseline_rate": 0.12,
+          "cond_rate": 0.16666666666666666,
+          "delta_rate": 0.04666666666666666,
+          "ratio": 1.3888888888888888
+        },
+        "enter_gnomish_mines": {
+          "baseline_count": 0,
+          "cond_count": 0,
+          "baseline_rate": 0.0,
+          "cond_rate": 0.0,
+          "delta_rate": 0.0,
+          "ratio": 1.0
+        },
+        "descend_floor": {
+          "baseline_count": 0,
+          "cond_count": 0,
+          "baseline_rate": 0.0,
+          "cond_rate": 0.0,
+          "delta_rate": 0.0,
+          "ratio": 1.0
+        }
+      }
+    },
+    {
+      "label": "C switch\u2192avoid_animals @200",
+      "dir": "/data/group_data/rl/geney/eval_results/psf_v2_cadence5_grounded_predonly_top2M_switch/switch_to_avoid_animals_v2_at200_30ep",
+      "n": 30,
+      "mean_return": 16.466666652262212,
+      "se_return": 0.8225749993292152,
+      "delta_return": 1.8066666638851174,
+      "se_diff_return": 1.1617046224138492,
+      "z_return": 1.5551859130345311,
+      "mean_length": 524.6333333333333,
+      "mean_num_ach": 16.766666666666666,
+      "achievement_counts": {
+        "collect_coal": 23,
+        "collect_drink": 27,
+        "collect_iron": 18,
+        "collect_sapling": 17,
+        "collect_stone": 28,
+        "collect_wood": 30,
+        "defeat_skeleton": 22,
+        "defeat_zombie": 22,
+        "eat_cow": 29,
+        "enter_dungeon": 6,
+        "find_bow": 1,
+        "fire_bow": 1,
+        "make_arrow": 25,
+        "make_stone_pickaxe": 27,
+        "make_stone_sword": 25,
+        "make_wood_pickaxe": 28,
+        "make_wood_sword": 27,
+        "open_chest": 1,
+        "place_furnace": 23,
+        "place_plant": 16,
+        "place_table": 29,
+        "make_torch": 21,
+        "place_torch": 20,
+        "place_stone": 23,
+        "wake_up": 12,
+        "eat_plant": 2
+      },
+      "achievement_deltas": {
+        "collect_wood": {
+          "baseline_count": 50,
+          "cond_count": 30,
+          "baseline_rate": 1.0,
+          "cond_rate": 1.0,
+          "delta_rate": 0.0,
+          "ratio": 1.0
+        },
+        "collect_stone": {
+          "baseline_count": 47,
+          "cond_count": 28,
+          "baseline_rate": 0.94,
+          "cond_rate": 0.9333333333333333,
+          "delta_rate": -0.006666666666666599,
+          "ratio": 0.9929078014184398
+        },
+        "collect_coal": {
+          "baseline_count": 36,
+          "cond_count": 23,
+          "baseline_rate": 0.72,
+          "cond_rate": 0.7666666666666667,
+          "delta_rate": 0.046666666666666745,
+          "ratio": 1.0648148148148149
+        },
+        "collect_iron": {
+          "baseline_count": 25,
+          "cond_count": 18,
+          "baseline_rate": 0.5,
+          "cond_rate": 0.6,
+          "delta_rate": 0.09999999999999998,
+          "ratio": 1.2
+        },
+        "collect_drink": {
+          "baseline_count": 41,
+          "cond_count": 27,
+          "baseline_rate": 0.82,
+          "cond_rate": 0.9,
+          "delta_rate": 0.08000000000000007,
+          "ratio": 1.0975609756097562
+        },
+        "collect_diamond": {
+          "baseline_count": 0,
+          "cond_count": 0,
+          "baseline_rate": 0.0,
+          "cond_rate": 0.0,
+          "delta_rate": 0.0,
+          "ratio": 1.0
+        },
+        "eat_cow": {
+          "baseline_count": 43,
+          "cond_count": 29,
+          "baseline_rate": 0.86,
+          "cond_rate": 0.9666666666666667,
+          "delta_rate": 0.10666666666666669,
+          "ratio": 1.124031007751938
+        },
+        "eat_plant": {
+          "baseline_count": 0,
+          "cond_count": 2,
+          "baseline_rate": 0.0,
+          "cond_rate": 0.06666666666666667,
+          "delta_rate": 0.06666666666666667,
+          "ratio": Infinity
+        },
+        "make_wood_pickaxe": {
+          "baseline_count": 47,
+          "cond_count": 28,
+          "baseline_rate": 0.94,
+          "cond_rate": 0.9333333333333333,
+          "delta_rate": -0.006666666666666599,
+          "ratio": 0.9929078014184398
+        },
+        "make_stone_pickaxe": {
+          "baseline_count": 38,
+          "cond_count": 27,
+          "baseline_rate": 0.76,
+          "cond_rate": 0.9,
+          "delta_rate": 0.14,
+          "ratio": 1.1842105263157894
+        },
+        "make_iron_pickaxe": {
+          "baseline_count": 0,
+          "cond_count": 0,
+          "baseline_rate": 0.0,
+          "cond_rate": 0.0,
+          "delta_rate": 0.0,
+          "ratio": 1.0
+        },
+        "make_wood_sword": {
+          "baseline_count": 44,
+          "cond_count": 27,
+          "baseline_rate": 0.88,
+          "cond_rate": 0.9,
+          "delta_rate": 0.020000000000000018,
+          "ratio": 1.0227272727272727
+        },
+        "make_stone_sword": {
+          "baseline_count": 35,
+          "cond_count": 25,
+          "baseline_rate": 0.7,
+          "cond_rate": 0.8333333333333334,
+          "delta_rate": 0.13333333333333341,
+          "ratio": 1.1904761904761907
+        },
+        "make_iron_sword": {
+          "baseline_count": 0,
+          "cond_count": 0,
+          "baseline_rate": 0.0,
+          "cond_rate": 0.0,
+          "delta_rate": 0.0,
+          "ratio": 1.0
+        },
+        "place_stone": {
+          "baseline_count": 34,
+          "cond_count": 23,
+          "baseline_rate": 0.68,
+          "cond_rate": 0.7666666666666667,
+          "delta_rate": 0.08666666666666667,
+          "ratio": 1.1274509803921569
+        },
+        "place_table": {
+          "baseline_count": 48,
+          "cond_count": 29,
+          "baseline_rate": 0.96,
+          "cond_rate": 0.9666666666666667,
+          "delta_rate": 0.00666666666666671,
+          "ratio": 1.0069444444444444
+        },
+        "place_furnace": {
+          "baseline_count": 31,
+          "cond_count": 23,
+          "baseline_rate": 0.62,
+          "cond_rate": 0.7666666666666667,
+          "delta_rate": 0.14666666666666672,
+          "ratio": 1.2365591397849462
+        },
+        "place_torch": {
+          "baseline_count": 26,
+          "cond_count": 20,
+          "baseline_rate": 0.52,
+          "cond_rate": 0.6666666666666666,
+          "delta_rate": 0.1466666666666666,
+          "ratio": 1.282051282051282
+        },
+        "wake_up": {
+          "baseline_count": 26,
+          "cond_count": 12,
+          "baseline_rate": 0.52,
+          "cond_rate": 0.4,
+          "delta_rate": -0.12,
+          "ratio": 0.7692307692307693
+        },
+        "defeat_zombie": {
+          "baseline_count": 36,
+          "cond_count": 22,
+          "baseline_rate": 0.72,
+          "cond_rate": 0.7333333333333333,
+          "delta_rate": 0.013333333333333308,
+          "ratio": 1.0185185185185184
+        },
+        "defeat_skeleton": {
+          "baseline_count": 37,
+          "cond_count": 22,
+          "baseline_rate": 0.74,
+          "cond_rate": 0.7333333333333333,
+          "delta_rate": -0.00666666666666671,
+          "ratio": 0.990990990990991
+        },
+        "enter_dungeon": {
+          "baseline_count": 6,
+          "cond_count": 6,
+          "baseline_rate": 0.12,
+          "cond_rate": 0.2,
+          "delta_rate": 0.08000000000000002,
+          "ratio": 1.6666666666666667
+        },
+        "enter_gnomish_mines": {
+          "baseline_count": 0,
+          "cond_count": 0,
+          "baseline_rate": 0.0,
+          "cond_rate": 0.0,
+          "delta_rate": 0.0,
+          "ratio": 1.0
+        },
+        "descend_floor": {
+          "baseline_count": 0,
+          "cond_count": 0,
+          "baseline_rate": 0.0,
+          "cond_rate": 0.0,
+          "delta_rate": 0.0,
+          "ratio": 1.0
+        }
+      }
+    },
+    {
+      "label": "C switch\u2192target_descend @200",
+      "dir": "/data/group_data/rl/geney/eval_results/psf_v2_cadence5_grounded_predonly_top2M_switch/switch_to_target_descend_v2_at200_30ep",
+      "n": 30,
+      "mean_return": 14.966666654497384,
+      "se_return": 1.1839044003537937,
+      "delta_return": 0.3066666661202895,
+      "se_diff_return": 1.440332471824933,
+      "z_return": 0.21291380436055576,
+      "mean_length": 418.3333333333333,
+      "mean_num_ach": 14.933333333333334,
+      "achievement_counts": {
+        "collect_coal": 22,
+        "collect_drink": 25,
+        "collect_stone": 25,
+        "collect_wood": 30,
+        "defeat_skeleton": 19,
+        "defeat_zombie": 21,
+        "eat_cow": 25,
+        "enter_dungeon": 8,
+        "make_arrow": 21,
+        "make_stone_pickaxe": 21,
+        "make_stone_sword": 23,
+        "make_wood_pickaxe": 25,
+        "make_wood_sword": 25,
+        "place_furnace": 17,
+        "place_stone": 23,
+        "place_table": 25,
+        "wake_up": 13,
+        "collect_sapling": 11,
+        "make_torch": 19,
+        "place_plant": 9,
+        "place_torch": 18,
+        "eat_snail": 2,
+        "collect_iron": 17,
+        "find_bow": 2,
+        "open_chest": 2
+      },
+      "achievement_deltas": {
+        "collect_wood": {
+          "baseline_count": 50,
+          "cond_count": 30,
+          "baseline_rate": 1.0,
+          "cond_rate": 1.0,
+          "delta_rate": 0.0,
+          "ratio": 1.0
+        },
+        "collect_stone": {
+          "baseline_count": 47,
+          "cond_count": 25,
+          "baseline_rate": 0.94,
+          "cond_rate": 0.8333333333333334,
+          "delta_rate": -0.10666666666666658,
+          "ratio": 0.8865248226950355
+        },
+        "collect_coal": {
+          "baseline_count": 36,
+          "cond_count": 22,
+          "baseline_rate": 0.72,
+          "cond_rate": 0.7333333333333333,
+          "delta_rate": 0.013333333333333308,
+          "ratio": 1.0185185185185184
+        },
+        "collect_iron": {
+          "baseline_count": 25,
+          "cond_count": 17,
+          "baseline_rate": 0.5,
+          "cond_rate": 0.5666666666666667,
+          "delta_rate": 0.06666666666666665,
+          "ratio": 1.1333333333333333
+        },
+        "collect_drink": {
+          "baseline_count": 41,
+          "cond_count": 25,
+          "baseline_rate": 0.82,
+          "cond_rate": 0.8333333333333334,
+          "delta_rate": 0.01333333333333342,
+          "ratio": 1.016260162601626
+        },
+        "collect_diamond": {
+          "baseline_count": 0,
+          "cond_count": 0,
+          "baseline_rate": 0.0,
+          "cond_rate": 0.0,
+          "delta_rate": 0.0,
+          "ratio": 1.0
+        },
+        "eat_cow": {
+          "baseline_count": 43,
+          "cond_count": 25,
+          "baseline_rate": 0.86,
+          "cond_rate": 0.8333333333333334,
+          "delta_rate": -0.026666666666666616,
+          "ratio": 0.9689922480620156
+        },
+        "eat_plant": {
+          "baseline_count": 0,
+          "cond_count": 0,
+          "baseline_rate": 0.0,
+          "cond_rate": 0.0,
+          "delta_rate": 0.0,
+          "ratio": 1.0
+        },
+        "make_wood_pickaxe": {
+          "baseline_count": 47,
+          "cond_count": 25,
+          "baseline_rate": 0.94,
+          "cond_rate": 0.8333333333333334,
+          "delta_rate": -0.10666666666666658,
+          "ratio": 0.8865248226950355
+        },
+        "make_stone_pickaxe": {
+          "baseline_count": 38,
+          "cond_count": 21,
+          "baseline_rate": 0.76,
+          "cond_rate": 0.7,
+          "delta_rate": -0.06000000000000005,
+          "ratio": 0.9210526315789473
+        },
+        "make_iron_pickaxe": {
+          "baseline_count": 0,
+          "cond_count": 0,
+          "baseline_rate": 0.0,
+          "cond_rate": 0.0,
+          "delta_rate": 0.0,
+          "ratio": 1.0
+        },
+        "make_wood_sword": {
+          "baseline_count": 44,
+          "cond_count": 25,
+          "baseline_rate": 0.88,
+          "cond_rate": 0.8333333333333334,
+          "delta_rate": -0.046666666666666634,
+          "ratio": 0.946969696969697
+        },
+        "make_stone_sword": {
+          "baseline_count": 35,
+          "cond_count": 23,
+          "baseline_rate": 0.7,
+          "cond_rate": 0.7666666666666667,
+          "delta_rate": 0.06666666666666676,
+          "ratio": 1.0952380952380953
+        },
+        "make_iron_sword": {
+          "baseline_count": 0,
+          "cond_count": 0,
+          "baseline_rate": 0.0,
+          "cond_rate": 0.0,
+          "delta_rate": 0.0,
+          "ratio": 1.0
+        },
+        "place_stone": {
+          "baseline_count": 34,
+          "cond_count": 23,
+          "baseline_rate": 0.68,
+          "cond_rate": 0.7666666666666667,
+          "delta_rate": 0.08666666666666667,
+          "ratio": 1.1274509803921569
+        },
+        "place_table": {
+          "baseline_count": 48,
+          "cond_count": 25,
+          "baseline_rate": 0.96,
+          "cond_rate": 0.8333333333333334,
+          "delta_rate": -0.1266666666666666,
+          "ratio": 0.8680555555555556
+        },
+        "place_furnace": {
+          "baseline_count": 31,
+          "cond_count": 17,
+          "baseline_rate": 0.62,
+          "cond_rate": 0.5666666666666667,
+          "delta_rate": -0.053333333333333344,
+          "ratio": 0.9139784946236559
+        },
+        "place_torch": {
+          "baseline_count": 26,
+          "cond_count": 18,
+          "baseline_rate": 0.52,
+          "cond_rate": 0.6,
+          "delta_rate": 0.07999999999999996,
+          "ratio": 1.1538461538461537
+        },
+        "wake_up": {
+          "baseline_count": 26,
+          "cond_count": 13,
+          "baseline_rate": 0.52,
+          "cond_rate": 0.43333333333333335,
+          "delta_rate": -0.08666666666666667,
+          "ratio": 0.8333333333333334
+        },
+        "defeat_zombie": {
+          "baseline_count": 36,
+          "cond_count": 21,
+          "baseline_rate": 0.72,
+          "cond_rate": 0.7,
+          "delta_rate": -0.020000000000000018,
+          "ratio": 0.9722222222222222
+        },
+        "defeat_skeleton": {
+          "baseline_count": 37,
+          "cond_count": 19,
+          "baseline_rate": 0.74,
+          "cond_rate": 0.6333333333333333,
+          "delta_rate": -0.10666666666666669,
+          "ratio": 0.8558558558558558
+        },
+        "enter_dungeon": {
+          "baseline_count": 6,
+          "cond_count": 8,
+          "baseline_rate": 0.12,
+          "cond_rate": 0.26666666666666666,
+          "delta_rate": 0.14666666666666667,
+          "ratio": 2.2222222222222223
+        },
+        "enter_gnomish_mines": {
+          "baseline_count": 0,
+          "cond_count": 0,
+          "baseline_rate": 0.0,
+          "cond_rate": 0.0,
+          "delta_rate": 0.0,
+          "ratio": 1.0
+        },
+        "descend_floor": {
+          "baseline_count": 0,
+          "cond_count": 0,
+          "baseline_rate": 0.0,
+          "cond_rate": 0.0,
+          "delta_rate": 0.0,
+          "ratio": 1.0
+        }
+      }
+    },
+    {
+      "label": "C switch\u2192die_v2 @200",
+      "dir": "/data/group_data/rl/geney/eval_results/psf_v2_cadence5_grounded_predonly_top2M_switch/switch_to_die_v2_at200_30ep",
+      "n": 30,
+      "mean_return": 14.399999995032946,
+      "se_return": 0.9251426341497263,
+      "delta_return": -0.2599999933441488,
+      "se_diff_return": 1.2364533528353345,
+      "z_return": -0.21027885342211894,
+      "mean_length": 409.93333333333334,
+      "mean_num_ach": 14.7,
+      "achievement_counts": {
+        "collect_coal": 23,
+        "collect_drink": 25,
+        "collect_iron": 14,
+        "collect_stone": 27,
+        "collect_wood": 30,
+        "defeat_zombie": 20,
+        "eat_cow": 26,
+        "enter_dungeon": 5,
+        "make_arrow": 18,
+        "make_stone_pickaxe": 20,
+        "make_stone_sword": 21,
+        "make_wood_pickaxe": 27,
+        "make_wood_sword": 25,
+        "place_furnace": 16,
+        "place_stone": 21,
+        "place_table": 29,
+        "wake_up": 12,
+        "collect_sapling": 12,
+        "defeat_skeleton": 21,
+        "place_plant": 11,
+        "make_torch": 18,
+        "place_torch": 16,
+        "find_bow": 2,
+        "open_chest": 2
+      },
+      "achievement_deltas": {
+        "collect_wood": {
+          "baseline_count": 50,
+          "cond_count": 30,
+          "baseline_rate": 1.0,
+          "cond_rate": 1.0,
+          "delta_rate": 0.0,
+          "ratio": 1.0
+        },
+        "collect_stone": {
+          "baseline_count": 47,
+          "cond_count": 27,
+          "baseline_rate": 0.94,
+          "cond_rate": 0.9,
+          "delta_rate": -0.039999999999999925,
+          "ratio": 0.9574468085106383
+        },
+        "collect_coal": {
+          "baseline_count": 36,
+          "cond_count": 23,
+          "baseline_rate": 0.72,
+          "cond_rate": 0.7666666666666667,
+          "delta_rate": 0.046666666666666745,
+          "ratio": 1.0648148148148149
+        },
+        "collect_iron": {
+          "baseline_count": 25,
+          "cond_count": 14,
+          "baseline_rate": 0.5,
+          "cond_rate": 0.4666666666666667,
+          "delta_rate": -0.033333333333333326,
+          "ratio": 0.9333333333333333
+        },
+        "collect_drink": {
+          "baseline_count": 41,
+          "cond_count": 25,
+          "baseline_rate": 0.82,
+          "cond_rate": 0.8333333333333334,
+          "delta_rate": 0.01333333333333342,
+          "ratio": 1.016260162601626
+        },
+        "collect_diamond": {
+          "baseline_count": 0,
+          "cond_count": 0,
+          "baseline_rate": 0.0,
+          "cond_rate": 0.0,
+          "delta_rate": 0.0,
+          "ratio": 1.0
+        },
+        "eat_cow": {
+          "baseline_count": 43,
+          "cond_count": 26,
+          "baseline_rate": 0.86,
+          "cond_rate": 0.8666666666666667,
+          "delta_rate": 0.00666666666666671,
+          "ratio": 1.0077519379844961
+        },
+        "eat_plant": {
+          "baseline_count": 0,
+          "cond_count": 0,
+          "baseline_rate": 0.0,
+          "cond_rate": 0.0,
+          "delta_rate": 0.0,
+          "ratio": 1.0
+        },
+        "make_wood_pickaxe": {
+          "baseline_count": 47,
+          "cond_count": 27,
+          "baseline_rate": 0.94,
+          "cond_rate": 0.9,
+          "delta_rate": -0.039999999999999925,
+          "ratio": 0.9574468085106383
+        },
+        "make_stone_pickaxe": {
+          "baseline_count": 38,
+          "cond_count": 20,
+          "baseline_rate": 0.76,
+          "cond_rate": 0.6666666666666666,
+          "delta_rate": -0.09333333333333338,
+          "ratio": 0.8771929824561403
+        },
+        "make_iron_pickaxe": {
+          "baseline_count": 0,
+          "cond_count": 0,
+          "baseline_rate": 0.0,
+          "cond_rate": 0.0,
+          "delta_rate": 0.0,
+          "ratio": 1.0
+        },
+        "make_wood_sword": {
+          "baseline_count": 44,
+          "cond_count": 25,
+          "baseline_rate": 0.88,
+          "cond_rate": 0.8333333333333334,
+          "delta_rate": -0.046666666666666634,
+          "ratio": 0.946969696969697
+        },
+        "make_stone_sword": {
+          "baseline_count": 35,
+          "cond_count": 21,
+          "baseline_rate": 0.7,
+          "cond_rate": 0.7,
+          "delta_rate": 0.0,
+          "ratio": 1.0
+        },
+        "make_iron_sword": {
+          "baseline_count": 0,
+          "cond_count": 0,
+          "baseline_rate": 0.0,
+          "cond_rate": 0.0,
+          "delta_rate": 0.0,
+          "ratio": 1.0
+        },
+        "place_stone": {
+          "baseline_count": 34,
+          "cond_count": 21,
+          "baseline_rate": 0.68,
+          "cond_rate": 0.7,
+          "delta_rate": 0.019999999999999907,
+          "ratio": 1.0294117647058822
+        },
+        "place_table": {
+          "baseline_count": 48,
+          "cond_count": 29,
+          "baseline_rate": 0.96,
+          "cond_rate": 0.9666666666666667,
+          "delta_rate": 0.00666666666666671,
+          "ratio": 1.0069444444444444
+        },
+        "place_furnace": {
+          "baseline_count": 31,
+          "cond_count": 16,
+          "baseline_rate": 0.62,
+          "cond_rate": 0.5333333333333333,
+          "delta_rate": -0.08666666666666667,
+          "ratio": 0.8602150537634409
+        },
+        "place_torch": {
+          "baseline_count": 26,
+          "cond_count": 16,
+          "baseline_rate": 0.52,
+          "cond_rate": 0.5333333333333333,
+          "delta_rate": 0.013333333333333308,
+          "ratio": 1.0256410256410255
+        },
+        "wake_up": {
+          "baseline_count": 26,
+          "cond_count": 12,
+          "baseline_rate": 0.52,
+          "cond_rate": 0.4,
+          "delta_rate": -0.12,
+          "ratio": 0.7692307692307693
+        },
+        "defeat_zombie": {
+          "baseline_count": 36,
+          "cond_count": 20,
+          "baseline_rate": 0.72,
+          "cond_rate": 0.6666666666666666,
+          "delta_rate": -0.053333333333333344,
+          "ratio": 0.9259259259259259
+        },
+        "defeat_skeleton": {
+          "baseline_count": 37,
+          "cond_count": 21,
+          "baseline_rate": 0.74,
+          "cond_rate": 0.7,
+          "delta_rate": -0.040000000000000036,
+          "ratio": 0.9459459459459459
+        },
+        "enter_dungeon": {
+          "baseline_count": 6,
+          "cond_count": 5,
+          "baseline_rate": 0.12,
+          "cond_rate": 0.16666666666666666,
+          "delta_rate": 0.04666666666666666,
+          "ratio": 1.3888888888888888
+        },
+        "enter_gnomish_mines": {
+          "baseline_count": 0,
+          "cond_count": 0,
+          "baseline_rate": 0.0,
+          "cond_rate": 0.0,
+          "delta_rate": 0.0,
+          "ratio": 1.0
+        },
+        "descend_floor": {
+          "baseline_count": 0,
+          "cond_count": 0,
+          "baseline_rate": 0.0,
+          "cond_rate": 0.0,
+          "delta_rate": 0.0,
+          "ratio": 1.0
+        }
+      }
+    }
+  ],
+  "achievements_of_interest": [
+    "collect_wood",
+    "collect_stone",
+    "collect_coal",
+    "collect_iron",
+    "collect_drink",
+    "collect_diamond",
+    "eat_cow",
+    "eat_plant",
+    "make_wood_pickaxe",
+    "make_stone_pickaxe",
+    "make_iron_pickaxe",
+    "make_wood_sword",
+    "make_stone_sword",
+    "make_iron_sword",
+    "place_stone",
+    "place_table",
+    "place_furnace",
+    "place_torch",
+    "wake_up",
+    "defeat_zombie",
+    "defeat_skeleton",
+    "enter_dungeon",
+    "enter_gnomish_mines",
+    "descend_floor"
+  ]
+}
