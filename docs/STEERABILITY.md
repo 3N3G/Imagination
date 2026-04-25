@@ -762,6 +762,98 @@ direction (z=+2.0 to +6.0). Not run on `A_full` or `B_thinking_2M`.
 
 ---
 
+<a id="patch-by-prompt"></a>
+## Patch-by-prompt: `v2_basic_coverage` and `v2_long_tail`
+
+**Setup.** Two new base prompts that don't *steer* the policy toward a
+single behavior — they instead expand the baseline algorithm to
+explicitly mention the long-tail achievements that
+`docs/TRACK_ANALYSIS.md` identified as deficits per track. Both prompts
+are run on the existing `freezenone` checkpoints, no retraining (this is
+purely an inference-time prompt swap).
+
+- `v2_basic_coverage` (template:
+  `predict_state_only_prompt_concise_v2_basic_coverage.txt`) — addresses
+  B's basic-chain coverage gap: always make+place a torch on coal, craft
+  both wood AND stone tier sword/pickaxe, place stone walls before
+  sleeping, sleep when energy low.
+- `v2_long_tail` (template:
+  `predict_state_only_prompt_concise_v2_long_tail.txt`) — addresses C's
+  long-tail abandonment: plant a sapling whenever collected, sleep
+  safely when energy low, place torches with collected coal, descend on
+  visible open ladder when HP is full.
+
+### Per-track before/after (n=30 patch / n=43–50 baseline)
+
+| Track | baseline | `v2_basic_coverage` | Δret (z) | `v2_long_tail` | Δret (z) |
+|---|---|---|---|---|---|
+| A_full | 18.98 ± 0.36 (n=50) | [18.60 ± 0.49](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/vrifr64a) | −0.38 (z=−0.62) | [18.83 ± 0.50](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/uvsixwzo) | −0.15 (z=−0.24) |
+| B_thinking_2M | 16.31 ± 1.02 (n=43) | [14.93 ± 1.12](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/xazexbbs) | −1.38 (z=−0.91) | [13.67 ± 1.26](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/udo35u3d) | **−2.64 (z=−1.63)** |
+| **C_grounded_2M** | 14.66 ± 0.83 (n=50) | **[16.10 ± 1.20](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/rsgr6p45)** | **+1.44 (z=+0.99)** | **[16.80 ± 1.30](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/0uuf13ul)** | **+2.14 (z=+1.39)** |
+
+**`C_grounded_2M` × `v2_long_tail` is the headline patch result.** Per-achievement
+before/after (baseline n=50 vs `v2_long_tail` n=30):
+
+| achievement | baseline | v2_long_tail | Δpp | wandb |
+|---|---|---|---|---|
+| **wake_up** | 52% | **90%** | **+38** | [run](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/0uuf13ul) |
+| place_torch | 52% | 67% | +15 | (same) |
+| make_torch | 58% | 73% | +15 | (same) |
+| place_plant | 28% | 43% | +15 | (same) |
+| **eat_plant** | 0% | **13%** | **+13** | (same) |
+| collect_sapling | 38% | 50% | +12 | (same) |
+| enter_dungeon | 12% | 20% | +8 | (same) |
+| collect_iron | 50% | 57% | +7 | (same) |
+| place_furnace | 62% | 67% | +5 | (same) |
+| place_stone | 68% | 73% | +5 | (same) |
+| make_stone_sword | 70% | 73% | +3 | (same) |
+| make_iron_pickaxe | 0% | 3% | +3 | (same) — first non-zero |
+| make_arrow | 72% | 70% | −2 | (same) |
+
+The patch hits exactly the long-tail items the prompt was designed to
+elicit (wake_up, place/eat plant, place/make torch, sapling) and
+incidentally lifts the chain that depends on them (enter_dungeon,
+collect_iron, even one make_iron_pickaxe — the first time C's
+freezenone produces an iron pickaxe). No off-axis regressions other
+than make_arrow −2pp.
+
+`v2_basic_coverage` on C_grounded also helps (+1.44, z=+0.99): wake_up
++31pp, enter_dungeon +21pp, place_torch +18pp, make_torch +19pp. Less
+of an eat_plant nudge than long_tail — basic_coverage doesn't
+explicitly mention plants. Still net-positive because the wake_up /
+torch chain is shared.
+
+### Why B fails the patches
+
+For `B_thinking_2M`, both patches **regress** (`basic` z=−0.9, `long_tail`
+z=−1.6). Per-achievement: place_plant 93% → 50% (−43pp), collect_sapling
+93% → 60% (−33pp), make_arrow 79% → 57% (−22pp), enter_dungeon 30% →
+17% (−14pp). The pattern is the same as B's response to most prompt
+swaps: the policy reads the embedding poorly, so changing the embedding
+mostly disrupts an already-good baseline rather than steering it.
+Confirms TRACK_ANALYSIS's interpretation that B's gap is a *policy*
+fidelity problem, not an *instruction-clarity* problem — fixing the
+prompt cannot fix what the policy can't read.
+
+A_full is unmoved (Δret ≈ 0) — the content-blind policy is robust to
+both patches.
+
+### What this changes about the central claim
+
+Patch-by-prompt is the strongest single-axis demonstration that a
+lower-fidelity prompt is the *binding constraint* on C's return.
+Holding the policy fixed and changing only the inference-time prompt
+moves return by +14% relative (14.66 → 16.80) and pushes wake_up by
+38pp. Combined with `target_descend_v2` (which gets C to 17.23 by
+elevating descent as priority 1), and the [Specificity matrix
+(2026-04-25)](#specificity-matrix-2026-04-25) showing that 12/21
+single-axis steers move the targeted metric in the right direction,
+the picture is: **C's hidden branch reads the prompt content,
+including long-tail behavioral instructions, and the policy executes
+on what it can.**
+
+---
+
 <a id="synthetic-embedding-arithmetic"></a>
 ## Synthetic embedding arithmetic — the killer probe
 
