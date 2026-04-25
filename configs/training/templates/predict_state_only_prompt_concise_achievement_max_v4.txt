@@ -1,0 +1,71 @@
+You are forecasting a plausible future for a Craftax state.
+
+Craftax overview:
+Craftax is a game about exploring dungeons, mining, crafting and fighting enemies. Each one-time achievement (collect a resource, craft an item, defeat a foe, descend a floor, find a bow, open a chest, etc.) adds points to the score. Tier-weighted: BASIC = 1pt, INTERMEDIATE (incl. enter_dungeon, find_bow, open_chest, fire_bow, drink_potion, eat_snail, defeat_orc_solider) = 3pt. The player wants to harvest as many distinct INTERMEDIATE +3 achievements as possible on Floor 1 BEFORE descending further or dying.
+
+Use these game rules:
+1) Coordinates are (Row, Column), centered on the player at (0,0).
+   - Negative Row = UP, Positive Row = DOWN.
+   - Negative Column = LEFT, Positive Column = RIGHT.
+2) Intrinsics: Health, Food, Drink, Energy, Mana. All out of 9.
+   - Food/Drink/Energy naturally decay.
+   - If Food/Drink/Energy reaches 0, Health will decay.
+   - If Food/Drink/Energy are maintained, Health can recover.
+3) Floor progression uses ladders.
+   - Descending requires reaching the ladder on the current floor.
+   - On non-overworld floors, the ladder is generally closed until enough mobs are killed.
+4) Actions: NOOP, LEFT, RIGHT, UP, DOWN, DO (interact/attack/mine/drink/eat),
+   SLEEP, PLACE_STONE, PLACE_TABLE, PLACE_FURNACE, PLACE_PLANT,
+   MAKE_{WOOD,STONE,IRON,DIAMOND}_{PICKAXE,SWORD}, REST, DESCEND, ASCEND,
+   MAKE_ARROW, SHOOT_ARROW, CAST_FIREBALL, CAST_ICEBALL, PLACE_TORCH,
+   DRINK_POTION_*, READ_BOOK, ENCHANT_*, LEVEL_UP_*.
+
+Here is the algorithm the player will play the game by:
+The plan is in three phases by floor.
+
+PHASE A — Floor 0 (overworld): build the toolkit and head down.
+On Floor 0, the player gathers wood and stone, crafts a stone pickaxe AND stone sword AND a few arrows AND a torch (these tools are needed on Floor 1), then DESCENDS. Specifically:
+1. Survive (top off intrinsics if Food/Drink/Energy ≤ 4).
+2. Mine wood from trees and stone from stone tiles until inventory has ≥ 2 wood, ≥ 2 stone, ≥ 1 coal (mine coal whenever seen).
+3. Craft Crafting Table (3 Wood) → Stone Pickaxe (1 Wood + 1 Stone) → Stone Sword (1 Wood + 1 Stone) → Furnace (1 Stone) → 1-2 Torches (1 Wood + 1 Coal each).
+4. Pick up any opportunistic milestone within 2 tiles of the path (sapling, plant, sleep if Energy ≤ 4, place_torch).
+5. Walk directly to the visible open ladder and DESCEND to Floor 1.
+Do NOT linger on Floor 0 once stone tools are crafted. The big point reservoir is on Floor 1.
+
+PHASE B — Floor 1 (dungeon): hunt the +3 INTERMEDIATE achievements.
+Once on Floor 1, the player STAYS there until either (a) the +3 specials in sight are exhausted, or (b) HP ≤ 5 and the player needs to retreat. The player does NOT immediately look for the next ladder. The player's job is to harvest ALL of these +3 achievements before going deeper:
+  (a) **bow** — looks like a small arrow / curved line on the floor. If visible, walk to it and DO to pick up (+3 find_bow).
+  (b) **chest** — a small box icon. If visible, walk to it and DO to open (+3 open_chest, may drop a potion).
+  (c) **fire_bow** — once the player has the bow in inventory, SHOOT_ARROW at any visible mob from 2+ tiles range (+3 fire_bow).
+  (d) **drink_potion** — if a potion is in inventory (any color), use the appropriate DRINK_POTION_* action (+3 drink_potion).
+  (e) **defeat_orc_solider** — orc soldier is a humanoid with brown/orange tint. If visible AND the player has stone sword, walk to it and DO to attack until dead (+3). Use SHOOT_ARROW from range if bow is in inventory.
+  (f) **eat_snail** — small spiral on the ground. Walk to it, DO to attack, then DO to eat the meat (+3 eat_snail).
+
+If multiple Floor-1 specials are visible, route to the closest first. After harvesting one, scan for the next.
+
+PHASE C — Floor 1 retreat / descend.
+After the visible Floor-1 specials are exhausted, the player has two options:
+- If HP ≥ 7 and player has full intrinsics: walk to the next down-ladder (now open since enough mobs killed) and DESCEND to Floor 2 to start Phase B again on a new floor.
+- If HP ≤ 5 OR Food/Drink/Energy ≤ 4: ASCEND back to Floor 0 to recover, then re-descend later.
+
+CROSS-PHASE SURVIVE rules (override any Phase B/C action):
+- If HP ≤ 4: STOP what the player is doing. Walk to a safe tile (corner, water-blocked, etc.) and DO to eat any meat or DRINK_POTION_RED to heal.
+- If a Skeleton or distant Archer is shooting arrows: move perpendicular to the arrow path to dodge. The bow they hold can also be picked up (+3 find_bow).
+- If Energy ≤ 4: SLEEP in a safe enclosure (+1 wake_up).
+
+Crafting Costs & Requirements:
+- Pickaxe/Sword: 1 Wood + 1 [Wood/Stone/Iron/Diamond].
+- Armor: 3 [Iron/Diamond].
+- Stations: Crafting Table (3 Wood), Furnace (1 Stone). Crafting anything requires being adjacent to a Crafting Table. Iron and Diamond tier items also require being adjacent to a Furnace.
+- Misc: Arrows (1 Wood + 1 Stone = 2), Torches (1 Wood + 1 Coal = 4).
+
+Predict at a high level what the next five steps for the player will look like, given that they are following the algorithm. Do not forecast beyond five time steps! In particular, the player can move at most five tiles during these five steps. Reason during your state understanding about which Phase the player is in, and which Phase-specific target is closest.
+
+State Understanding: <A few sentences analyzing the current scene. Identify the current floor and Phase. On Floor 1, identify any visible bow / chest / orc soldier / snail / potion within 4 tiles, and note HP/intrinsics for retreat decision. >
+
+Prediction: <1 positive, direction-stating sentence describing the high-level behavior of the player in the next five steps. Good examples: "Move down to the visible open ladder and DESCEND to Floor 1.", "Walk left to the visible chest and DO to open it.", "SHOOT_ARROW at the orc soldier two tiles to the right.", "Walk up to the up-ladder and ASCEND to Floor 0 to recover HP." Do not use "instead of", "rather than", "avoid", "away from", "refuse", or any other negation — just state the direction and target. Do not reference specific coordinates. >
+
+Now, predict the future of the following state.
+
+Current state:
+{current_state_filtered}
