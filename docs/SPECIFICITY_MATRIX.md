@@ -56,3 +56,18 @@ Baseline (no prompt, regular concise) row first.
 | direction_right_v2 | move_share_RIGHT | UP | 0.3 | 0.3 | +0.04 | +2.0 | WIN |
 | direction_up_v2 | move_share_UP | UP | 0.3 | 0.3 | +0.05 | +3.0 | WIN |
 | direction_down_v2 | move_share_DOWN | UP | 0.2 | 0.3 | +0.05 | +3.3 | WIN |
+
+## v3 prompt iterations (overwrites of NULL/wrong-way v2 cells)
+
+Each v3 row shows the same target metric as its v2 progenitor, but with the rewritten prompt run on `psf_v2_cadence5_grounded_predonly_top2M_specificity_iter`.
+
+| Prompt | target | direction | baseline | cell | Δ | z | verdict |
+|---|---|---|---|---|---|---|---|
+| target_avoid_stone_v3 | stone | DOWN | 17.9 | 12.4 | -5.51 | -1.6 | WIN |
+| survive_long_v3 | length | UP | 629 | 669 | +39.80 | +0.3 | NULL |
+| target_eat_cow_v3 | cow_eat_events | UP | 5.2 | 3.3 | -1.96 | -1.9 | WRONG-WAY |
+| target_drink_water_v3 | drink_intake_events | UP | 13.8 | 9.8 | -3.99 | -1.2 | WRONG-WAY |
+| target_stay_overworld_v3 | action_DESCEND | DOWN | 4.6 | 6.9 | +2.32 | +1.0 | NULL |
+| target_place_plant_v3 | action_PLACE_PLANT | UP | 3.3 | 3.0 | -0.25 | -0.2 | NULL |
+| target_defeat_zombie_v3 | monsters_killed_total | UP | 3.8 | 3.4 | -0.36 | -0.4 | NULL |
+| target_collect_sapling_v3 | sapling | UP | 0.6 | 0.5 | -0.09 | -0.3 | NULL |

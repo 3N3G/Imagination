@@ -134,4 +134,35 @@ doesn't tilt priorities toward descent — the *structural* lever that
 appears most powerful. v1 will tell us whether enumeration alone helps
 relative to the baseline (14.66) and to target_descend (17.23).
 
-(Submitted as job 7491101 at 11:20 EDT, ETA 1.5–2h. n=30.)
+**v1 result (n=29): return 15.51 ± 1.00, length 658, Δret +0.85 (z=+0.65 NS).**
+Below the target_descend bar of 17.23. Per-achievement deltas vs baseline:
+
+| Δpp | achievement | note |
+|---|---|---|
+| **+17pp** | place_plant (28→45%) | the v1 nudge worked |
+| +11pp | defeat_zombie (72→83%) | side effect |
+| +11pp | make_arrow | side effect |
+| +10pp | place_torch (52→62%) | the v1 nudge worked |
+| +7pp | eat_plant (0→7%) | first non-zero on this metric |
+| +7pp | collect_sapling (38→45%) | the v1 nudge worked |
+| +7pp | wake_up (52→59%) | the v1 nudge worked |
+| +5pp | collect_iron, find_bow, open_chest | |
+| **−5pp** | **enter_dungeon (12→7%)** | UNINTENDED. The v1 prompt gated dungeon entry on "stone pickaxe + stone sword + ≥1 iron", which made the policy WAIT longer. baseline descends without iron. |
+| −5pp | defeat_skeleton, make_stone_sword | possibly a side effect of less floor-1 time |
+
+Reading: the v1 milestone enumeration captured the headroom items it
+named (place_plant, eat_plant, sapling, wake_up, place_torch) but the
+extra rule "wait for iron before descending" cost the policy its
+descent cascade. Net: small win, well below `target_descend_v2`.
+
+### v2 — `target_descend` base + cheap-milestones rider ("`achievement_max_v2`")
+
+Design: keep `target_descend_v2`'s structure (which already produces
+17.23 by tilting priority 1 to descent + cascading episode length).
+Add an explicit "One-shot opportunistic milestone within 3 tiles"
+section as priority 3 (between Survive and Take ladder), enumerating
+sapling / place_plant / eat_plant / place_torch with a hard "no detour
+> 3 tiles, never delay descent significantly" rule. Critically, do NOT
+re-introduce v1's "wait for iron before descending" gate.
+
+(Submitted as job 7492824 at 13:20 EDT, ETA 1.5–2h. n=30.)

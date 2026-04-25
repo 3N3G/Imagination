@@ -84,6 +84,63 @@ below the 1e8 PPO-RNN baseline (27.87 raw = 12.3%).
 | B_thinking_2M | `psf_v2_cadence5_think_predonly_top2M/freezenone/final.pth` |
 | C_grounded_2M | `psf_v2_cadence5_grounded_predonly_top2M/freezenone/final.pth` |
 
+### Full recipe for `C_grounded_2M` (the policy used for almost all steering experiments)
+
+**Architecture**: `ActorCriticAugLN` (PyTorch, `models/actor_critic_aug.py`),
+layer_width=512, hidden_dim=3072 (Gemini embedding dim), 13.2M params,
+LayerNorm + dropout=0.0.
+
+**Training data**:
+- Trajectory rows: top-2M-rows subset of PSF (2,539 episodes, 2,000,896
+  rows, episode-return range 11.09–14.42; the full PSF dataset has mean
+  return 9.53, so this is the top ~14% of episodes).
+- Path:
+  `final_trajectories_psf_v2_cadence5_grounded_predonly_gemini_emb_top2M`.
+- The trajectories themselves are PPO rollouts. The labels are
+  Gemini-3-flash predictions written *with the future visible* —
+  Gemini is shown the next 5 obs and asked to phrase its output as a
+  forward "Prediction: ...". Embeddings are produced from just the
+  Prediction-suffix via `gemini-embedding-001` (3072-dim).
+
+**Oracle data** (for the auxiliary loss): 38,108 samples from
+`oracle_pipeline/predict_only_final_v2_cadence5_predonly_gemini_emb`.
+These are *also* grounded-Gemini labels but on a separate held-out
+trajectory set; in the run config they are mixed in at
+`oracle_fraction=0.05` and weighted at `oracle_loss_weight=0.5`. They
+function as the high-quality teacher signal.
+
+**Two-phase training** (sequential, not joint):
+
+1. **AWR pretrain** — `psf_v2_cadence5_grounded_predonly_top2M/awr/`
+   - 100,000 steps, batch=256, lr=3e-4, β=10
+   - `oracle_loss_weight=0.0` (oracle data present in the loader at
+     5% but contributes 0 weight — present for advantage-stat purposes,
+     not for behavior shaping).
+   - Pure advantage-weighted regression on the grounded labels.
+
+2. **BC + AWR joint finetune** — `psf_v2_cadence5_grounded_predonly_top2M/freezenone/`
+   - 50,000 steps, batch=256, lr=1e-4, β=30
+   - `oracle_loss_weight=0.5`, `oracle_fraction=0.05`,
+     `entropy_coeff=0.01`
+   - `freeze_mode=none` (all weights unfrozen)
+   - Initialised from the AWR pretrain checkpoint (above).
+   - Loss is BC on every batch + AWR on every batch + 0.5× oracle BC on
+     5% oracle rows. So *for the freezenone phase* BC and AWR are
+     simultaneous, but the AWR-only pretrain happens first.
+
+**Inference (deploy-time)**: same architecture loaded from `final.pth`.
+Gemini called with the **regular concise prompt** (no future visible —
+intentional train/eval distribution mismatch); the policy must read the
+embedding as if it were a real prediction even though label-time
+behaviour was oracle. Embedding extracted via the same predonly
+pipeline + `gemini-embedding-001`.
+
+**Net effect**: a policy whose hidden branch is sensitive to
+content-rich embeddings (Δ_shuf=+0.195, 7× the unaugmented A baseline)
+but whose deploy-time embeddings are necessarily lower-fidelity than
+training-time. The mismatch is the active behavioural bug noted in
+`docs/PATH1_C_TRAIN_EVAL_MISMATCH.md`.
+
 ---
 
 ## Prompt-variant design
@@ -900,16 +957,60 @@ the embedding mode at step 200.
    late-episode nudge lands on a state where the steered action is
    productive.
 
-3. **`switch → avoid_animals` is the strongest positive-return result.**
-   Δret = +1.81 (z=+1.56, near-significant at n=30). Switching from
-   normal Gemini to avoid_animals at step 200 shifts the policy toward
-   productive late-game behaviors: place_furnace +15pp, place_torch
-   +15pp, make_stone_pickaxe +14pp, make_stone_sword +13pp, eat_cow
-   +11pp. The right *timing* of steering appears to matter as much as
-   the steering itself.
+3. **`switch → avoid_animals` is the strongest positive-return result —
+   but it is NOT actually avoidance** (re-analyzed 2026-04-25). The
+   prompt is doing something the name doesn't capture: every productive
+   achievement rate goes UP, not down. Compare full-episode vs switch
+   on `C_grounded_2M`:
+
+   | achievement | base (n=50) | full avoid (n=50) | switch→avoid @200 (n=30) |
+   |---|---|---|---|
+   | eat_cow | 86% | 74% (−12pp) | **97% (+11pp)** |
+   | place_stone | 68% | 48% (−20pp) | **77% (+9pp)** |
+   | place_furnace | 62% | 50% (−12pp) | **77% (+15pp)** |
+   | place_torch | 52% | 38% (−14pp) | **67% (+15pp)** |
+   | make_torch | 58% | 42% (−16pp) | **70% (+12pp)** |
+   | collect_iron | 50% | 34% (−16pp) | **60% (+10pp)** |
+   | place_plant | 28% | 42% (+14pp) | **53% (+25pp)** |
+   | collect_sapling | 38% | 46% (+8pp) | **57% (+19pp)** |
+   | eat_plant | 0% | 0% | **7% (+7pp)** |
+   | enter_dungeon | 12% | 14% (+2pp) | **20% (+8pp)** |
+   | length | 629 | 416 (−213) | 525 (−104) |
+   | return | 14.66 | 11.54 (−3.12) | **16.47 (+1.81)** |
+
+   Full-episode `avoid_animals` is genuine suppression: every productive
+   late-game achievement drops, episode length collapses to 416, return
+   drops −3.12. Mid-episode `switch → avoid_animals` is the OPPOSITE:
+   every productive achievement RISES (eat_cow goes from 86% → 97%, not
+   down), and the gain is concentrated on plant/sapling/place behaviors
+   (sapling +19pp, place_plant +25pp).
+
+   Mechanism (hypothesis): once the policy has done ~200 steps of normal
+   wood→stone routine, switching to a `avoid_animals` embedding shifts
+   Gemini's predictions away from "go to the cow" toward "go to grass /
+   explore". That's exactly the right *late-episode* nudge for
+   collecting saplings, placing plants, and incidentally finding more
+   resources en route — it functions as a "go explore the grasslands"
+   prompt, not avoidance. The policy is in a different state by step 200
+   (already toolable), and the same embedding is read as a different
+   instruction in the new state.
+
+   Implications:
+   - The "+1.81 return" effect is real, but the published name is
+     misleading. Do NOT cite this as positive-return *avoidance steering*.
+   - The mid-episode `switch → target_descend @200` (only +0.31 return)
+     is the apples-to-apples comparison — same switch event, different
+     content, much weaker positive return. So the avoid_animals-specific
+     gain is real, just not via avoidance.
+   - Useful follow-up: try switch → {target_collect_sapling, target_place_plant,
+     target_collect_stone} @200. If switch_to_target_collect_sapling @200
+     produces a similar +1-2 return, the effect is generic to
+     "go-explore-grass-after-200" content. If only avoid_animals does it,
+     something specific about the negation embedding is the lever.
 
 Source: `probe_results/steerability_analysis/c_full_extra.json`,
-`c_switch_partial.json`.
+`c_switch_partial.json`. Re-analysis script and per-achievement
+breakdown above written 2026-04-25 from raw summary.json files.
 
 ---
 
@@ -1212,3 +1313,92 @@ NULL specificity-matrix cells (`target_eat_cow_v3`, `target_drink_water_v3`,
 `target_stay_overworld_v3`, `target_place_plant_v3`,
 `target_defeat_zombie_v3`, `target_collect_sapling_v3`, job 7491313,
 6 cells × n=30). Results will be appended once the array completes.
+
+### `survive_long_v3` prompt verbatim (the algorithm body — feedback wanted)
+
+The v3 prompt is still imperfect: it brings the policy back to baseline
+length but fails to extend it past 629 steps. The full algorithm body
+(everything above "Predict at a high level...") follows so the prompt
+text itself can be edited.
+
+```
+Here is the algorithm the player will play the game by:
+At every step, the player should act with the goal of maximizing how
+long the episode lasts. The player keeps Food, Drink, and Energy
+comfortably topped up at all times and refuses any action that risks
+Health.
+
+The player will choose the highest-priority active goal in this order:
+1. Top up Food, Drink, or Energy whenever any of them drops to 7 or below
+2. Move toward the safest visible terrain when no intrinsic needs
+   replenishing
+3. NOOP when on safe terrain and all intrinsics are at 8 or 9
+4. Run from any visible enemy
+
+1. Top up the lowest intrinsic
+The player tracks Food, Drink, and Energy and acts as soon as any of
+them is at 7 or below.
+- Drink ≤ 7: the player walks to the nearest visible water tile and
+  uses DO until Drink is 9. If the player is already adjacent to water,
+  DO immediately.
+- Food ≤ 7: the player walks to the nearest visible cow and uses DO to
+  attack it, then eats the meat until Food is 9. If a fruit-bearing
+  plant is closer, the player walks to it and DOes to eat instead.
+- Energy ≤ 7: the player walks to the most enclosed adjacent tile
+  (corner of stone, between trees, etc.) and uses SLEEP until wake_up.
+  The player does not need a fully sealed base — any enclosed-looking
+  tile is acceptable.
+The thresholds are 7 (not the usual 4) so the player keeps a buffer and
+never lets intrinsics drop into the danger zone where Health starts
+decaying.
+
+2. Move to safe terrain
+If all intrinsics are 8 or 9 but the current tile is exposed (no walls
+around, enemies visible nearby), the player moves toward the nearest
+natural enclosure (a corner of stone, a clump of trees, the edge of
+water) and stops there. The player does not range far — any safer tile
+within 5 tiles of the current position is preferred over walking far.
+
+3. NOOP
+When all intrinsics are 8 or 9 and the current tile is safe (no enemy
+within 4 tiles), the player picks NOOP. NOOP passes time without
+spending any risk; it is preferred over any movement when there is
+nothing to gain.
+
+4. Run from enemies
+If any enemy mob is visible and within 4 tiles, the player walks AWAY
+from it (the direction that puts the most empty tiles between the
+player and the enemy) until it is out of sight or until walking further
+would lead the player into worse terrain. The player does not engage in
+combat unless there is no escape route.
+
+The player NEVER descends a ladder, NEVER explores beyond the immediate
+area, NEVER enters dungeons, NEVER picks fights, and NEVER mines or
+crafts beyond what is needed for an immediate sleep enclosure. The
+single goal is to keep the episode going.
+```
+
+Suspected weaknesses (best guesses for why this still maxes out at
+length ≈ baseline rather than extending past it):
+
+- **NOOP-heavy advice + "never explore"** may starve the policy of
+  resource-gathering it needs for multi-cycle survival. After a few
+  cycles the player runs out of nearby cows / saplings / drinkable
+  water and dies because the prompt forbids exploration.
+- **Threshold of 7** triggers a big chunk of the prompt to fire too
+  early, possibly creating thrashing between drink/eat/sleep targets
+  when more than one is at 7.
+- **"Run from enemies"** — using "AWAY" in the algorithm body might
+  cause Gemini to inherit the negation-style language even though the
+  Prediction template forbids it.
+- **No mention of building a buffer** of food (extra meat) or water
+  (drink-twice-while-here) — the policy probably runs out of nearby
+  food/water faster than it ought to.
+
+Open question for the next iteration: should the prompt explicitly
+budget *resource accumulation* (e.g., "if drink ≥ 7 but a water tile is
+adjacent, drink anyway to fill the buffer"), and should it allow modest
+exploration when intrinsics are full but no resource is in sight?
+
+The full file is at
+`configs/training/templates/predict_state_only_prompt_concise_survive_long_v3.txt`.

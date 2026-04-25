@@ -54,6 +54,19 @@ CELLS = [
     ("direction_down_v2",           "move_share_DOWN",       "UP"),
 ]
 
+# v3 prompt iterations (overwrites of NULL/wrong-way v2 cells).
+# These live in the _specificity_iter eval dir, not _specificity.
+CELLS_V3 = [
+    ("target_avoid_stone_v3",       "stone",                 "DOWN"),
+    ("survive_long_v3",             "length",                "UP"),
+    ("target_eat_cow_v3",           "cow_eat_events",        "UP"),
+    ("target_drink_water_v3",       "drink_intake_events",   "UP"),
+    ("target_stay_overworld_v3",    "action_DESCEND",        "DOWN"),
+    ("target_place_plant_v3",       "action_PLACE_PLANT",    "UP"),
+    ("target_defeat_zombie_v3",     "monsters_killed_total", "UP"),
+    ("target_collect_sapling_v3",   "sapling",               "UP"),
+]
+
 # Columns to display in the matrix (the "axes")
 COLUMNS = [
     "stone", "action_PLACE_STONE",
@@ -199,6 +212,10 @@ def main():
     ap.add_argument("--eval-root", type=Path,
                     default=Path("/data/group_data/rl/geney/eval_results/"
                                  "psf_v2_cadence5_grounded_predonly_top2M_specificity"))
+    ap.add_argument("--iter-eval-root", type=Path,
+                    default=Path("/data/group_data/rl/geney/eval_results/"
+                                 "psf_v2_cadence5_grounded_predonly_top2M_specificity_iter"),
+                    help="Root for v3 iteration cells")
     ap.add_argument("--counts-root", type=Path,
                     default=Path("probe_results/inventory_counts/specificity"))
     ap.add_argument("--baseline", type=Path,
@@ -221,28 +238,30 @@ def main():
             if k.startswith("move_share_") or k.startswith("rate_action_"):
                 base[k] = v
 
-    rows = []  # list of (cell_name, target_metric, direction, n, metrics_dict)
-    for cell, target, direction in CELLS:
-        eval_dir = args.eval_root / f"{cell}_30ep"
-        counts_path = args.counts_root / f"{cell}.json"
-        if not eval_dir.exists():
-            print(f"  [skip] {cell}: no eval dir")
-            rows.append((cell, target, direction, 0, None))
-            continue
+    def collect(cells, root):
+        out = []
+        for cell, target, direction in cells:
+            eval_dir = root / f"{cell}_30ep"
+            counts_path = args.counts_root / f"{cell}.json"
+            if not eval_dir.exists():
+                print(f"  [skip] {cell}: no eval dir at {eval_dir}")
+                out.append((cell, target, direction, 0, None))
+                continue
+            if args.regen_counts:
+                try:
+                    maybe_run_counts(eval_dir, counts_path, max_ep=args.max_episodes)
+                except subprocess.CalledProcessError as e:
+                    print(f"  [error] replay failed for {cell}: {e}")
+            cell_metrics = {}
+            if counts_path.exists():
+                cell_metrics.update(load_counts_json(counts_path))
+            cell_metrics.update(compute_summary_metrics(eval_dir))
+            n = cell_metrics.get("return", {}).get("n", 0)
+            out.append((cell, target, direction, n, cell_metrics))
+        return out
 
-        if args.regen_counts:
-            try:
-                maybe_run_counts(eval_dir, counts_path, max_ep=args.max_episodes)
-            except subprocess.CalledProcessError as e:
-                print(f"  [error] replay failed for {cell}: {e}")
-
-        cell_metrics = {}
-        if counts_path.exists():
-            cell_metrics.update(load_counts_json(counts_path))
-        # Always fold in summary-level metrics (return, length, ach_*, action_LEFT/RIGHT/UP/DOWN)
-        cell_metrics.update(compute_summary_metrics(eval_dir))
-        n = cell_metrics.get("return", {}).get("n", 0)
-        rows.append((cell, target, direction, n, cell_metrics))
+    rows = collect(CELLS, args.eval_root)
+    iter_rows = collect(CELLS_V3, args.iter_eval_root)
 
     # Build markdown
     md = []
@@ -318,6 +337,44 @@ def main():
         md.append(f"| {cell} | {target} | {direction} | {base_str} | {cell_str} | "
                   f"{diff:+.2f} | {z:+.1f} | {verdict} |")
 
+    # v3 iteration verdict table
+    md.append("")
+    md.append("## v3 prompt iterations (overwrites of NULL/wrong-way v2 cells)")
+    md.append("")
+    md.append("Each v3 row shows the same target metric as its v2 progenitor, but with the rewritten prompt run on `psf_v2_cadence5_grounded_predonly_top2M_specificity_iter`.")
+    md.append("")
+    md.append("| Prompt | target | direction | baseline | cell | Δ | z | verdict |")
+    md.append("|---|---|---|---|---|---|---|---|")
+    iter_serializable = {}
+    for cell, target, direction, n, metrics in iter_rows:
+        if metrics is None:
+            md.append(f"| {cell} | {target} | {direction} | — | — | — | — | NO DATA |")
+            iter_serializable[cell] = {"target": target, "direction": direction, "n": 0, "metrics": {}}
+            continue
+        m = metrics.get(target)
+        b = base.get(target)
+        if m is None or b is None:
+            md.append(f"| {cell} | {target} | {direction} | — | — | — | — | METRIC MISSING |")
+            iter_serializable[cell] = {"target": target, "direction": direction, "n": n, "metrics": metrics}
+            continue
+        diff = m["mean"] - b["mean"]
+        pooled = math.sqrt(m["se"] ** 2 + b["se"] ** 2)
+        z = diff / pooled if pooled > 0 else 0
+        ok = (z >= 1 and direction == "UP") or (z <= -1 and direction == "DOWN")
+        wrong = (z <= -1 and direction == "UP") or (z >= 1 and direction == "DOWN")
+        verdict = "WIN" if ok else ("WRONG-WAY" if wrong else "NULL")
+        if target.startswith("ach_"):
+            base_str = f"{b['mean']:.2f}"; cell_str = f"{m['mean']:.2f}"
+        elif target.startswith("rate_"):
+            base_str = f"{b['mean']:.3f}"; cell_str = f"{m['mean']:.3f}"
+        elif target == "length":
+            base_str = f"{b['mean']:.0f}"; cell_str = f"{m['mean']:.0f}"
+        else:
+            base_str = f"{b['mean']:.1f}"; cell_str = f"{m['mean']:.1f}"
+        md.append(f"| {cell} | {target} | {direction} | {base_str} | {cell_str} | "
+                  f"{diff:+.2f} | {z:+.1f} | {verdict} |")
+        iter_serializable[cell] = {"target": target, "direction": direction, "n": n, "metrics": metrics}
+
     args.out_md.parent.mkdir(parents=True, exist_ok=True)
     args.out_md.write_text("\n".join(md))
     args.out_json.parent.mkdir(parents=True, exist_ok=True)
@@ -326,6 +383,7 @@ def main():
         "cells": {cell: {"target": target, "direction": direction, "n": n,
                           "metrics": metrics or {}}
                   for cell, target, direction, n, metrics in rows},
+        "iter_cells": iter_serializable,
     }
     args.out_json.write_text(json.dumps(serializable, indent=2))
     print(f"Wrote {args.out_md}")
