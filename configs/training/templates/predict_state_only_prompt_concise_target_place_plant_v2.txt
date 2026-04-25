@@ -1,0 +1,44 @@
+You are forecasting a plausible future for a Craftax state.
+
+Craftax overview:
+Craftax is a game about exploring dungeons, mining, crafting and fighting enemies.
+
+Use these game rules:
+1) Coordinates are (Row, Column), centered on the player at (0,0).
+   - Negative Row = UP, Positive Row = DOWN.
+   - Negative Column = LEFT, Positive Column = RIGHT.
+2) Intrinsics: Health, Food, Drink, Energy, Mana. All out of 9.
+   - Food/Drink/Energy naturally decay.
+   - If Food/Drink/Energy reaches 0, Health will decay.
+   - If Food/Drink/Energy are maintained, Health can recover.
+3) Floor progression uses ladders.
+   - Descending requires reaching the ladder on the current floor.
+   - On non-overworld floors, the ladder is generally closed until enough mobs are killed.
+4) Actions: NOOP, LEFT, RIGHT, UP, DOWN, DO (interact/attack/mine/drink/eat),
+   SLEEP, PLACE_STONE, PLACE_TABLE, PLACE_FURNACE, PLACE_PLANT,
+   MAKE_{WOOD,STONE,IRON,DIAMOND}_{PICKAXE,SWORD}, REST, DESCEND, ASCEND,
+   MAKE_ARROW, SHOOT_ARROW, CAST_FIREBALL, CAST_ICEBALL, PLACE_TORCH,
+   DRINK_POTION_*, READ_BOOK, ENCHANT_*, LEVEL_UP_*.
+
+Here is the algorithm the player will play the game by:
+The player treats PLACE_PLANT as the single dominant priority. PLACE_PLANT puts a sapling from the inventory onto a grass tile, where it eventually grows into a fruit-bearing plant. The player accumulates PLACE_PLANT actions throughout the episode.
+
+The player will choose the highest-priority active goal in this order:
+1. Survive (only if intrinsic ≤ 1)
+2. If the player has at least one sapling AND is standing on a grass tile, the next action is PLACE_PLANT.
+3. If the player has a sapling but is not on grass, the next action is to move to the nearest visible grass tile.
+4. If the player has no saplings, the next action is to walk to the nearest visible sapling and DO to collect it.
+5. If neither saplings nor grass tiles are visible, explore toward the most-grass-likely direction (typically open green areas).
+
+The player should keep at least one sapling in inventory at all times once any are collected. After PLACE_PLANT-ing, the player immediately looks for another sapling so the cycle continues. The player ignores stones, ladders, monsters that aren't blocking the path, and crafting (other than maybe a wood sword for cow defense).
+
+Predict at a high level what the next five steps for the player will look like, given that they are following the algorithm. Do not forecast beyond five time steps! The player can move at most five tiles during these five steps. Reason during your state understanding about the most immediate next step according to the algorithm and then predict the player's immediate behavior.
+
+State Understanding: <A few sentences analyzing the current scene. Focus on careful spatial reasoning of the relevant tiles or tiles near the player. Note whether the player has saplings in inventory; whether there is a grass tile under or adjacent to the player; whether saplings are visible nearby. >
+
+Prediction: <1 positive, direction-stating sentence describing the player's action. Good examples: "Place a plant on the grass tile directly below.", "Move down to the grass area and place a plant.", "Move right to the visible sapling and collect it.", "Place a plant on the adjacent grass tile, then move up to the next sapling." Do not use "instead of", "rather than", "avoid", "away from", "refuse", or any other negation — just state the direction and target. Do not reference specific coordinates. >
+
+Now, predict the future of the following state.
+
+Current state:
+{current_state_filtered}

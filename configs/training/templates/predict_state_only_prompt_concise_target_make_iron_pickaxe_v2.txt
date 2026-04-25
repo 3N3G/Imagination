@@ -1,0 +1,56 @@
+You are forecasting a plausible future for a Craftax state.
+
+Craftax overview:
+Craftax is a game about exploring dungeons, mining, crafting and fighting enemies.
+
+Use these game rules:
+1) Coordinates are (Row, Column), centered on the player at (0,0).
+   - Negative Row = UP, Positive Row = DOWN.
+   - Negative Column = LEFT, Positive Column = RIGHT.
+2) Intrinsics: Health, Food, Drink, Energy, Mana. All out of 9.
+   - Food/Drink/Energy naturally decay.
+   - If Food/Drink/Energy reaches 0, Health will decay.
+   - If Food/Drink/Energy are maintained, Health can recover.
+3) Floor progression uses ladders.
+   - Descending requires reaching the ladder on the current floor.
+   - On non-overworld floors, the ladder is generally closed until enough mobs are killed.
+4) Actions: NOOP, LEFT, RIGHT, UP, DOWN, DO (interact/attack/mine/drink/eat),
+   SLEEP, PLACE_STONE, PLACE_TABLE, PLACE_FURNACE, PLACE_PLANT,
+   MAKE_{WOOD,STONE,IRON,DIAMOND}_{PICKAXE,SWORD}, REST, DESCEND, ASCEND,
+   MAKE_ARROW, SHOOT_ARROW, CAST_FIREBALL, CAST_ICEBALL, PLACE_TORCH,
+   DRINK_POTION_*, READ_BOOK, ENCHANT_*, LEVEL_UP_*.
+
+Here is the algorithm the player will play the game by:
+The player treats CRAFTING THE IRON PICKAXE as the single dominant priority. The iron pickaxe requires: 1 Wood + 1 Iron + 1 Coal, and the player must be adjacent to BOTH a placed crafting table AND a placed furnace at the moment of crafting.
+
+The player will choose the highest-priority active goal in this order:
+1. Survive (only if intrinsic ≤ 1)
+2. Advance the iron-pickaxe chain (the items below, in order)
+3. The moment all materials are gathered AND the player is adjacent to table+furnace: MAKE_IRON_PICKAXE
+
+Iron-pickaxe chain (do EACH item at the first feasible opportunity; do NOT skip):
+  a. Gather 4 Wood (chop trees with DO).
+  b. PLACE_TABLE as soon as 3 Wood are on hand.
+  c. MAKE_WOOD_PICKAXE adjacent to the table.
+  d. Mine 3+ Stone with the wood pickaxe.
+  e. PLACE_FURNACE adjacent to the table (needs 1 Stone).
+  f. MAKE_STONE_PICKAXE (needs 1 Wood + 1 Stone next to table).
+  g. Mine Coal (with stone pickaxe). Coal shows as black-flecked stone.
+  h. Mine Iron (with stone pickaxe). Iron shows as orange-flecked stone.
+  i. Walk back to be adjacent to BOTH the table and the furnace.
+  j. MAKE_IRON_PICKAXE.
+
+The player ignores cows (unless food ≤ 1), plants, descending the ladder (unless the current floor has no iron and the next floor likely does), monsters that are not blocking the path, and ornamental tiles. Combat is avoided. Sleep only if energy ≤ 1.
+
+If the player has all required materials but is not at the table+furnace, the next action is to walk back. If the player is at the table+furnace but missing one material, the next action is to gather that material.
+
+Predict at a high level what the next five steps for the player will look like, given that they are following the algorithm. Do not forecast beyond five time steps! The player can move at most five tiles during these five steps. Reason during your state understanding about which step of the iron-pickaxe chain the player is on, and predict the player's immediate behavior toward the next chain step.
+
+State Understanding: <A few sentences analyzing the current scene. Focus on careful spatial reasoning of the relevant tiles or tiles near the player. Identify which step of the iron-pickaxe chain the player is currently on (e.g. "needs 1 more iron", "has materials but not at furnace", "ready to craft iron pickaxe at next step"). >
+
+Prediction: <1 positive, direction-stating sentence describing the player's action. Good examples: "Move right to mine the visible iron tile, then return to the furnace.", "Walk back left to the table+furnace and craft the iron pickaxe.", "Mine the coal tile directly above, then move down to the iron tile.", "Place the furnace adjacent to the table." Do not use "instead of", "rather than", "avoid", "away from", "refuse", or any other negation — just state the direction and target. Do not reference specific coordinates. >
+
+Now, predict the future of the following state.
+
+Current state:
+{current_state_filtered}

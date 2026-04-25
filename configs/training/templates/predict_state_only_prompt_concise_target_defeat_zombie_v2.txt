@@ -1,0 +1,44 @@
+You are forecasting a plausible future for a Craftax state.
+
+Craftax overview:
+Craftax is a game about exploring dungeons, mining, crafting and fighting enemies.
+
+Use these game rules:
+1) Coordinates are (Row, Column), centered on the player at (0,0).
+   - Negative Row = UP, Positive Row = DOWN.
+   - Negative Column = LEFT, Positive Column = RIGHT.
+2) Intrinsics: Health, Food, Drink, Energy, Mana. All out of 9.
+   - Food/Drink/Energy naturally decay.
+   - If Food/Drink/Energy reaches 0, Health will decay.
+   - If Food/Drink/Energy are maintained, Health can recover.
+3) Floor progression uses ladders.
+   - Descending requires reaching the ladder on the current floor.
+   - On non-overworld floors, the ladder is generally closed until enough mobs are killed.
+4) Actions: NOOP, LEFT, RIGHT, UP, DOWN, DO (interact/attack/mine/drink/eat),
+   SLEEP, PLACE_STONE, PLACE_TABLE, PLACE_FURNACE, PLACE_PLANT,
+   MAKE_{WOOD,STONE,IRON,DIAMOND}_{PICKAXE,SWORD}, REST, DESCEND, ASCEND,
+   MAKE_ARROW, SHOOT_ARROW, CAST_FIREBALL, CAST_ICEBALL, PLACE_TORCH,
+   DRINK_POTION_*, READ_BOOK, ENCHANT_*, LEVEL_UP_*.
+
+Here is the algorithm the player will play the game by:
+The player treats DEFEATING ZOMBIES as the single dominant priority. The player engages every visible zombie and uses DO repeatedly until it is killed. The player accumulates zombie kills throughout the episode.
+
+The player will choose the highest-priority active goal in this order:
+1. Survive (only if health ≤ 2 — a zombie hits for 1 damage so health ≤ 2 means risk of death from the next hit)
+2. Move directly toward the nearest visible zombie and use DO repeatedly when adjacent to it.
+3. If no zombie is visible, move toward the unexplored direction most likely to contain a zombie (typically dark areas, dungeons, night-time spawns).
+
+The player should craft a wood sword (1 Wood, table needed) for ×2 zombie damage, then a stone sword (1 Wood + 1 Stone, table needed) for ×3 damage. After that, every visible zombie is engaged immediately. The player ignores cows (unless food ≤ 2), plants, ladders, water (unless drink ≤ 1), and ornamental tiles.
+
+If multiple zombies are visible, the player engages the closest one first. After killing a zombie, the player immediately searches for the next.
+
+Predict at a high level what the next five steps for the player will look like, given that they are following the algorithm. Do not forecast beyond five time steps! The player can move at most five tiles during these five steps. Reason during your state understanding about the most immediate next step according to the algorithm and then predict the player's immediate behavior.
+
+State Understanding: <A few sentences analyzing the current scene. Focus on careful spatial reasoning of the relevant tiles or tiles near the player. Identify the nearest visible zombie and a route to it; or note the most promising unexplored direction. Note the player's current sword tier. >
+
+Prediction: <1 positive, direction-stating sentence describing the player's action. Good examples: "Chase the zombie directly above and attack it with DO.", "Move right toward the visible zombie and attack with DO repeatedly.", "Move up-right toward the zombie a few tiles away.", "Attack the adjacent zombie to the left." Do not use "instead of", "rather than", "avoid", "away from", "refuse", or any other negation — just state the direction and target. Do not reference specific coordinates. >
+
+Now, predict the future of the following state.
+
+Current state:
+{current_state_filtered}

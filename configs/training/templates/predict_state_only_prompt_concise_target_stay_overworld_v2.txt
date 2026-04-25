@@ -1,0 +1,43 @@
+You are forecasting a plausible future for a Craftax state.
+
+Craftax overview:
+Craftax is a game about exploring dungeons, mining, crafting and fighting enemies.
+
+Use these game rules:
+1) Coordinates are (Row, Column), centered on the player at (0,0).
+   - Negative Row = UP, Positive Row = DOWN.
+   - Negative Column = LEFT, Positive Column = RIGHT.
+2) Intrinsics: Health, Food, Drink, Energy, Mana. All out of 9.
+   - Food/Drink/Energy naturally decay.
+   - If Food/Drink/Energy reaches 0, Health will decay.
+   - If Food/Drink/Energy are maintained, Health can recover.
+3) Floor progression uses ladders.
+   - Descending requires reaching the ladder on the current floor.
+   - On non-overworld floors, the ladder is generally closed until enough mobs are killed.
+4) Actions: NOOP, LEFT, RIGHT, UP, DOWN, DO (interact/attack/mine/drink/eat),
+   SLEEP, PLACE_STONE, PLACE_TABLE, PLACE_FURNACE, PLACE_PLANT,
+   MAKE_{WOOD,STONE,IRON,DIAMOND}_{PICKAXE,SWORD}, REST, DESCEND, ASCEND,
+   MAKE_ARROW, SHOOT_ARROW, CAST_FIREBALL, CAST_ICEBALL, PLACE_TORCH,
+   DRINK_POTION_*, READ_BOOK, ENCHANT_*, LEVEL_UP_*.
+
+Here is the algorithm the player will play the game by:
+The player treats DESCENDING THE LADDER as off-limits. The player stays on the overworld (Floor 0) for the entire episode. Ladder tiles are treated as ordinary terrain — the player walks past them without descending. The player's priorities are entirely overworld-bound: gather wood/stone/cows/water and survive on Floor 0.
+
+The player will choose the highest-priority active goal in this order, NEVER selecting DESCEND or ASCEND:
+1. Survive (food, drink, energy, health).
+2. Upgrade equipment to stone tier (wood pickaxe, then stone pickaxe + sword).
+3. Stockpile resources visible on the overworld (extra wood, extra stone, place torches, place plants).
+4. Explore the overworld in directions away from any visible ladder tile.
+
+If the player encounters a ladder tile, the player walks past it without using DESCEND. If the player is standing on a ladder, the player steps off. The player ignores the ladder entirely — its presence is irrelevant to the algorithm.
+
+Predict at a high level what the next five steps for the player will look like, given that they are following the algorithm. Do not forecast beyond five time steps! The player can move at most five tiles during these five steps. Reason during your state understanding about the most immediate next step according to the algorithm and then predict the player's immediate behavior.
+
+State Understanding: <A few sentences analyzing the current scene. Focus on careful spatial reasoning of the relevant tiles or tiles near the player. Identify the next overworld goal (resource, crafting, or exploration). Note if a ladder is visible — the player will move past it. >
+
+Prediction: <1 positive, direction-stating sentence describing the player's action. Good examples: "Move left to the cluster of trees and chop wood.", "Mine the adjacent stone tile to upgrade tools.", "Move up to the cow and attack it for food.", "Place a stone wall to the right to block enemies." Do not use "instead of", "rather than", "avoid", "away from", "refuse", or any other negation — just state the direction and target. Do not reference specific coordinates. >
+
+Now, predict the future of the following state.
+
+Current state:
+{current_state_filtered}

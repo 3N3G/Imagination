@@ -1,0 +1,57 @@
+You are forecasting a plausible future for a Craftax state.
+
+Craftax overview:
+Craftax is a game about exploring dungeons, mining, crafting and fighting enemies.
+
+Use these game rules:
+1) Coordinates are (Row, Column), centered on the player at (0,0).
+   - Negative Row = UP, Positive Row = DOWN.
+   - Negative Column = LEFT, Positive Column = RIGHT.
+2) Intrinsics: Health, Food, Drink, Energy, Mana. All out of 9.
+   - Food/Drink/Energy naturally decay.
+   - If Food/Drink/Energy reaches 0, Health will decay.
+   - If Food/Drink/Energy are maintained, Health can recover.
+3) Floor progression uses ladders.
+   - Descending requires reaching the ladder on the current floor.
+   - On non-overworld floors, the ladder is generally closed until enough mobs are killed.
+4) Actions: NOOP, LEFT, RIGHT, UP, DOWN, DO (interact/attack/mine/drink/eat),
+   SLEEP, PLACE_STONE, PLACE_TABLE, PLACE_FURNACE, PLACE_PLANT,
+   MAKE_{WOOD,STONE,IRON,DIAMOND}_{PICKAXE,SWORD}, REST, DESCEND, ASCEND,
+   MAKE_ARROW, SHOOT_ARROW, CAST_FIREBALL, CAST_ICEBALL, PLACE_TORCH,
+   DRINK_POTION_*, READ_BOOK, ENCHANT_*, LEVEL_UP_*.
+
+Here is the algorithm the player will play the game by:
+The player treats DIAMOND COLLECTION as the single dominant priority. Diamond requires an Iron Pickaxe to mine, which requires the full crafting chain. The player executes the SHORTEST path to the first diamond and then mines as much diamond as possible.
+
+The player will choose the highest-priority active goal in this order:
+1. Survive (only if intrinsic ≤ 1, the moment before health decay)
+2. Advance the diamond-mining chain (the items below, in order)
+3. Mine diamond when adjacent with iron pickaxe equipped
+
+Diamond-mining chain (do EACH item the moment its prerequisite is met; do NOT skip):
+  i.   Gather 4 Wood (chop trees with DO).
+  ii.  PLACE_TABLE as soon as 3 Wood are on hand.
+  iii. MAKE_WOOD_PICKAXE adjacent to the table.
+  iv.  Mine 5+ Stone with the wood pickaxe.
+  v.   PLACE_FURNACE adjacent to the table (needs 1 Stone).
+  vi.  MAKE_STONE_PICKAXE (needs 1 Wood + 1 Stone next to table).
+  vii. Mine Coal (with stone pickaxe). Coal is required for iron tools and shows as black-flecked stone.
+  viii.Mine Iron (with stone pickaxe). Iron shows as orange-flecked stone.
+  ix.  MAKE_IRON_PICKAXE (needs 1 Wood + 1 Iron + 1 Coal next to BOTH table and furnace). DO NOT SKIP THIS STEP.
+  x.   With iron pickaxe equipped, descend to floors that contain diamond (typically deeper floors). DESCEND open ladder.
+  xi.  Mine every visible diamond tile with DO. Diamond shows as blue-flecked stone.
+
+The player ignores cows, plants, water (unless drink ≤ 1), monsters that are not blocking the path, and ornamental tiles. Combat is avoided unless it is necessary to clear a ladder. Sleep only if energy ≤ 1.
+
+If the player is currently between chain steps, the next action is whatever advances the chain. If the player has all materials for an iron pickaxe but is not at table+furnace, the next action is to walk back to them. If the player has the iron pickaxe but no visible diamond, the next action is to descend or to mine through stone toward unexplored deeper terrain.
+
+Predict at a high level what the next five steps for the player will look like, given that they are following the algorithm. Do not forecast beyond five time steps! The player can move at most five tiles during these five steps. Reason during your state understanding about which step of the diamond-mining chain the player is on, and predict the player's immediate behavior toward the next chain step.
+
+State Understanding: <A few sentences analyzing the current scene. Focus on careful spatial reasoning of the relevant tiles or tiles near the player. Identify which step of the diamond-mining chain the player is currently on (e.g. "needs 3 more wood", "has materials but not at furnace", "iron pickaxe equipped, no diamond visible, should descend"). >
+
+Prediction: <1 positive, direction-stating sentence describing the player's action. Good examples: "Move right to mine the iron tile, then return to the furnace to craft the iron pickaxe.", "Descend the visible open ladder to look for diamond on the next floor.", "Move left to chop the tree, then place the table.", "Mine the diamond tile directly above with the iron pickaxe." Do not use "instead of", "rather than", "avoid", "away from", "refuse", or any other negation — just state the direction and target. Do not reference specific coordinates. >
+
+Now, predict the future of the following state.
+
+Current state:
+{current_state_filtered}

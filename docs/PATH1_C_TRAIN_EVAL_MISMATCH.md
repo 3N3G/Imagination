@@ -175,6 +175,50 @@ general.
 | D. Translator head | medium | unclear | high (no policy change) | low (workaround) |
 | E. Don't fix, frame as mechanism | zero | zero | high (status quo) | high (forces honest writeup) |
 
+## Caveat: prompt-quality vs policy-fidelity confound on the wrong-sign result
+
+The "C's HP/food sign is WRONG (food_low ΔV=+0.098)" finding is being
+used here as evidence that the train/eval mismatch corrupts C's value
+head (because the grounded-train pairing of low-food states with
+surviving-future blocks taught the policy that "low food + this
+embedding = good"). That story may be only half-right.
+
+The other half: the wrong sign could partially be a **prompting-logic
+issue**, not just a representation issue. If at training time Gemini's
+grounded prediction for a low-food state often said something like
+"the player will eat the cow at (1,2) and recover" — i.e., used the
+oracle future to give a clean "no need to worry" prediction — then the
+embedding for low-food states encoded that resolution. At eval time
+without the future block, Gemini's regular concise prediction for the
+same low-food state might say "the player should seek food" (correctly
+worried) but the embedding shifted away from the trained "resolution"
+embedding, so the policy reads it incorrectly.
+
+To distinguish:
+- Read 5–10 wandb runs' `gemini_log.jsonl` files for low-food states
+  paired with the C policy. Compare:
+  - What did the grounded-prompt prediction look like when the policy
+    was trained?
+  - What does the regular-prompt prediction look like at eval?
+- If the eval prediction is *correctly* describing the worry but the
+  policy's V is wrong, the issue is at the policy/embedding level.
+- If the eval prediction itself fails to mention food / panics
+  inappropriately, the wrong sign is a **Gemini prompt-quality**
+  problem and would also affect any other policy that reads such
+  embeddings.
+
+This matters for which mitigation makes sense:
+- If the issue is prompt quality at eval time: Option B (mixed re-label
+  + fine-tune) is overkill. A targeted prompt revision to the regular
+  concise prompt — making it ALWAYS mention intrinsics and risk —
+  could close the wrong-sign gap without retraining.
+- If the issue is the trained policy: Option B is necessary; prompt
+  revisions can't fix it.
+
+Action item when this is revisited: **manually inspect 5–10 low-food
+states' gemini outputs at train-time vs eval-time** before committing
+to any of A–E.
+
 ## Open questions before doing any of this
 
 1. Is C's steerability conditional on the mismatch? If we ran B at any

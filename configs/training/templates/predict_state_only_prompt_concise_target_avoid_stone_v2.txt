@@ -1,0 +1,42 @@
+You are forecasting a plausible future for a Craftax state.
+
+Craftax overview:
+Craftax is a game about exploring dungeons, mining, crafting and fighting enemies.
+
+Use these game rules:
+1) Coordinates are (Row, Column), centered on the player at (0,0).
+   - Negative Row = UP, Positive Row = DOWN.
+   - Negative Column = LEFT, Positive Column = RIGHT.
+2) Intrinsics: Health, Food, Drink, Energy, Mana. All out of 9.
+   - Food/Drink/Energy naturally decay.
+   - If Food/Drink/Energy reaches 0, Health will decay.
+   - If Food/Drink/Energy are maintained, Health can recover.
+3) Floor progression uses ladders.
+   - Descending requires reaching the ladder on the current floor.
+   - On non-overworld floors, the ladder is generally closed until enough mobs are killed.
+4) Actions: NOOP, LEFT, RIGHT, UP, DOWN, DO (interact/attack/mine/drink/eat),
+   SLEEP, PLACE_STONE, PLACE_TABLE, PLACE_FURNACE, PLACE_PLANT,
+   MAKE_{WOOD,STONE,IRON,DIAMOND}_{PICKAXE,SWORD}, REST, DESCEND, ASCEND,
+   MAKE_ARROW, SHOOT_ARROW, CAST_FIREBALL, CAST_ICEBALL, PLACE_TORCH,
+   DRINK_POTION_*, READ_BOOK, ENCHANT_*, LEVEL_UP_*.
+
+Here is the algorithm the player will play the game by:
+The player treats stone tiles as navigationally opaque — stone tiles act like walls that the player routes around. The player's priorities never involve stone. At every step, the player will choose the highest-priority active goal in this order, ignoring any stone tile when picking a target:
+1. Move toward trees, water, animals, plants, ladders, or crafting stations — whichever is nearest and not behind a stone wall.
+2. Craft, place, or upgrade equipment using only wood-based materials when standing adjacent to a placed table.
+3. Explore — move toward any direction that extends the player's view of unexplored grass, water, or forest territory while keeping clear of stone clusters.
+
+If the nearest resource is on the far side of a stone cluster, the player will route around the cluster by moving along its edge. If surrounded by stone on multiple sides, the player will step toward the open tile with the largest non-stone area.
+
+The player keeps wood tools but never upgrades to stone or iron tier. Crafting tables are placed on dirt or grass. Furnaces are NOT placed (they require stone). The player relies on cow meat and plant fruit for food, water for drink, and a sapling-planted area for cover.
+
+Predict at a high level what the next five steps for the player will look like, given that they are following the algorithm. Do not forecast beyond five time steps! The player can move at most five tiles during these five steps. Reason during your state understanding about the most immediate next step according to the algorithm and then predict the player's immediate behavior.
+
+State Understanding: <A few sentences analyzing the current scene. Focus on careful spatial reasoning of the relevant tiles or tiles near the player. Identify the nearest non-stone resource and a route to it that keeps clear of stone clusters. >
+
+Prediction: <1 positive, direction-stating sentence describing the player's action. Good examples: "Move left to the cluster of trees.", "Move down to the water tiles to drink.", "Move up-right to the cow.", "Move up and left to the visible open ladder." Do not use "instead of", "rather than", "avoid", "away from", "refuse", or any other negation — just state the direction and target. Do not reference specific coordinates. >
+
+Now, predict the future of the following state.
+
+Current state:
+{current_state_filtered}

@@ -1,0 +1,44 @@
+You are forecasting a plausible future for a Craftax state.
+
+Craftax overview:
+Craftax is a game about exploring dungeons, mining, crafting and fighting enemies.
+
+Use these game rules:
+1) Coordinates are (Row, Column), centered on the player at (0,0).
+   - Negative Row = UP, Positive Row = DOWN.
+   - Negative Column = LEFT, Positive Column = RIGHT.
+2) Intrinsics: Health, Food, Drink, Energy, Mana. All out of 9.
+   - Food/Drink/Energy naturally decay.
+   - If Food/Drink/Energy reaches 0, Health will decay.
+   - If Food/Drink/Energy are maintained, Health can recover.
+3) Floor progression uses ladders.
+   - Descending requires reaching the ladder on the current floor.
+   - On non-overworld floors, the ladder is generally closed until enough mobs are killed.
+4) Actions: NOOP, LEFT, RIGHT, UP, DOWN, DO (interact/attack/mine/drink/eat),
+   SLEEP, PLACE_STONE, PLACE_TABLE, PLACE_FURNACE, PLACE_PLANT,
+   MAKE_{WOOD,STONE,IRON,DIAMOND}_{PICKAXE,SWORD}, REST, DESCEND, ASCEND,
+   MAKE_ARROW, SHOOT_ARROW, CAST_FIREBALL, CAST_ICEBALL, PLACE_TORCH,
+   DRINK_POTION_*, READ_BOOK, ENCHANT_*, LEVEL_UP_*.
+
+Here is the algorithm the player will play the game by:
+The player treats COLLECTING SAPLINGS as the single dominant priority. Saplings are small green plants that grow on grass tiles. The player uses DO when adjacent to a sapling tile to add it to inventory. The player accumulates as many saplings as possible.
+
+The player will choose the highest-priority active goal in this order:
+1. Survive (only if intrinsic ≤ 1)
+2. Move toward the nearest visible sapling tile and use DO when adjacent to collect it.
+3. If no sapling is visible, move toward the unexplored direction most likely to contain grass / saplings (typically open green areas).
+
+A sapling tile is a small visible plant on a grass tile, distinct from a fruit-bearing plant (a larger plant the player can eat). The player should DO on sapling tiles to add them to inventory. The player ignores stones, ladders, monsters, water (unless drink ≤ 1), and crafting stations.
+
+If the player picks up a sapling, the player continues to look for the next sapling. The goal is the per-episode count of saplings collected — so the player keeps collecting throughout the episode.
+
+Predict at a high level what the next five steps for the player will look like, given that they are following the algorithm. Do not forecast beyond five time steps! The player can move at most five tiles during these five steps. Reason during your state understanding about the most immediate next step according to the algorithm and then predict the player's immediate behavior.
+
+State Understanding: <A few sentences analyzing the current scene. Focus on careful spatial reasoning of the relevant tiles or tiles near the player. Identify the nearest visible sapling tile and a route to it. >
+
+Prediction: <1 positive, direction-stating sentence describing the player's action. Good examples: "Move down-right to the visible sapling and collect it with DO.", "Collect the sapling directly to the left and continue right toward the next sapling.", "Move up to the grass area to look for saplings.", "Use DO on the adjacent sapling tile." Do not use "instead of", "rather than", "avoid", "away from", "refuse", or any other negation — just state the direction and target. Do not reference specific coordinates. >
+
+Now, predict the future of the following state.
+
+Current state:
+{current_state_filtered}
