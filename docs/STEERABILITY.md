@@ -407,7 +407,7 @@ rewritten to forbid negation phrasing).
 | Track | n | return ± SE | Δret (z) | Δrate(place_stone) | Δrate(place_furnace) | Δrate(wake_up) |
 |---|---|---|---|---|---|---|
 | A_full | 50 | [18.04 ± 0.48](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/62tmvkfl) | −0.94 (z=−1.6) | −0.08 | −0.02 | −0.04 |
-| B_thinking_2M | **In progress (n=24–29/50, job 7465078)** | [15.34 ± 1.16 (partial n=29)](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/lcwqcxo4) | +0.68 (z=+0.48 NS) | +0.0146 Δp (+129% rel) | — | +0.24 |
+| B_thinking_2M | 50 | [12.76 ± 0.91](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/lcwqcxo4) | −3.55 (z=−2.61) | −0.18 | −0.18 | −0.14 |
 | **C_grounded_2M** | 50 | **[15.76 ± 0.73](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/6phz27zr)** | **+1.10 (z=+1.0)** | **+0.16** | **+0.00 (baseline 0.68)** | **+0.24** |
 
 (Note: C_grounded place_stone baseline 0.68 → +0.16 absolute = 0.84.
@@ -463,7 +463,7 @@ rewritten to forbid negation phrasing).
 | Track | n | return ± SE | Δret (z) | Δrate(enter_dungeon) | Δp(DESCEND) relative |
 |---|---|---|---|---|---|
 | A_full | 50 | [19.28 ± 0.27](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/jkb171iy) | +0.30 (z=+0.7) | +0.06 | +24% |
-| B_thinking_2M | **In progress (n=11–17/50, job 7465078)** | [15.74 ± 1.99 (partial n=11)](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/ng2xcv0g) | −0.57 (z=−0.26) | +0.15 | — |
+| B_thinking_2M | 50 | [15.26 ± 0.95](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/ng2xcv0g) | −1.05 (z=−0.75) | −0.02 | +12% |
 | **C_grounded_2M** | 50 | [14.80 ± 0.99](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/y09770mm) | +0.14 (z=+0.1) | **+0.10 (0.12 → 0.22, +83% rel)** | **+44%** |
 
 ### Interpretation
@@ -499,7 +499,7 @@ rewritten to forbid negation phrasing).
 | Track | n | return ± SE | Δret (z) | Δrate(eat_cow) | Δrate(wake_up) |
 |---|---|---|---|---|---|
 | A_full | 50 | [18.62 ± 0.42](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/yzndpabh) | −0.36 (z=−0.6) | −0.02 | −0.04 |
-| B_thinking_2M | **In progress (n=23/50)** | [14.32 ± 1.30 (partial)](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/snqn8pak) | −0.34 (z=−0.22) | +0.00 | +0.20 |
+| B_thinking_2M | 50 | [16.58 ± 0.83](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/snqn8pak) | +0.27 (z=+0.21) | +0.08 | +0.06 |
 | C_grounded_2M | 50 | [14.42 ± 0.83](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/fa0dlxd8) | −0.24 (z=−0.2) | +0.04 | +0.20 |
 
 ### Inventory counts (C_grounded_2M, n=50)
@@ -582,7 +582,7 @@ Template: `configs/training/templates/predict_state_only_prompt_concise_target_h
 Algorithm-section diff vs base: lines 23–69 replaced (+ Prediction directive
 rewritten to forbid negation phrasing).
 
-wandb runs (status TBD when results land):
+wandb runs:
 [A_full](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/3m3rdbnf) /
 [B_thinking_2M](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/9vr77310) /
 [C_grounded_2M](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/3chzhpeu).
@@ -596,11 +596,19 @@ wandb runs (status TBD when results land):
 > 2. If any plant with fruit visible, harvest.
 > 3. Otherwise move toward grassland.
 
-### Per-track results
+### Per-track results (n=50)
 
-**QUEUED (job 7468781, 3 cells: A_full / C_grounded_2M / B_thinking_2M).**
-Results will be appended to `probe_results/master_table_FINAL.md` once the
-cells finish (~12h ETA at time of writing).
+| Track | n | return ± SE | Δret (z) | Δrate(eat_cow) | Δrate(eat_plant) |
+|---|---|---|---|---|---|
+| A_full | 50 | [18.96 ± 0.42](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/3m3rdbnf) | −0.02 (z=−0.04) | +0.00 | +0.00 |
+| B_thinking_2M | 50 | [14.72 ± 1.03](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/9vr77310) | −1.59 (z=−1.10) | −0.08 | −0.12 |
+| C_grounded_2M | 50 | [12.70 ± 0.99](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/3chzhpeu) | −1.96 (z=−1.52) | −0.04 | +0.00 |
+
+(C_grounded_2M shows a smaller +1.1z `cow_eat_events/ep` win at n=30 in
+the [Specificity matrix (2026-04-25)](#specificity-matrix-2026-04-25);
+the steer_v2 n=50 run here uses a different seed and shows a slight net
+return drag instead. Both runs are consistent in that the prompt does
+not extend life on C, while A is unaffected.)
 
 ---
 
@@ -630,7 +638,7 @@ reading the embedding content (no other plausible explanation).
 | Track | n | return ± SE | Δret (z) | LEFT%-of-moves (baseline → cond) | Δp(DO) |
 |---|---|---|---|---|---|
 | A_full | 50 | [17.48 ± 0.54](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/8g2lqfcy) | −1.50 (z=−2.3) | 0.262 → 0.255 (−3%) | −0.021 |
-| B_thinking_2M | **In progress (n=16/50)** | [13.54 ± 1.74 (partial)](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/wfxhxqlg) | −2.77 (z=−1.38) | 0.255 → 0.264 (+4%) | +0.040 |
+| B_thinking_2M | 50 | [13.44 ± 1.01](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/wfxhxqlg) | −2.87 (z=−2.01) | 0.255 → 0.267 (+5%) | +0.056 |
 | **C_grounded_2M** | 50 | **[7.94 ± 0.84](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/w21fwecj)** | **−6.72 (z=−5.7)** | **0.243 → 0.343 (+41%)** | +0.175 |
 
 ### Interpretation
@@ -672,16 +680,17 @@ rewritten to forbid negation phrasing).
 | Track | n | return ± SE | Δret (z) | RIGHT%-of-moves (Δ) | LEFT%-of-moves (Δ) |
 |---|---|---|---|---|---|
 | A_full | 50 | [18.22 ± 0.46](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/alqre6lj) | −0.76 (z=−1.3) | +0.002 | −0.005 |
-| B_thinking_2M | **In progress (n=18/50)** | [13.77 ± 1.20 (partial)](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/533r9el6) | −2.54 (z=−1.62) | **+0.028 (+11% rel)** | −0.003 |
+| B_thinking_2M | 50 | [14.78 ± 0.83](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/533r9el6) | −1.53 (z=−1.17) | **+0.039 (+16% rel)** | −0.009 |
 | C_grounded_2M | 50 | [11.16 ± 0.92](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/olscsp79) | −3.50 (z=−2.8) | +0.007 | +0.001 |
 
 ### Interpretation
 
 Weaker than direction_left on RIGHT%. C_grounded's return drop (−3.50)
 is mostly via DO-spike (Δp(DO)=+0.165) rather than clean RIGHT-walking.
-B_thinking's partial signal (+11% relative RIGHT) is actually the
-cleanest of the three tracks on right-specific behavior. Reason for the
-asymmetry unclear; worth re-checking once B reaches n=50.
+B_thinking at n=50 shows the cleanest right-specific behavior of the
+three tracks — RIGHT% +16% relative — confirming the partial-n
+observation; the embedding-content asymmetry is real on B but smaller
+than C's reaction.
 
 ---
 
@@ -689,9 +698,10 @@ asymmetry unclear; worth re-checking once B reaches n=50.
 ## `direction_up_v2`, `direction_down_v2` — remaining cardinals
 
 Templates exist (`*_direction_up_v2.txt`, `*_direction_down_v2.txt`) with
-identical structure to left/right. **Not run online** — prioritized
-left/right as the minimal test; up/down would add symmetry if the
-left/right signal replicates at n=50 on B and C.
+identical structure to left/right. Now run on `C_grounded_2M` as part
+of the [Specificity matrix (2026-04-25)](#specificity-matrix-2026-04-25):
+all 4 cardinal directions move move-share-of-cardinals in the prompted
+direction (z=+2.0 to +6.0). Not run on `A_full` or `B_thinking_2M`.
 
 ---
 
@@ -905,8 +915,7 @@ Source: `probe_results/steerability_analysis/c_full_extra.json`,
 
 ## Master comparison table — one row per condition × track
 
-Return (± SE). Bold = decisive; `—` = not run; `—P` = in progress at
-writing time.
+Return (± SE). Bold = decisive; `—` = not run.
 
 | Condition | A_full (base [18.98](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/n7wmnk82)) | A_top2M (base [18.14](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/7id4059l)) | B_thinking_2M (base [16.31](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/7itrrqbh)) | C_grounded_2M (base [14.66](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/pjb8wf7z)) |
 |---|---|---|---|---|
@@ -914,14 +923,14 @@ writing time.
 | `adversarial_v2` | [19.38 ± 0.29](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/ksubq27s) (+0.40) | [16.08 ± 0.90](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/zo1imok6) (−2.06) | [13.80 ± 0.94](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/nqfle4h5) (−2.51) | [11.68 ± 0.95](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/s5skoqs0) (−2.98*) |
 | `avoid_water_v2` | [18.30 ± 0.41](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/hxcfdgwx) (−0.68) | [(−1.66 marginal)](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/2qy7xdo8) | [15.90 ± 0.92](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/asthb0rc) (−0.41) | [13.64 ± 1.01](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/pdjilnqf) (−1.02) |
 | `avoid_animals_v2` | [18.20 ± 0.50](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/203drusj) (−0.78) | [(−1.70 marginal)](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/cmpexs6l) | [16.84 ± 0.96](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/756yap5q) (+0.53) | **[11.54 ± 1.02](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/gwhh7c5j) (−3.12*)** |
-| `target_collect_stone_v2` | [18.04 ± 0.48](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/62tmvkfl) (−0.94) | — | [—P (n≈29)](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/lcwqcxo4) | **[15.76 ± 0.73](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/6phz27zr) (+1.10)** |
-| `target_descend_v2` | [19.28 ± 0.27](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/jkb171iy) (+0.30) | — | [—P (n≈11)](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/ng2xcv0g) | [14.80 ± 0.99](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/y09770mm) (+0.14) |
-| `target_eat_cow_v2` | [18.62 ± 0.42](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/yzndpabh) (−0.36) | — | [—P (n≈23)](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/snqn8pak) | [14.42 ± 0.83](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/fa0dlxd8) (−0.24) |
+| `target_collect_stone_v2` | [18.04 ± 0.48](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/62tmvkfl) (−0.94) | — | [12.76 ± 0.91](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/lcwqcxo4) (**−3.55**) | **[15.76 ± 0.73](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/6phz27zr) (+1.10)** |
+| `target_descend_v2` | [19.28 ± 0.27](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/jkb171iy) (+0.30) | — | [15.26 ± 0.95](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/ng2xcv0g) (−1.05) | [14.80 ± 0.99](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/y09770mm) (+0.14) |
+| `target_eat_cow_v2` | [18.62 ± 0.42](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/yzndpabh) (−0.36) | — | [16.58 ± 0.83](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/snqn8pak) (+0.27) | [14.42 ± 0.83](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/fa0dlxd8) (−0.24) |
 | `target_drink_water_v2` | [18.08 ± 0.40](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/18tl33lj) (−0.90) | — | — | — |
 | `target_place_stone_v2` | [18.38 ± 0.52](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/ix5qkxbs) (−0.60) | — | — | — |
-| `target_hunt_animals_v2` | [queued (7468781)](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/3m3rdbnf) | — | [queued](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/9vr77310) | [queued](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/3chzhpeu) |
-| `direction_left_v2` | [17.48 ± 0.54](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/8g2lqfcy) (−1.50*) | — | [—P (n≈16)](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/wfxhxqlg) | **[7.94 ± 0.84](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/w21fwecj) (−6.72)** |
-| `direction_right_v2` | [18.22 ± 0.46](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/alqre6lj) (−0.76) | — | [—P (n≈18)](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/533r9el6) | [11.16 ± 0.92](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/olscsp79) (−3.50*) |
+| `target_hunt_animals_v2` | [18.96 ± 0.42](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/3m3rdbnf) (−0.02) | — | [14.72 ± 1.03](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/9vr77310) (−1.59) | [12.70 ± 0.99](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/3chzhpeu) (−1.96) |
+| `direction_left_v2` | [17.48 ± 0.54](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/8g2lqfcy) (−1.50*) | — | [13.44 ± 1.01](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/wfxhxqlg) (**−2.87**) | **[7.94 ± 0.84](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/w21fwecj) (−6.72)** |
+| `direction_right_v2` | [18.22 ± 0.46](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/alqre6lj) (−0.76) | — | [14.78 ± 0.83](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/533r9el6) (−1.53) | [11.16 ± 0.92](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/olscsp79) (−3.50*) |
 | α=+2 × d_die (synthetic) | [18.24 ± 0.53](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/2061g8dn) (−0.74) | — | — | **[9.53 ± 1.22](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/4j5pi14i) (−5.13)** |
 | α=−2 × d_die (synthetic) | [18.62 ± 0.63](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/ra87r7ex) (−0.36) | — | — | [14.93 ± 1.20](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/u30xdjdz) (+0.27) |
 | d_value α=+2 | [17.03 ± 0.76](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/vzmmcuxf) (−1.95*) | — | — | [13.57 ± 1.13](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/iqbybdhz) (−1.09) |
@@ -943,8 +952,8 @@ flagged decisive).
 | PPO-RNN 20M | 2e7 | 14.08 ± 0.48 | 6.2% | `ppo_rnn_20M_50ep_video/` |
 | PPO-RNN 1e8 | 1e8 | 27.87 (training-time) | 12.3% | [run fkxga61m](https://wandb.ai/iris-sobolmark/craftax-baselines-replication/runs/fkxga61m) |
 | PPO-symbolic 1e8 (1st attempt) | TIMEOUT at 33M | 17.60 | 7.8% | [run tswtiilh](https://wandb.ai/iris-sobolmark/craftax-baselines-replication/runs/tswtiilh) |
-| PPO-symbolic 1e8 (resubmit 7464286) | pending | — | — | — |
-| PPO-RNN 1e8 with checkpoint save (7464853) | pending | — | — | — |
+| PPO-symbolic 1e8 (resubmit 7464286) | FAILED at 47s | — | — | did not start training; needs resubmit |
+| PPO-RNN 1e8 with checkpoint save (7464853) | FAILED at 55s | — | — | did not start training; needs resubmit |
 
 **Scoreboard context**: 1B PPO-RNN = 15.3%, 1B PPO-GTrXL = 18.3%. Our
 augmented tracks sit below the 1e8 PPO-RNN baseline on raw return. The
@@ -954,22 +963,17 @@ unaug offline-RL baseline (18.38), not at scoreboard-top scale.
 
 ---
 
-## Status of in-progress jobs (as of 2026-04-24 EOD)
+## Job status (resolved as of 2026-04-25)
 
-| Job | Cells | Status | ETA |
-|---|---|---|---|
-| 7465078 v2_steerability (B_thinking_2M) | target_{collect_stone,descend,eat_cow}, direction_{left,right} | In progress (n≈17–24 each) | ~12h to reach n=50 |
-| 7468781 v2 target_hunt_animals | A_full, C_grounded_2M, B_thinking_2M × target_hunt_animals | Queued | L40S, 12h walltime |
-| 7468782 PPO video re-eval | PPO-RNN {5M, 20M} with wandb video | Running | ~6h |
-| 7464286 PPO-symbolic 1e8 (resubmit) | 1 cell | Pending | 48h walltime, ~55h wall |
-| 7464853 PPO-RNN 1e8 w/ checkpoint save | 1 cell | Pending | 24h |
-
-Partial numbers for B_thinking_2M already recorded in
-`probe_results/steerability_analysis/b_partial2.json` and
-`probe_results/action_analysis/b_partial2.json`. C_grounded additional
-inventory counts are being computed in the background (stone, wood,
-coal, iron, food_intake_events, drink_intake_events,
-monsters_killed_total) — don't block on them.
+| Job | Cells | Outcome |
+|---|---|---|
+| 7465078 v2_steerability (B_thinking_2M) | target_{collect_stone,descend,eat_cow,hunt_animals}, direction_{left,right} | COMPLETED at n=50; final results merged into the per-cell tables above |
+| 7468781 v2 target_hunt_animals | A_full, C_grounded_2M, B_thinking_2M × target_hunt_animals | COMPLETED at n=50 |
+| 7468782 PPO video re-eval | PPO-RNN {5M, 20M} with wandb video | COMPLETED |
+| 7464286 PPO-symbolic 1e8 (resubmit) | 1 cell | **FAILED at 47s** — did not start training; needs investigation + resubmit |
+| 7464853 PPO-RNN 1e8 with checkpoint save | 1 cell | **FAILED at 55s** — did not start training; needs investigation + resubmit |
+| 7481845 v2_specificity matrix | 21 cells × C_grounded_2M | COMPLETED — see [Specificity matrix (2026-04-25)](#specificity-matrix-2026-04-25) |
+| 7486443 v2_spec_iter_v3 | avoid_stone_v3, survive_long_v3 | COMPLETED — see [v3 prompt iteration](#v3-prompt-iteration-2026-04-25-post-matrix) |
 
 ---
 
@@ -1195,3 +1199,16 @@ Two observations:
   no longer disrupts the policy but does not extend episodes either.
   **The policy's survival skill cap is a fidelity ceiling, not a prompt
   problem.** Final WIN tally: 12/21, NULL 9/21, WRONG-WAY 1/21.
+
+Note (2026-04-25): the `target_avoid_stone_v2.txt` template file on
+disk has now been overwritten with the v3 contents (the contradictory
+upgrade-tree was the bug, not anything specific to "v2"). Future
+`--embedding-mode target_avoid_stone_v2` runs will use the fixed
+prompt; the old wrong-sign result above remains in the matrix for
+historical comparison.
+
+A second round of v3 prompt iteration was queued covering all the other
+NULL specificity-matrix cells (`target_eat_cow_v3`, `target_drink_water_v3`,
+`target_stay_overworld_v3`, `target_place_plant_v3`,
+`target_defeat_zombie_v3`, `target_collect_sapling_v3`, job 7491313,
+6 cells × n=30). Results will be appended once the array completes.

@@ -188,6 +188,35 @@ _V2_TEMPLATES = {
         "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_survive_long_v3.txt",
         "thinking": _TEMPLATE_DIR / "predict_state_only_prompt_concise_survive_long_v3.txt",
     },
+    "achievement_max_v1": {
+        "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_achievement_max_v1.txt",
+        "thinking": _TEMPLATE_DIR / "predict_state_only_prompt_concise_achievement_max_v1.txt",
+    },
+    # v3 iterations of the NULL specificity-matrix cells
+    "target_eat_cow_v3": {
+        "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_target_eat_cow_v3.txt",
+        "thinking": _TEMPLATE_DIR / "predict_state_only_prompt_concise_target_eat_cow_v3.txt",
+    },
+    "target_drink_water_v3": {
+        "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_target_drink_water_v3.txt",
+        "thinking": _TEMPLATE_DIR / "predict_state_only_prompt_concise_target_drink_water_v3.txt",
+    },
+    "target_stay_overworld_v3": {
+        "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_target_stay_overworld_v3.txt",
+        "thinking": _TEMPLATE_DIR / "predict_state_only_prompt_concise_target_stay_overworld_v3.txt",
+    },
+    "target_place_plant_v3": {
+        "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_target_place_plant_v3.txt",
+        "thinking": _TEMPLATE_DIR / "predict_state_only_prompt_concise_target_place_plant_v3.txt",
+    },
+    "target_defeat_zombie_v3": {
+        "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_target_defeat_zombie_v3.txt",
+        "thinking": _TEMPLATE_DIR / "predict_state_only_prompt_concise_target_defeat_zombie_v3.txt",
+    },
+    "target_collect_sapling_v3": {
+        "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_target_collect_sapling_v3.txt",
+        "thinking": _TEMPLATE_DIR / "predict_state_only_prompt_concise_target_collect_sapling_v3.txt",
+    },
     # Specificity matrix: rare-behavior upward steering + opposite-direction
     # mirrors. All concise-only fallback (no thinking variants yet).
     "target_collect_diamond_v2": {
@@ -1134,6 +1163,10 @@ def main():
                              "target_avoid_stone_v3",
                              "target_stay_overworld_v2",
                              "survive_long_v3",
+                             "achievement_max_v1",
+                             "target_eat_cow_v3", "target_drink_water_v3",
+                             "target_stay_overworld_v3", "target_place_plant_v3",
+                             "target_defeat_zombie_v3", "target_collect_sapling_v3",
                              "embed_arith"],
                     help="How to generate hidden state embeddings: "
                          "gemini=normal Gemini+Qwen, constant=embed fixed string, "
