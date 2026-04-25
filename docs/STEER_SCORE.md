@@ -501,6 +501,34 @@ re-submission once disk quota is freed. See
 [`docs/SCALING_C.md`](SCALING_C.md) "Status" for cleanup candidates
 (70GB+ recoverable from old experiments).
 
+### v3 freezenone — partial (n=9) directional signal
+
+Even at n=9 the per-achievement deltas relative to v2 are
+suggestive (huge SE on return so this is *not* a return claim, just
+a behavior-shift claim):
+
+| ach | baseline | v2 (n=30) | v3 (n=9 partial) | v3 − v2 |
+|---|---|---|---|---|
+| enter_dungeon | 12% | 37% | **56%** | +19pp |
+| defeat_orc_solider | 0% | 3% | **22%** | +19pp |
+| fire_bow | 0% | 3% | 11% | +8pp |
+| find_bow | 2% | 7% | 11% | +4pp |
+| open_chest | 2% | 7% | 11% | +4pp |
+| eat_snail | 4% | 7% | 0% | −7pp |
+| make_iron_pickaxe | 0% | 0% | 0% | 0 |
+| collect_diamond | 0% | 0% | 0% | 0 |
+
+v3 return at n=9 is 18.32 ± 1.93 (essentially equal to v2's 18.33,
+within noise). Length is shorter (698 vs v2's 878) — the policy
+descends faster but seems to die on floor 1 more often. The floor-1
+INTERMEDIATE achievements DO get pushed up by v3, but the prompt
+isn't yet teaching the policy to *survive* floor 1 long enough to
+collect the resulting +3-pt rewards reliably. A v4 might add a
+"retreat to floor 0 if HP ≤ 5" rule.
+
+(Re-run with full n=30 needed once disk freed — partial-data SE is
+too high to draw return conclusions.)
+
 Per-achievement deltas (top movers, n=28 vs baseline n=50):
 
 | Δpp | achievement | note |
