@@ -1,0 +1,53 @@
+You are forecasting a plausible future for a Craftax state.
+
+Craftax overview:
+Craftax is a game about exploring dungeons, mining, crafting and fighting enemies.
+
+Use these game rules:
+1) Coordinates are (Row, Column), centered on the player at (0,0).
+   - Negative Row = UP, Positive Row = DOWN.
+   - Negative Column = LEFT, Positive Column = RIGHT.
+2) Intrinsics: Health, Food, Drink, Energy, Mana. All out of 9.
+   - Food/Drink/Energy naturally decay.
+   - If Food/Drink/Energy reaches 0, Health will decay.
+   - If Food/Drink/Energy are maintained, Health can recover.
+3) Floor progression uses ladders.
+   - Descending requires reaching the ladder on the current floor.
+   - On non-overworld floors, the ladder is generally closed until enough mobs are killed.
+4) Actions: NOOP, LEFT, RIGHT, UP, DOWN, DO (interact/attack/mine/drink/eat),
+   SLEEP, PLACE_STONE, PLACE_TABLE, PLACE_FURNACE, PLACE_PLANT,
+   MAKE_{WOOD,STONE,IRON,DIAMOND}_{PICKAXE,SWORD}, REST, DESCEND, ASCEND,
+   MAKE_ARROW, SHOOT_ARROW, CAST_FIREBALL, CAST_ICEBALL, PLACE_TORCH,
+   DRINK_POTION_*, READ_BOOK, ENCHANT_*, LEVEL_UP_*.
+
+Here is the algorithm the player will play the game by:
+At every step, the player should act with the goal of dying as quickly as possible by taking damage from enemy mobs. The player chooses the highest-priority active goal in this order:
+1. Move toward enemy mobs and into enemy attack range
+2. Stay clear of water (water does not damage but slows progress toward enemies)
+3. Let intrinsics decay naturally (do not eat, drink, or sleep)
+4. Explore in directions most likely to contain more enemies
+
+1. Move toward enemy mobs and into enemy attack range
+The player tracks all visible enemy mobs (zombies, skeletons, archers, gnome warriors, gnome archers, orc soldiers, orc mages, lizards, kobolds, trolls, knights, deep things, fire elementals, frost trolls, ice elementals, pigmen, necromancers). The player moves directly toward the nearest visible enemy. When adjacent to a melee enemy (zombie, skeleton, gnome warrior, orc soldier, lizard, kobold, troll, knight, pigman), the player stands still or steps INTO the enemy's attack range so the enemy hits the player. When a ranged enemy is visible (archer, gnome archer, orc mage, necromancer, fire elemental, ice elemental, frost troll), the player moves into the enemy's line of fire so projectiles hit the player.
+
+The player does NOT use DO to attack enemies (attacking would shorten the enemy's life and reduce future damage to the player). The player does NOT make a sword or pickaxe (no equipment progression). The player does NOT place stones (no defensive walls).
+
+2. Stay clear of water
+Water tiles do not damage the player, but stepping into water blocks movement and routes the player around enemies. The player walks around water tiles when planning a path toward an enemy, treating water as an obstacle to detour past — not as a hazard or resource.
+
+3. Let intrinsics decay
+Do not eat, drink, or sleep. Food, drink, and energy decay naturally; once any reaches 0, health begins to decay too. This compounds with damage from enemy mobs.
+
+4. Explore toward more enemies
+If no enemy is currently visible, the player moves toward the unexplored direction most likely to contain enemies (typically deeper into stone, away from grass, toward dark areas). On overworld (Floor 0) night spawns more zombies and skeletons. Descending the ladder is allowed if a deeper-floor enemy is more accessible than the nearest overworld enemy.
+
+Predict at a high level what the next five steps for the player will look like, given that they are following the algorithm. Do not forecast beyond five time steps! In particular, the player can move at most five tiles during these five steps. Reason during your state understanding about the most immediate next step according to the algorithm and then predict the player's immediate behavior.
+
+State Understanding: <A few sentences analyzing the current scene. Focus on careful spatial reasoning of the relevant tiles or tiles near the player. Identify the nearest visible enemy mob and a route toward it. Note any water that has to be routed around. >
+
+Prediction: <1 positive, direction-stating sentence describing the player's action. Good examples: "Move down-right toward the zombie and step into its attack range.", "Walk left toward the visible skeleton and stand in its line of fire.", "Move up to engage the cluster of zombies in the dark area.", "Step around the water tile to the left to reach the orc soldier." Do not use "instead of", "rather than", "avoid", "away from", "refuse", or any other negation — just state the direction and target. Do not reference specific coordinates. >
+
+Now, predict the future of the following state.
+
+Current state:
+{current_state_filtered}

@@ -55,40 +55,108 @@ def load_eps(eval_dir: Path) -> List[dict]:
     return eps
 
 
+_ACTION_PLACE_PLANT = 10
+_ACTION_SLEEP = 6
+_ACTION_DESCEND = 18
+_ACTION_ASCEND = 19
+_ACTION_PLACE_STONE = 7
+_ACTION_PLACE_TABLE = 8
+_ACTION_PLACE_FURNACE = 9
+_ACTION_PLACE_TORCH = 28
+
+
 def replay_episode(env, env_params, rng_in, reset_key, actions: List[int]):
     """Step env deterministically using the outer rng for step keys (matches eval_online).
     Returns (counts_dict, rng_out). counts_dict has:
-      inventory keys (TRACKED), food_intake_events, drink_intake_events,
-      monsters_killed_total."""
+      - inventory keys (TRACKED): cumulative ever-mined/collected counts
+      - food_intake_events: total food-up events
+      - cow_eat_events: food-up events where no fruit-plant was just consumed
+        (proxy: cow meat is eaten — neither plant nor potion since we don't
+         track potion drinks separately)
+      - plant_eat_events: food-up events that coincide with a growing_plants_mask
+        slot flipping False (a fruit-bearing plant was just consumed)
+      - drink_intake_events: total drink-up events
+      - monsters_killed_total: sum across all monster types killed
+      - monsters_killed_by_type: dict of monster_type_idx -> count
+      - action_counts: dict of action_name -> count for tracked actions
+        (PLACE_PLANT, SLEEP, DESCEND, ASCEND, PLACE_STONE, PLACE_TABLE,
+         PLACE_FURNACE, PLACE_TORCH)
+    """
     obs, state = env.reset(reset_key, env_params)
     counts = {k: 0 for k in TRACKED}
     counts["food_intake_events"] = 0
+    counts["cow_eat_events"] = 0
+    counts["plant_eat_events"] = 0
     counts["drink_intake_events"] = 0
     counts["monsters_killed_total"] = 0
+    n_monster_types = int(state.monsters_killed.shape[0])
+    counts["monsters_killed_by_type"] = {i: 0 for i in range(n_monster_types)}
+    counts["action_PLACE_PLANT"] = 0
+    counts["action_SLEEP"] = 0
+    counts["action_DESCEND"] = 0
+    counts["action_ASCEND"] = 0
+    counts["action_PLACE_STONE"] = 0
+    counts["action_PLACE_TABLE"] = 0
+    counts["action_PLACE_FURNACE"] = 0
+    counts["action_PLACE_TORCH"] = 0
+
     rng = rng_in
     prev_inv = {k: int(getattr(state.inventory, k)) for k in TRACKED}
     prev_food = int(state.player_food)
     prev_drink = int(state.player_drink)
-    prev_mk = int(state.monsters_killed.sum())
+    prev_mk = state.monsters_killed.copy()
+    prev_plants_mask = state.growing_plants_mask.copy()
     for action in actions:
         rng, sk = jax.random.split(rng)
         obs, state, reward, done, info = env.step(sk, state, int(action), env_params)
+
+        # inventory increments
         cur_inv = {k: int(getattr(state.inventory, k)) for k in TRACKED}
         for k in TRACKED:
             delta = cur_inv[k] - prev_inv[k]
             if delta > 0:
                 counts[k] += int(delta)
         prev_inv = cur_inv
+
+        # food intake — disambiguate cow vs plant via growing_plants_mask delta
         cur_food = int(state.player_food)
-        cur_drink = int(state.player_drink)
-        cur_mk = int(state.monsters_killed.sum())
+        cur_plants_mask = state.growing_plants_mask
+        plant_consumed_this_step = bool(((prev_plants_mask) & (~cur_plants_mask)).any())
         if cur_food > prev_food:
             counts["food_intake_events"] += 1
+            if plant_consumed_this_step:
+                counts["plant_eat_events"] += 1
+            else:
+                counts["cow_eat_events"] += 1
+        prev_plants_mask = cur_plants_mask
+
+        # drink intake
+        cur_drink = int(state.player_drink)
         if cur_drink > prev_drink:
             counts["drink_intake_events"] += 1
-        if cur_mk > prev_mk:
-            counts["monsters_killed_total"] += cur_mk - prev_mk
-        prev_food, prev_drink, prev_mk = cur_food, cur_drink, cur_mk
+
+        # monster kills (per type)
+        cur_mk = state.monsters_killed
+        delta_mk = cur_mk - prev_mk
+        for i in range(n_monster_types):
+            d = int(delta_mk[i])
+            if d > 0:
+                counts["monsters_killed_by_type"][i] += d
+                counts["monsters_killed_total"] += d
+        prev_mk = cur_mk.copy()
+
+        # action counts (tracked actions)
+        a = int(action)
+        if a == _ACTION_PLACE_PLANT: counts["action_PLACE_PLANT"] += 1
+        elif a == _ACTION_SLEEP: counts["action_SLEEP"] += 1
+        elif a == _ACTION_DESCEND: counts["action_DESCEND"] += 1
+        elif a == _ACTION_ASCEND: counts["action_ASCEND"] += 1
+        elif a == _ACTION_PLACE_STONE: counts["action_PLACE_STONE"] += 1
+        elif a == _ACTION_PLACE_TABLE: counts["action_PLACE_TABLE"] += 1
+        elif a == _ACTION_PLACE_FURNACE: counts["action_PLACE_FURNACE"] += 1
+        elif a == _ACTION_PLACE_TORCH: counts["action_PLACE_TORCH"] += 1
+
+        prev_food, prev_drink = cur_food, cur_drink
         if done:
             break
     return counts, rng
@@ -128,7 +196,13 @@ def main():
         if (ep_idx + 1) % 5 == 0:
             print(f"  done {ep_idx+1}/{len(eps)}: stone={counts['stone']} wood={counts['wood']}", flush=True)
 
-    ALL_KEYS = TRACKED + ["food_intake_events", "drink_intake_events", "monsters_killed_total"]
+    ALL_KEYS = TRACKED + [
+        "food_intake_events", "cow_eat_events", "plant_eat_events",
+        "drink_intake_events", "monsters_killed_total",
+        "action_PLACE_PLANT", "action_SLEEP", "action_DESCEND", "action_ASCEND",
+        "action_PLACE_STONE", "action_PLACE_TABLE", "action_PLACE_FURNACE",
+        "action_PLACE_TORCH",
+    ]
     arr = {k: np.array([r[k] for r in rows]) for k in ALL_KEYS}
     summary = {
         "n": len(rows),

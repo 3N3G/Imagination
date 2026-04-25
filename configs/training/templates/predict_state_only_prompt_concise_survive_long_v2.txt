@@ -1,0 +1,61 @@
+You are forecasting a plausible future for a Craftax state.
+
+Craftax overview:
+Craftax is a game about exploring dungeons, mining, crafting and fighting enemies.
+
+Use these game rules:
+1) Coordinates are (Row, Column), centered on the player at (0,0).
+   - Negative Row = UP, Positive Row = DOWN.
+   - Negative Column = LEFT, Positive Column = RIGHT.
+2) Intrinsics: Health, Food, Drink, Energy, Mana. All out of 9.
+   - Food/Drink/Energy naturally decay.
+   - If Food/Drink/Energy reaches 0, Health will decay.
+   - If Food/Drink/Energy are maintained, Health can recover.
+3) Floor progression uses ladders.
+   - Descending requires reaching the ladder on the current floor.
+   - On non-overworld floors, the ladder is generally closed until enough mobs are killed.
+4) Actions: NOOP, LEFT, RIGHT, UP, DOWN, DO (interact/attack/mine/drink/eat),
+   SLEEP, PLACE_STONE, PLACE_TABLE, PLACE_FURNACE, PLACE_PLANT,
+   MAKE_{WOOD,STONE,IRON,DIAMOND}_{PICKAXE,SWORD}, REST, DESCEND, ASCEND,
+   MAKE_ARROW, SHOOT_ARROW, CAST_FIREBALL, CAST_ICEBALL, PLACE_TORCH,
+   DRINK_POTION_*, READ_BOOK, ENCHANT_*, LEVEL_UP_*.
+
+Here is the algorithm the player will play the game by:
+At every step, the player should act with the goal of staying alive as long as possible by repeating the survival loop in a fixed safe base location. The loop is: drink water → eat from a cow → sleep next to both. The player establishes a base where a water tile, a cow, and a safe sleep spot are all adjacent or within a few tiles, then cycles through the three actions in rotation. The player NEVER explores away from this base, NEVER descends a ladder, and NEVER engages enemies unless they walk into the base.
+
+The player will choose the highest-priority active goal in this order:
+1. Establish or return to the survival base
+2. Run the survival loop (drink → eat → sleep → repeat)
+3. Defend the base only if an enemy mob enters the base perimeter
+4. Stay in place (NOOP) once intrinsics are full and the base is secure
+
+1. Establish or return to the survival base
+The base is a location with a water tile, a cow (or known cow respawn area), and a stone or wood enclosure for sleeping — all within a 3-tile radius of each other. If no base exists yet, the player walks toward the nearest visible water tile, identifies the nearest cow within 3 tiles of that water, and selects a flat tile between them as the sleep spot. If a stone cluster is within 5 tiles, the player mines a 1-tile tunnel and places a stone behind to block enemies — that becomes the sleep spot. If no stone is available, the player chooses the most enclosed corner near the water + cow.
+
+If the player is already at a base (water + cow + sleep-spot all within reach), the player STAYS at the base and starts the loop.
+
+2. Run the survival loop
+Once at the base, the player cycles through:
+  - When drink ≤ 7: walk to the water tile and use DO to drink until drink = 9.
+  - When food ≤ 7: walk to the cow, use DO to attack until it drops meat, step onto meat and DO to eat until food = 9. If the cow is dead, wait for respawn (or use a stockpile of meat).
+  - When energy ≤ 7: walk to the sleep spot and SLEEP until wake_up.
+The thresholds are 7 (not the usual 4) so the player keeps a comfortable buffer and never lets intrinsics drop close to the danger zone. Health recovers passively when food, drink, and energy are all ≥ 5.
+
+3. Defend the base
+If an enemy mob enters within 2 tiles of the base, the player attacks it with DO (using a wood sword if crafted, otherwise bare hands). After defeating the threat, the player resumes the survival loop. The player does NOT pursue enemies outside the base.
+
+4. Stay in place
+When food, drink, and energy are all ≥ 7 and no enemy is in the base perimeter, the player chooses NOOP. The goal is maximum episode length, not progression — passing turns safely is preferred over any non-loop action.
+
+The player does NOT descend the ladder, does NOT explore beyond the base, does NOT collect stone/wood/coal/iron beyond what is needed to enclose the sleep spot, and does NOT engage in combat outside the base perimeter.
+
+Predict at a high level what the next five steps for the player will look like, given that they are following the algorithm. Do not forecast beyond five time steps! In particular, the player can move at most five tiles during these five steps. Reason during your state understanding about which loop step is next or whether the player needs to establish the base.
+
+State Understanding: <A few sentences analyzing the current scene. Focus on careful spatial reasoning of the relevant tiles or tiles near the player. Identify whether the player is at a base or needs to establish one. Note current intrinsic levels and which loop step is next. >
+
+Prediction: <1 positive, direction-stating sentence describing the player's action. Good examples: "Move right to the water tile and drink until full.", "Walk down-left to the cow and attack it for food.", "Place a stone behind the player and SLEEP until wake_up.", "NOOP at the base since all intrinsics are full." Do not use "instead of", "rather than", "avoid", "away from", "refuse", or any other negation — just state the direction and target. Do not reference specific coordinates. >
+
+Now, predict the future of the following state.
+
+Current state:
+{current_state_filtered}

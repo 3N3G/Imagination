@@ -20,33 +20,63 @@ Use these game rules:
    MAKE_ARROW, SHOOT_ARROW, CAST_FIREBALL, CAST_ICEBALL, PLACE_TORCH,
    DRINK_POTION_*, READ_BOOK, ENCHANT_*, LEVEL_UP_*.
 
-Here is the algorithm the player will play the game by:
-The player treats placing stone walls as the single dominant priority.
-Every step is chosen to bring the player closer to placing a stone tile.
-At every step, the player will choose the highest-priority active goal in
-this order:
-1. If the player has stone in inventory and is standing next to an empty
-   tile, the player uses PLACE_STONE on that empty tile to build a wall.
-2. If the player has no stone in inventory, the player moves toward the
-   nearest visible stone tile and mines it with DO when adjacent.
-3. The player builds compact stone enclosures wherever space allows,
-   placing stone in every direction the player can reach.
+Here is a good algorithm the player will play the game by:
+At every step, the player should act with the goal of staying alive and progressing down floors, with using PLACE_STONE on every adjacent empty tile (whenever stone is in inventory) as the top priority.
+This means the player will choose the highest-priority active goal in this order:
+1. Target place stone
+2. Survive
+3. Take the ladder if it is open and on-screen
+4. Upgrade equipment if survival is stable. This takes priority over taking the ladder if the player is in the overworld (floor 0) and has a sword or pickaxe worse than stone or missing.
+5. Explore to find resources, troops, and the ladder
 
-The player will only briefly interrupt stone-placing to top up Food,
-Drink, or Energy when they fall to 1. The player ignores cows, plants,
-monsters, ladders, and crafting stations beyond what is needed to
-sustain placing more stone.
+1. Target place stone
+If the player has at least one stone in inventory and there is an adjacent empty tile in the facing direction, the next action is PLACE_STONE. After placing, the player turns to the next adjacent empty tile and places again. If the player has no stone in inventory, the next action is to walk toward the nearest visible stone tile and mine it (a wood pickaxe is required and should be made if missing). The player keeps a continual cycle of mine-then-place to maximize per-episode placements.
 
-Predict at a high level what the next five steps for the player will look
-like, given that they are following the algorithm. Do not forecast beyond
-five time steps! The player can move at most five tiles during these five
-steps. Reason during your state understanding about the most immediate next
-step according to the algorithm and then predict the player's immediate
-behavior.
+2. Survive
+The player must track health, food, drink, and energy.  If food is <= 4, get food immediately by killing animals and eating them.  If drink is <= 4, get drink immediately from water tiles.  If energy is <= 4, make a safe enclosure and sleep.  If health is <= 4, restore food, drink, and energy before doing anything risky. To avoid losing health, avoid arrows, and avoid enemies unless you can kill them. The player should never sleep in the open. Before sleeping, block enemies out, for example with stone walls. An easy way for the player to become safe is to mine a tunnel into a cluster of stone and place a stone behind blocking off the tunnel.
+
+3. Take the ladder if it is open and visible
+If the ladder is open and on screen, the player should prioritize using it unless they are in the overworld. The overworld has the majority of the resources so the player should first acquire at least stone tools before leaving. Note that open and visible are not the same; an open ladder can be used, but the player still needs to find it (down_ladder) to use it. On later floors, the ladder opens only after 8 troops have been killed. Each time and only each time the player descends to a new floor, they will gain one player_xp, which can be used to upgrade one of three attributes:
+1. Strength: increases max health and physical melee damage
+2. Dexterity: increases max food, drink, and energy and slows their decrease
+2. Intelligence: increases max mana, mana regeneration, and spell damage
+
+4. Upgrade equipment
+The player should upgrade only when survival is stable. The player must always craft the highest-tier item they have the materials for but are missing, skipping lower tiers entirely. Always evaluate the Upgrade Decision Tree below from top to bottom (Highest Tier -> Lowest Tier).
+
+Crafting Costs & Requirements:
+- Pickaxe/Sword: 1 Wood + 1 [Wood/Stone/Iron/Diamond].
+- Armor: 3 [Iron/Diamond].
+- Stations: Crafting Table (3 Wood), Furnace (1 Stone). Crafting anything requires being adjacent to a Crafting Table. Iron and Diamond tier items also require being adjacent to a Furnace.
+- Misc: Arrows (1 Wood + 1 Stone = 2), Torches (1 Wood + 1 Coal = 4).
+
+Upgrade Decision Tree (Evaluate in order 1 -> 4):
+1. Diamond Tier: If the player has Diamonds, Coal, and Wood: craft Diamond equipment.
+2. Iron Tier: If the player has at least 1 Iron, 1 Coal, and 1 Wood:
+- If a furnace and a table are adjacent: craft immediately.
+- If no Furnace/Table placed: place a Crafting Table (3 Wood) and Furnace (1 Stone), THEN craft Iron Sword and/or Pickaxe. This takes priority over Stone Tier even if stations aren't yet placed.
+3. Stone Tier: If the player lacks Iron/Diamond but has Stone and Wood: craft a Stone Pickaxe and Stone Sword.
+4. Wood/Base Tier: If the player lacks Stone but has Wood: craft Wood tools.
+
+Resource Gathering & Maintenance Rules:
+- Target of Opportunity: Mine Coal whenever seen. Mine Iron whenever seen (requires Stone Pickaxe).
+- Deficit Gathering:
+  - If the player has no useful tools and <10 Wood: gather up to 10 Wood.
+  - If the player has only Wood tools and <10 Stone: mine 10 Stone.
+- Surplus: If the player has extra resources after securing tools/armor, craft arrows or torches.
+
+5. Explore
+If the player is not in immediate danger, the ladder is not in sight, and no immediate upgrade is available, the player should explore.
+While exploring, the player should:
+- look for the ladder
+- kill troops if the ladder is still closed
+- gather useful nearby resources, especially wood, stone, coal, iron, and diamonds
+
+Predict at a high level what the next five steps for the player will look like, given that they are following the algorithm. Do not forecast beyond five time steps! In particular, the player can move at most five tiles during these five steps. Reason during your state understanding about the most immediate next step according to the algorithm and then predict the player's immediate behavior.
 
 State Understanding: <A few sentences analyzing the current scene. Focus on careful spatial reasoning of the relevant tiles or tiles near the player. Identify the nearest empty tile to place stone on, or the nearest stone tile if the player has no stone in inventory. >
 
-Prediction: <1 positive, direction-stating sentence describing the player's action. Good examples: "Place a stone on the empty tile directly to the right.", "Move left to the stone cluster and mine it for placement material.", "Place a stone above and another one to the left to enclose the player.", "Mine the adjacent stone tile and then place it back." Do not use "instead of", "rather than", "avoid", "away from", "refuse", or any other negation — just state the direction and action. Do not reference specific coordinates. >
+Prediction: <1 positive, direction-stating sentence describing the high-level behavior of the player in the next five steps. Good examples: "Place a stone on the empty tile directly to the right.", "Move left to the stone cluster and mine it for placement material.", "Place a stone above and another one to the left to enclose the player.", "Mine the adjacent stone tile and then place it back." Do not use "instead of", "rather than", "avoid", "away from", "refuse", or any other negation — just state the direction and action. Do not reference specific coordinates. >
 
 Now, predict the future of the following state.
 

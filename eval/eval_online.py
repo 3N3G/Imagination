@@ -174,6 +174,46 @@ _V2_TEMPLATES = {
         "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_direction_down_v2.txt",
         "thinking": _TEMPLATE_DIR / "predict_state_only_prompt_concise_direction_down_v2.txt",
     },
+    # Replacements for die_v2 / adversarial_v2 — phrased positively as
+    # "move toward enemies (die_fast)" and "stay alive long via survival loop".
+    "die_fast_v2": {
+        "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_die_fast_v2.txt",
+        "thinking": _TEMPLATE_DIR / "predict_state_only_prompt_concise_die_fast_v2.txt",
+    },
+    "survive_long_v2": {
+        "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_survive_long_v2.txt",
+        "thinking": _TEMPLATE_DIR / "predict_state_only_prompt_concise_survive_long_v2.txt",
+    },
+    # Specificity matrix: rare-behavior upward steering + opposite-direction
+    # mirrors. All concise-only fallback (no thinking variants yet).
+    "target_collect_diamond_v2": {
+        "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_target_collect_diamond_v2.txt",
+        "thinking": _TEMPLATE_DIR / "predict_state_only_prompt_concise_target_collect_diamond_v2.txt",
+    },
+    "target_make_iron_pickaxe_v2": {
+        "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_target_make_iron_pickaxe_v2.txt",
+        "thinking": _TEMPLATE_DIR / "predict_state_only_prompt_concise_target_make_iron_pickaxe_v2.txt",
+    },
+    "target_collect_sapling_v2": {
+        "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_target_collect_sapling_v2.txt",
+        "thinking": _TEMPLATE_DIR / "predict_state_only_prompt_concise_target_collect_sapling_v2.txt",
+    },
+    "target_defeat_zombie_v2": {
+        "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_target_defeat_zombie_v2.txt",
+        "thinking": _TEMPLATE_DIR / "predict_state_only_prompt_concise_target_defeat_zombie_v2.txt",
+    },
+    "target_place_plant_v2": {
+        "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_target_place_plant_v2.txt",
+        "thinking": _TEMPLATE_DIR / "predict_state_only_prompt_concise_target_place_plant_v2.txt",
+    },
+    "target_avoid_stone_v2": {
+        "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_target_avoid_stone_v2.txt",
+        "thinking": _TEMPLATE_DIR / "predict_state_only_prompt_concise_target_avoid_stone_v2.txt",
+    },
+    "target_stay_overworld_v2": {
+        "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_target_stay_overworld_v2.txt",
+        "thinking": _TEMPLATE_DIR / "predict_state_only_prompt_concise_target_stay_overworld_v2.txt",
+    },
 }
 
 
@@ -1076,6 +1116,14 @@ def main():
                              "v2_basic_coverage", "v2_long_tail",
                              "direction_left_v2", "direction_right_v2",
                              "direction_up_v2", "direction_down_v2",
+                             "die_fast_v2", "survive_long_v2",
+                             "target_collect_diamond_v2",
+                             "target_make_iron_pickaxe_v2",
+                             "target_collect_sapling_v2",
+                             "target_defeat_zombie_v2",
+                             "target_place_plant_v2",
+                             "target_avoid_stone_v2",
+                             "target_stay_overworld_v2",
                              "embed_arith"],
                     help="How to generate hidden state embeddings: "
                          "gemini=normal Gemini+Qwen, constant=embed fixed string, "

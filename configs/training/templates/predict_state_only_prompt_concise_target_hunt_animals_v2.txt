@@ -20,36 +20,63 @@ Use these game rules:
    MAKE_ARROW, SHOOT_ARROW, CAST_FIREBALL, CAST_ICEBALL, PLACE_TORCH,
    DRINK_POTION_*, READ_BOOK, ENCHANT_*, LEVEL_UP_*.
 
-Here is the algorithm the player will play the game by:
-The player treats ALL visible animals (cows and plants) as immediate hunt
-targets. The moment any animal is visible, the player redirects to attack
-or harvest it. At every step, the player will choose the highest-priority
-active goal in this order:
-1. If any cow is visible, move directly toward the nearest cow and use DO
-   to attack it repeatedly until it drops meat. Step onto the meat and
-   use DO to eat.
-2. If any plant with fruit is visible (not a sapling), move directly toward
-   it and use DO to harvest.
-3. If no animals are visible, move toward the unexplored direction most
-   likely to reveal grassland or plant tiles (typically toward open green
-   tiles).
+Here is a good algorithm the player will play the game by:
+At every step, the player should act with the goal of staying alive and progressing down floors, with aggressively hunting every visible cow as fast as possible as the top priority.
+This means the player will choose the highest-priority active goal in this order:
+1. Target hunt animals
+2. Survive
+3. Take the ladder if it is open and on-screen
+4. Upgrade equipment if survival is stable. This takes priority over taking the ladder if the player is in the overworld (floor 0) and has a sword or pickaxe worse than stone or missing.
+5. Explore to find resources, troops, and the ladder
 
-After each animal is eaten, the player immediately searches for the next
-visible animal and repeats. The player will briefly interrupt hunting
-only to top up Drink or Energy when they fall to 1. The player ignores
-stones, ladders, crafting stations, and ornamental tiles. Wood is gathered
-only if needed to craft a wood sword for more efficient hunting.
+1. Target hunt animals
+The player sprints directly toward the nearest visible cow on the shortest path and uses DO repeatedly when adjacent to attack and kill it as quickly as possible. After dropping meat, the player steps onto it and uses DO once to eat it, then immediately turns to the next visible cow. Speed and kill-count matter: the player does not stop to gather other resources beyond what is needed to make a wood sword (1 wood + table) for ×2 cow damage. If no cow is visible, the player walks toward the most cow-likely unexplored direction (typically open green grassland).
 
-Predict at a high level what the next five steps for the player will look
-like, given that they are following the algorithm. Do not forecast beyond
-five time steps! The player can move at most five tiles during these five
-steps. Reason during your state understanding about the most immediate next
-step according to the algorithm and then predict the player's immediate
-behavior.
+2. Survive
+The player must track health, food, drink, and energy.  If food is <= 4, get food immediately by killing animals and eating them.  If drink is <= 4, get drink immediately from water tiles.  If energy is <= 4, make a safe enclosure and sleep.  If health is <= 4, restore food, drink, and energy before doing anything risky. To avoid losing health, avoid arrows, and avoid enemies unless you can kill them. The player should never sleep in the open. Before sleeping, block enemies out, for example with stone walls. An easy way for the player to become safe is to mine a tunnel into a cluster of stone and place a stone behind blocking off the tunnel.
 
-State Understanding: <A few sentences analyzing the current scene. Focus on careful spatial reasoning of the relevant tiles or tiles near the player. Identify every visible animal (cows and fruit-bearing plants) and rank them by distance. >
+3. Take the ladder if it is open and visible
+If the ladder is open and on screen, the player should prioritize using it unless they are in the overworld. The overworld has the majority of the resources so the player should first acquire at least stone tools before leaving. Note that open and visible are not the same; an open ladder can be used, but the player still needs to find it (down_ladder) to use it. On later floors, the ladder opens only after 8 troops have been killed. Each time and only each time the player descends to a new floor, they will gain one player_xp, which can be used to upgrade one of three attributes:
+1. Strength: increases max health and physical melee damage
+2. Dexterity: increases max food, drink, and energy and slows their decrease
+2. Intelligence: increases max mana, mana regeneration, and spell damage
 
-Prediction: <1 positive, direction-stating sentence describing the player's action. Good examples: "Chase the adjacent cow to the left and attack it with DO.", "Move up-right toward the nearest cow a few tiles away.", "Harvest the fruit-bearing plant directly above.", "Attack the cow and then move right to the next visible cow." Do not use "instead of", "rather than", "avoid", "away from", "refuse", or any other negation — just state the direction and target. Do not reference specific coordinates. >
+4. Upgrade equipment
+The player should upgrade only when survival is stable. The player must always craft the highest-tier item they have the materials for but are missing, skipping lower tiers entirely. Always evaluate the Upgrade Decision Tree below from top to bottom (Highest Tier -> Lowest Tier).
+
+Crafting Costs & Requirements:
+- Pickaxe/Sword: 1 Wood + 1 [Wood/Stone/Iron/Diamond].
+- Armor: 3 [Iron/Diamond].
+- Stations: Crafting Table (3 Wood), Furnace (1 Stone). Crafting anything requires being adjacent to a Crafting Table. Iron and Diamond tier items also require being adjacent to a Furnace.
+- Misc: Arrows (1 Wood + 1 Stone = 2), Torches (1 Wood + 1 Coal = 4).
+
+Upgrade Decision Tree (Evaluate in order 1 -> 4):
+1. Diamond Tier: If the player has Diamonds, Coal, and Wood: craft Diamond equipment.
+2. Iron Tier: If the player has at least 1 Iron, 1 Coal, and 1 Wood:
+- If a furnace and a table are adjacent: craft immediately.
+- If no Furnace/Table placed: place a Crafting Table (3 Wood) and Furnace (1 Stone), THEN craft Iron Sword and/or Pickaxe. This takes priority over Stone Tier even if stations aren't yet placed.
+3. Stone Tier: If the player lacks Iron/Diamond but has Stone and Wood: craft a Stone Pickaxe and Stone Sword.
+4. Wood/Base Tier: If the player lacks Stone but has Wood: craft Wood tools.
+
+Resource Gathering & Maintenance Rules:
+- Target of Opportunity: Mine Coal whenever seen. Mine Iron whenever seen (requires Stone Pickaxe).
+- Deficit Gathering:
+  - If the player has no useful tools and <10 Wood: gather up to 10 Wood.
+  - If the player has only Wood tools and <10 Stone: mine 10 Stone.
+- Surplus: If the player has extra resources after securing tools/armor, craft arrows or torches.
+
+5. Explore
+If the player is not in immediate danger, the ladder is not in sight, and no immediate upgrade is available, the player should explore.
+While exploring, the player should:
+- look for the ladder
+- kill troops if the ladder is still closed
+- gather useful nearby resources, especially wood, stone, coal, iron, and diamonds
+
+Predict at a high level what the next five steps for the player will look like, given that they are following the algorithm. Do not forecast beyond five time steps! In particular, the player can move at most five tiles during these five steps. Reason during your state understanding about the most immediate next step according to the algorithm and then predict the player's immediate behavior.
+
+State Understanding: <A few sentences analyzing the current scene. Focus on careful spatial reasoning of the relevant tiles or tiles near the player. Identify every visible cow and rank them by distance. >
+
+Prediction: <1 positive, direction-stating sentence describing the high-level behavior of the player in the next five steps. Good examples: "Chase the adjacent cow to the left and attack it with DO.", "Move up-right toward the nearest cow a few tiles away.", "Attack the cow and then move right to the next visible cow.", "Sprint down to the cow and kill it quickly." Do not use "instead of", "rather than", "avoid", "away from", "refuse", or any other negation — just state the direction and target. Do not reference specific coordinates. >
 
 Now, predict the future of the following state.
 

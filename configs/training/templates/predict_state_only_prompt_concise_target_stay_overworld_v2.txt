@@ -20,22 +20,56 @@ Use these game rules:
    MAKE_ARROW, SHOOT_ARROW, CAST_FIREBALL, CAST_ICEBALL, PLACE_TORCH,
    DRINK_POTION_*, READ_BOOK, ENCHANT_*, LEVEL_UP_*.
 
-Here is the algorithm the player will play the game by:
-The player treats DESCENDING THE LADDER as off-limits. The player stays on the overworld (Floor 0) for the entire episode. Ladder tiles are treated as ordinary terrain — the player walks past them without descending. The player's priorities are entirely overworld-bound: gather wood/stone/cows/water and survive on Floor 0.
+Here is a good algorithm the player will play the game by:
+At every step, the player should act with the goal of staying alive and progressing on the overworld (Floor 0), while never selecting DESCEND or ASCEND.
+This means the player will choose the highest-priority active goal in this order:
+1. Survive
+2. Skip the ladder; never DESCEND
+3. Upgrade equipment if survival is stable. This takes priority over taking the ladder if the player is in the overworld (floor 0) and has a sword or pickaxe worse than stone or missing.
+4. Explore to find resources and troops on the overworld
 
-The player will choose the highest-priority active goal in this order, NEVER selecting DESCEND or ASCEND:
-1. Survive (food, drink, energy, health).
-2. Upgrade equipment to stone tier (wood pickaxe, then stone pickaxe + sword).
-3. Stockpile resources visible on the overworld (extra wood, extra stone, place torches, place plants).
-4. Explore the overworld in directions away from any visible ladder tile.
+1. Survive
+The player must track health, food, drink, and energy.  If food is <= 4, get food immediately by killing animals and eating them.  If drink is <= 4, get drink immediately from water tiles.  If energy is <= 4, make a safe enclosure and sleep.  If health is <= 4, restore food, drink, and energy before doing anything risky. To avoid losing health, avoid arrows, and avoid enemies unless you can kill them. The player should never sleep in the open. Before sleeping, block enemies out, for example with stone walls. An easy way for the player to become safe is to mine a tunnel into a cluster of stone and place a stone behind blocking off the tunnel.
 
-If the player encounters a ladder tile, the player walks past it without using DESCEND. If the player is standing on a ladder, the player steps off. The player ignores the ladder entirely — its presence is irrelevant to the algorithm.
+2. Skip the ladder; never DESCEND
+[The base priority "Take the ladder if it is open and visible" has been removed: the player stays on the overworld for the entire episode and never selects DESCEND or ASCEND.] If the player encounters a ladder tile, the player walks past it without using DESCEND. If the player is standing on a ladder, the player steps off. The player ignores the ladder entirely — its presence is irrelevant to the algorithm. (As a consequence, the player gains no player_xp from descending and never levels up Strength/Dexterity/Intelligence via the descend reward.)
 
-Predict at a high level what the next five steps for the player will look like, given that they are following the algorithm. Do not forecast beyond five time steps! The player can move at most five tiles during these five steps. Reason during your state understanding about the most immediate next step according to the algorithm and then predict the player's immediate behavior.
+3. Upgrade equipment
+The player should upgrade only when survival is stable. The player must always craft the highest-tier item they have the materials for but are missing, skipping lower tiers entirely. Always evaluate the Upgrade Decision Tree below from top to bottom (Highest Tier -> Lowest Tier).
 
-State Understanding: <A few sentences analyzing the current scene. Focus on careful spatial reasoning of the relevant tiles or tiles near the player. Identify the next overworld goal (resource, crafting, or exploration). Note if a ladder is visible — the player will move past it. >
+Crafting Costs & Requirements:
+- Pickaxe/Sword: 1 Wood + 1 [Wood/Stone/Iron/Diamond].
+- Armor: 3 [Iron/Diamond].
+- Stations: Crafting Table (3 Wood), Furnace (1 Stone). Crafting anything requires being adjacent to a Crafting Table. Iron and Diamond tier items also require being adjacent to a Furnace.
+- Misc: Arrows (1 Wood + 1 Stone = 2), Torches (1 Wood + 1 Coal = 4).
 
-Prediction: <1 positive, direction-stating sentence describing the player's action. Good examples: "Move left to the cluster of trees and chop wood.", "Mine the adjacent stone tile to upgrade tools.", "Move up to the cow and attack it for food.", "Place a stone wall to the right to block enemies." Do not use "instead of", "rather than", "avoid", "away from", "refuse", or any other negation — just state the direction and target. Do not reference specific coordinates. >
+Upgrade Decision Tree (Evaluate in order 1 -> 4):
+1. Diamond Tier: If the player has Diamonds, Coal, and Wood: craft Diamond equipment.
+2. Iron Tier: If the player has at least 1 Iron, 1 Coal, and 1 Wood:
+- If a furnace and a table are adjacent: craft immediately.
+- If no Furnace/Table placed: place a Crafting Table (3 Wood) and Furnace (1 Stone), THEN craft Iron Sword and/or Pickaxe. This takes priority over Stone Tier even if stations aren't yet placed.
+3. Stone Tier: If the player lacks Iron/Diamond but has Stone and Wood: craft a Stone Pickaxe and Stone Sword.
+4. Wood/Base Tier: If the player lacks Stone but has Wood: craft Wood tools.
+
+Resource Gathering & Maintenance Rules:
+- Target of Opportunity: Mine Coal whenever seen. Mine Iron whenever seen (requires Stone Pickaxe).
+- Deficit Gathering:
+  - If the player has no useful tools and <10 Wood: gather up to 10 Wood.
+  - If the player has only Wood tools and <10 Stone: mine 10 Stone.
+- Surplus: If the player has extra resources after securing tools/armor, craft arrows or torches.
+
+4. Explore
+If the player is not in immediate danger, the ladder is not in sight, and no immediate upgrade is available, the player should explore.
+While exploring, the player should:
+- [The base sub-rule "look for the ladder" has been removed: the player ignores the ladder.]
+- kill troops if the ladder is still closed
+- gather useful nearby resources, especially wood, stone, coal, iron, and diamonds
+
+Predict at a high level what the next five steps for the player will look like, given that they are following the algorithm. Do not forecast beyond five time steps! In particular, the player can move at most five tiles during these five steps. Reason during your state understanding about the most immediate next step according to the algorithm and then predict the player's immediate behavior.
+
+State Understanding: <A few sentences analyzing the current scene. Focus on careful spatial reasoning of the relevant tiles or tiles near the player. >
+
+Prediction: <1 positive, direction-stating sentence describing the high-level behavior of the player in the next five steps. Good examples: "Move left to the cluster of trees and chop wood.", "Mine the adjacent stone tile to upgrade tools.", "Move up to the cow and attack it for food.", "Place a stone wall to the right to block enemies." Do not use "instead of", "rather than", "avoid", "away from", "refuse", or any other negation — just state the direction and target. Do not reference specific coordinates. >
 
 Now, predict the future of the following state.
 

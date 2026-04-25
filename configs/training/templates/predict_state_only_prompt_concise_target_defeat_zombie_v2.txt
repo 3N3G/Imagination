@@ -20,23 +20,63 @@ Use these game rules:
    MAKE_ARROW, SHOOT_ARROW, CAST_FIREBALL, CAST_ICEBALL, PLACE_TORCH,
    DRINK_POTION_*, READ_BOOK, ENCHANT_*, LEVEL_UP_*.
 
-Here is the algorithm the player will play the game by:
-The player treats DEFEATING ZOMBIES as the single dominant priority. The player engages every visible zombie and uses DO repeatedly until it is killed. The player accumulates zombie kills throughout the episode.
+Here is a good algorithm the player will play the game by:
+At every step, the player should act with the goal of staying alive and progressing down floors, with engaging and using DO on every visible zombie as the top priority.
+This means the player will choose the highest-priority active goal in this order:
+1. Target defeat zombie
+2. Survive
+3. Take the ladder if it is open and on-screen
+4. Upgrade equipment if survival is stable. This takes priority over taking the ladder if the player is in the overworld (floor 0) and has a sword or pickaxe worse than stone or missing.
+5. Explore to find resources, troops, and the ladder
 
-The player will choose the highest-priority active goal in this order:
-1. Survive (only if health ≤ 2 — a zombie hits for 1 damage so health ≤ 2 means risk of death from the next hit)
-2. Move directly toward the nearest visible zombie and use DO repeatedly when adjacent to it.
-3. If no zombie is visible, move toward the unexplored direction most likely to contain a zombie (typically dark areas, dungeons, night-time spawns).
+1. Target defeat zombie
+The player moves directly toward the nearest visible zombie and uses DO repeatedly when adjacent to attack and kill it. If multiple zombies are visible, the player engages the closest one first and continues to the next once the current zombie is dead. If no zombie is visible, the player walks toward the most zombie-likely unexplored direction (typically dark areas, dungeons, or night-time spawn zones). The player makes a wood sword first if missing (×2 zombie damage), then a stone sword once stone and a table are available (×3 damage), per the base Upgrade priority — better swords let the player engage more zombies faster.
 
-The player should craft a wood sword (1 Wood, table needed) for ×2 zombie damage, then a stone sword (1 Wood + 1 Stone, table needed) for ×3 damage. After that, every visible zombie is engaged immediately. The player ignores cows (unless food ≤ 2), plants, ladders, water (unless drink ≤ 1), and ornamental tiles.
+2. Survive
+The player must track health, food, drink, and energy.  If food is <= 4, get food immediately by killing animals and eating them.  If drink is <= 4, get drink immediately from water tiles.  If energy is <= 4, make a safe enclosure and sleep.  If health is <= 4, restore food, drink, and energy before doing anything risky. To avoid losing health, avoid arrows, and avoid enemies unless you can kill them. The player should never sleep in the open. Before sleeping, block enemies out, for example with stone walls. An easy way for the player to become safe is to mine a tunnel into a cluster of stone and place a stone behind blocking off the tunnel.
 
-If multiple zombies are visible, the player engages the closest one first. After killing a zombie, the player immediately searches for the next.
+3. Take the ladder if it is open and visible
+If the ladder is open and on screen, the player should prioritize using it unless they are in the overworld. The overworld has the majority of the resources so the player should first acquire at least stone tools before leaving. Note that open and visible are not the same; an open ladder can be used, but the player still needs to find it (down_ladder) to use it. On later floors, the ladder opens only after 8 troops have been killed. Each time and only each time the player descends to a new floor, they will gain one player_xp, which can be used to upgrade one of three attributes:
+1. Strength: increases max health and physical melee damage
+2. Dexterity: increases max food, drink, and energy and slows their decrease
+2. Intelligence: increases max mana, mana regeneration, and spell damage
 
-Predict at a high level what the next five steps for the player will look like, given that they are following the algorithm. Do not forecast beyond five time steps! The player can move at most five tiles during these five steps. Reason during your state understanding about the most immediate next step according to the algorithm and then predict the player's immediate behavior.
+4. Upgrade equipment
+The player should upgrade only when survival is stable. The player must always craft the highest-tier item they have the materials for but are missing, skipping lower tiers entirely. Always evaluate the Upgrade Decision Tree below from top to bottom (Highest Tier -> Lowest Tier).
+
+Crafting Costs & Requirements:
+- Pickaxe/Sword: 1 Wood + 1 [Wood/Stone/Iron/Diamond].
+- Armor: 3 [Iron/Diamond].
+- Stations: Crafting Table (3 Wood), Furnace (1 Stone). Crafting anything requires being adjacent to a Crafting Table. Iron and Diamond tier items also require being adjacent to a Furnace.
+- Misc: Arrows (1 Wood + 1 Stone = 2), Torches (1 Wood + 1 Coal = 4).
+
+Upgrade Decision Tree (Evaluate in order 1 -> 4):
+1. Diamond Tier: If the player has Diamonds, Coal, and Wood: craft Diamond equipment.
+2. Iron Tier: If the player has at least 1 Iron, 1 Coal, and 1 Wood:
+- If a furnace and a table are adjacent: craft immediately.
+- If no Furnace/Table placed: place a Crafting Table (3 Wood) and Furnace (1 Stone), THEN craft Iron Sword and/or Pickaxe. This takes priority over Stone Tier even if stations aren't yet placed.
+3. Stone Tier: If the player lacks Iron/Diamond but has Stone and Wood: craft a Stone Pickaxe and Stone Sword.
+4. Wood/Base Tier: If the player lacks Stone but has Wood: craft Wood tools.
+
+Resource Gathering & Maintenance Rules:
+- Target of Opportunity: Mine Coal whenever seen. Mine Iron whenever seen (requires Stone Pickaxe).
+- Deficit Gathering:
+  - If the player has no useful tools and <10 Wood: gather up to 10 Wood.
+  - If the player has only Wood tools and <10 Stone: mine 10 Stone.
+- Surplus: If the player has extra resources after securing tools/armor, craft arrows or torches.
+
+5. Explore
+If the player is not in immediate danger, the ladder is not in sight, and no immediate upgrade is available, the player should explore.
+While exploring, the player should:
+- look for the ladder
+- kill troops if the ladder is still closed
+- gather useful nearby resources, especially wood, stone, coal, iron, and diamonds
+
+Predict at a high level what the next five steps for the player will look like, given that they are following the algorithm. Do not forecast beyond five time steps! In particular, the player can move at most five tiles during these five steps. Reason during your state understanding about the most immediate next step according to the algorithm and then predict the player's immediate behavior.
 
 State Understanding: <A few sentences analyzing the current scene. Focus on careful spatial reasoning of the relevant tiles or tiles near the player. Identify the nearest visible zombie and a route to it; or note the most promising unexplored direction. Note the player's current sword tier. >
 
-Prediction: <1 positive, direction-stating sentence describing the player's action. Good examples: "Chase the zombie directly above and attack it with DO.", "Move right toward the visible zombie and attack with DO repeatedly.", "Move up-right toward the zombie a few tiles away.", "Attack the adjacent zombie to the left." Do not use "instead of", "rather than", "avoid", "away from", "refuse", or any other negation — just state the direction and target. Do not reference specific coordinates. >
+Prediction: <1 positive, direction-stating sentence describing the high-level behavior of the player in the next five steps. Good examples: "Chase the zombie directly above and attack it with DO.", "Move right toward the visible zombie and attack with DO repeatedly.", "Move up-right toward the zombie a few tiles away.", "Attack the adjacent zombie to the left." Do not use "instead of", "rather than", "avoid", "away from", "refuse", or any other negation — just state the direction and target. Do not reference specific coordinates. >
 
 Now, predict the future of the following state.
 

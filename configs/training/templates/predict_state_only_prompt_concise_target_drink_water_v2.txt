@@ -20,34 +20,63 @@ Use these game rules:
    MAKE_ARROW, SHOOT_ARROW, CAST_FIREBALL, CAST_ICEBALL, PLACE_TORCH,
    DRINK_POTION_*, READ_BOOK, ENCHANT_*, LEVEL_UP_*.
 
-Here is the algorithm the player will play the game by:
-The player treats drinking from water as the single dominant priority.
-Every step is chosen to bring the player closer to a water tile and into
-a position to use DO on it. At every step, the player will choose the
-highest-priority active goal in this order:
-1. Move directly toward the nearest visible water tile and use DO when
-   standing adjacent to it.
-2. If multiple water tiles are visible, route to the closest one. The
-   player will use DO repeatedly while adjacent to water to fill Drink
-   to maximum.
-3. If no water is visible, move toward the unexplored direction most
-   likely to reveal water (typically toward blue tiles or the largest
-   open quadrant on the map edge).
+Here is a good algorithm the player will play the game by:
+At every step, the player should act with the goal of staying alive and progressing down floors, with moving to water and using DO to drink as the top priority.
+This means the player will choose the highest-priority active goal in this order:
+1. Target drink water
+2. Survive
+3. Take the ladder if it is open and on-screen
+4. Upgrade equipment if survival is stable. This takes priority over taking the ladder if the player is in the overworld (floor 0) and has a sword or pickaxe worse than stone or missing.
+5. Explore to find resources, troops, and the ladder
 
-The player will only briefly interrupt water-drinking to top up Food or
-Energy when they fall to 1. The player ignores cows, plants, monsters,
-ladders, and crafting stations.
+1. Target drink water
+The player moves directly toward the nearest visible water tile and uses DO when adjacent to drink. The player drinks repeatedly even when Drink is already 9 — every adjacent water tile triggers another DO. If multiple water tiles are visible, the player routes to the closest first and continues to the next once the current one has been drunk from. If no water is visible, the player walks toward the most water-likely unexplored direction (typically toward darker blue tiles or low ground).
 
-Predict at a high level what the next five steps for the player will look
-like, given that they are following the algorithm. Do not forecast beyond
-five time steps! The player can move at most five tiles during these five
-steps. Reason during your state understanding about the most immediate next
-step according to the algorithm and then predict the player's immediate
-behavior.
+2. Survive
+The player must track health, food, drink, and energy.  If food is <= 4, get food immediately by killing animals and eating them.  If drink is <= 4, get drink immediately from water tiles.  If energy is <= 4, make a safe enclosure and sleep.  If health is <= 4, restore food, drink, and energy before doing anything risky. To avoid losing health, avoid arrows, and avoid enemies unless you can kill them. The player should never sleep in the open. Before sleeping, block enemies out, for example with stone walls. An easy way for the player to become safe is to mine a tunnel into a cluster of stone and place a stone behind blocking off the tunnel.
+
+3. Take the ladder if it is open and visible
+If the ladder is open and on screen, the player should prioritize using it unless they are in the overworld. The overworld has the majority of the resources so the player should first acquire at least stone tools before leaving. Note that open and visible are not the same; an open ladder can be used, but the player still needs to find it (down_ladder) to use it. On later floors, the ladder opens only after 8 troops have been killed. Each time and only each time the player descends to a new floor, they will gain one player_xp, which can be used to upgrade one of three attributes:
+1. Strength: increases max health and physical melee damage
+2. Dexterity: increases max food, drink, and energy and slows their decrease
+2. Intelligence: increases max mana, mana regeneration, and spell damage
+
+4. Upgrade equipment
+The player should upgrade only when survival is stable. The player must always craft the highest-tier item they have the materials for but are missing, skipping lower tiers entirely. Always evaluate the Upgrade Decision Tree below from top to bottom (Highest Tier -> Lowest Tier).
+
+Crafting Costs & Requirements:
+- Pickaxe/Sword: 1 Wood + 1 [Wood/Stone/Iron/Diamond].
+- Armor: 3 [Iron/Diamond].
+- Stations: Crafting Table (3 Wood), Furnace (1 Stone). Crafting anything requires being adjacent to a Crafting Table. Iron and Diamond tier items also require being adjacent to a Furnace.
+- Misc: Arrows (1 Wood + 1 Stone = 2), Torches (1 Wood + 1 Coal = 4).
+
+Upgrade Decision Tree (Evaluate in order 1 -> 4):
+1. Diamond Tier: If the player has Diamonds, Coal, and Wood: craft Diamond equipment.
+2. Iron Tier: If the player has at least 1 Iron, 1 Coal, and 1 Wood:
+- If a furnace and a table are adjacent: craft immediately.
+- If no Furnace/Table placed: place a Crafting Table (3 Wood) and Furnace (1 Stone), THEN craft Iron Sword and/or Pickaxe. This takes priority over Stone Tier even if stations aren't yet placed.
+3. Stone Tier: If the player lacks Iron/Diamond but has Stone and Wood: craft a Stone Pickaxe and Stone Sword.
+4. Wood/Base Tier: If the player lacks Stone but has Wood: craft Wood tools.
+
+Resource Gathering & Maintenance Rules:
+- Target of Opportunity: Mine Coal whenever seen. Mine Iron whenever seen (requires Stone Pickaxe).
+- Deficit Gathering:
+  - If the player has no useful tools and <10 Wood: gather up to 10 Wood.
+  - If the player has only Wood tools and <10 Stone: mine 10 Stone.
+- Surplus: If the player has extra resources after securing tools/armor, craft arrows or torches.
+
+5. Explore
+If the player is not in immediate danger, the ladder is not in sight, and no immediate upgrade is available, the player should explore.
+While exploring, the player should:
+- look for the ladder
+- kill troops if the ladder is still closed
+- gather useful nearby resources, especially wood, stone, coal, iron, and diamonds
+
+Predict at a high level what the next five steps for the player will look like, given that they are following the algorithm. Do not forecast beyond five time steps! In particular, the player can move at most five tiles during these five steps. Reason during your state understanding about the most immediate next step according to the algorithm and then predict the player's immediate behavior.
 
 State Understanding: <A few sentences analyzing the current scene. Focus on careful spatial reasoning of the relevant tiles or tiles near the player. Identify the nearest visible water tile and a direct route to it. >
 
-Prediction: <1 positive, direction-stating sentence describing the player's action. Good examples: "Move left to the adjacent water tile and drink.", "Move down-right to the visible water and drink.", "Drink from the water tile directly to the left.", "Move up to the river and drink." Do not use "instead of", "rather than", "avoid", "away from", "refuse", or any other negation — just state the direction and target. Do not reference specific coordinates. >
+Prediction: <1 positive, direction-stating sentence describing the high-level behavior of the player in the next five steps. Good examples: "Move left to the adjacent water tile and drink.", "Move down-right to the visible water and drink.", "Drink from the water tile directly to the left.", "Move up to the river and drink." Do not use "instead of", "rather than", "avoid", "away from", "refuse", or any other negation — just state the direction and target. Do not reference specific coordinates. >
 
 Now, predict the future of the following state.
 
