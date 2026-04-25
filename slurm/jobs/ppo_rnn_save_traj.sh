@@ -21,6 +21,11 @@ SAVE_DIR="/data/group_data/rl/geney/checkpoints/ppo_rnn_100M_save_traj"
 TRAJ_SAVE_DIR="/data/group_data/rl/geney/raw_trajectories/ppo_rnn_1e8_save_traj"
 mkdir -p "${SAVE_DIR}" "${TRAJ_SAVE_DIR}"
 
+# PPO-RNN at default config runs ~1525 update_steps for 1e8 timesteps
+# (NUM_ENVS=1024 × NUM_STEPS=64 = 65,536 transitions/step, 1e8/65536 ≈ 1525).
+# Saved bucket-size = save_every × 65,536. Choose save_every=10 + start=500
+# → ~100 batches × 65K = ~6.5M transitions saved, covering update_steps 500
+# - 1525 (ep_return ~17 → 28). Plenty to filter top-4M from.
 "${SCRIPT_DIR}/submit.sh" \
     --env craftax \
     --job "ppo_rnn_save_traj" \
@@ -34,6 +39,6 @@ mkdir -p "${SAVE_DIR}" "${TRAJ_SAVE_DIR}"
         --save_policy \
         --save_output_dir "${SAVE_DIR}" \
         --save_traj \
-        --save_traj_every 20 \
-        --save_traj_start_step 1500 \
+        --save_traj_every 10 \
+        --save_traj_start_step 500 \
         --traj_save_path "${TRAJ_SAVE_DIR}"
