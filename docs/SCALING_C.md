@@ -286,25 +286,53 @@ policy to see how much higher the ceiling moves.
 
 - [x] Code change to `ppo_rnn.py` to support `--save_traj` (this doc).
 - [x] User approval to run the Gemini labelling spend.
-- [ ] **BLOCKER (2026-04-25 17:10 EDT): the `craftax` conda env's JAX
-      0.8.0 cannot find cuSPARSE on GPU compute nodes — falls back to
-      CPU.** All 3 in-flight PPO jobs (7492202 PPO-symbolic, 7492203
-      PPO-RNN baseline, 7496030 PPO-RNN+save_traj) cancelled because
-      they were running on CPU and would not finish in walltime.
-      Diagnostic: `python -c "import jax; print(jax.devices())"` on
-      a GPU node prints `[CpuDevice(id=0)]` after a `RuntimeError:
-      Unable to load cuSPARSE`. The library file
-      (`libcusparse.so.12`, 486 MB) IS present at
-      `/data/user_data/geney/.conda/envs/craftax/lib/python3.12/
-      site-packages/nvidia/cusparse/lib/`, but JAX 0.8 expects a newer
-      cusparse version than the installed `nvidia-cusparse-cu12
-      12.5.10.65`. Possible fixes (require user judgement, not landed):
-        - `pip install --upgrade nvidia-cusparse-cu12` in the craftax
-          env (low risk; single library upgrade).
-        - Pin `jax==0.4.31` + matching `jaxlib` (compatible with
-          12.5.x cusparse; may regress other JAX functionality).
-        - Re-create the env from a known-good lockfile if one exists.
-      Until this is fixed, **all PPO-baseline + PPO-trajectory-save
-      work is blocked**. SCALING_C Phases 1, plus the new PPO-symbolic
-      / PPO-RNN baseline numbers the user asked for, all wait on this.
-- [ ] Phases 2–6 (after Phase 1 unblocks).
+- [x] Env workaround: `craftax_fast_llm` (JAX 0.6.2, cusparse
+      12.5.8.93) works for PPO-RNN. The original `craftax` env (JAX
+      0.8.0, cusparse 12.5.10.65) is broken; cuSPARSE version is too
+      old for JAX 0.8. Fix in `craftax` env requires either a
+      `pip install --upgrade nvidia-cusparse-cu12` or a JAX downgrade.
+      Untouched here — `craftax_fast_llm` is the active alternative.
+- [ ] **NEW BLOCKER (2026-04-25 17:43 EDT): /data/group_data/rl group
+      quota EXHAUSTED.** `awr_only_score_v2` (7494727) failed at
+      episode 6 with `OSError: [Errno 122] Disk quota exceeded`. df
+      reports the rl mount at 100% used. All 3 follow-up jobs
+      cancelled to avoid further partial-write damage:
+        - 7496516 ppo_rnn_save_traj (would have written ~80GB)
+        - 7496528 awr_only_score_v3 (eval would have hit quota)
+        - 7495771 steer_score_v3 freezenone (eval would have hit quota)
+      Top 10 space consumers under `/data/group_data/rl/geney/`
+      (total 554GB):
+
+       ```
+       179G  new_craftax_llm_labelled_results_shards (the canonical PSF data)
+        80G  checkpoints (active model weights)
+        70G  predict_history_k5         <- old experiment, candidate for cleanup
+        45G  model_mirrors              <- HF cache, candidate
+        42G  vllm_craftax_labelled_results  <- old vllm era, candidate
+        42G  eval_results               <- active
+        35G  online_rl_hidden_models    <- old, candidate
+        18G  predict_state_full         <- old, candidate
+        15G  openvla-7b...              <- vlm experiments, candidate
+        9.7G test                       <- candidate
+       ```
+
+      Cleanup candidates (user judgement; *not deleted*):
+      - `predict_history_k5` (70G) — appears to be an old k=5 history
+        experiment, likely unreferenced now.
+      - `vllm_craftax_labelled_results` (42G) — pre-Gemini-era
+        labelled results; superseded by `new_craftax_llm_labelled_*`.
+      - `online_rl_hidden_models` (35G) — old hidden-state models.
+      - `predict_state_full` (18G) — old predict-state-only data.
+      - `model_mirrors` (45G) — HF mirrors; deletable if re-downloadable.
+      - Older eval_results subdirs that have already been analyzed
+        and committed.
+
+      `/data/user_data/geney` has 37GB free of 500GB; could redirect
+      large new outputs there if quota stays tight.
+
+      Until cleanup happens, **NO new evals or PPO jobs can write to
+      `/data/group_data/rl/geney/eval_results/` or `raw_trajectories/`
+      without partial-failure**. The Phase-1 PPO-RNN+save_traj job
+      especially would generate ~80GB of new traj data which the
+      quota cannot hold.
+- [ ] Phases 2–6 (after disk freed AND Phase 1 traj saved).

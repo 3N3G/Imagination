@@ -493,6 +493,14 @@ single-prompt result on the C policy to date. wandb:
 [`0v0j63nw`](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/0v0j63nw)
 (per-episode videos available).
 
+**Status note (2026-04-25 17:43 EDT)**: v3 freezenone eval (job
+7495771) was cancelled at episode 9/30 due to a /data/group_data/rl
+quota-exhausted error. v3 awr-only test (job 7496528) was cancelled
+before getting any episodes for the same reason. Both are pending
+re-submission once disk quota is freed. See
+[`docs/SCALING_C.md`](SCALING_C.md) "Status" for cleanup candidates
+(70GB+ recoverable from old experiments).
+
 Per-achievement deltas (top movers, n=28 vs baseline n=50):
 
 | Δpp | achievement | note |
