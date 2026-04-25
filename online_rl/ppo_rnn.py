@@ -1,6 +1,7 @@
 import argparse
 import os
 import sys
+from pathlib import Path
 
 
 import jax
@@ -124,12 +125,14 @@ class ActorCriticRNN(nn.Module):
 
 
 class Transition(NamedTuple):
-    done: jnp.ndarray
+    done: jnp.ndarray         # = last_done (pre-step done) for PPO/GAE compat
     action: jnp.ndarray
     value: jnp.ndarray
     reward: jnp.ndarray
     log_prob: jnp.ndarray
     obs: jnp.ndarray
+    next_obs: jnp.ndarray     # post-step obs (for downstream offline-RL pipelines)
+    next_done: jnp.ndarray    # post-step done (true if THIS step terminated)
     info: jnp.ndarray
 
 
@@ -238,7 +241,8 @@ def make_train(config):
                     _rng, env_state, action, env_params
                 )
                 transition = Transition(
-                    last_done, action, value, reward, log_prob, last_obs, info
+                    last_done, action, value, reward, log_prob,
+                    last_obs, obsv, done, info,
                 )
                 runner_state = (
                     train_state,
@@ -420,6 +424,40 @@ def make_train(config):
 
                 jax.debug.callback(callback, metric, update_step)
 
+            # Trajectory saving (matches the schema used by ppo.py +
+            # downstream pipeline/scan_streaming.py + AWR training).
+            if config.get("SAVE_TRAJ", False):
+
+                def save_callback(traj_batch, update_step):
+                    every = int(config.get("SAVE_TRAJ_EVERY", 10))
+                    start = int(config.get("SAVE_TRAJ_START_STEP", 0))
+                    if int(update_step) < start:
+                        return
+                    if int(update_step) % every != 0:
+                        return
+                    batch_data = {
+                        "obs": np.array(traj_batch.obs).reshape(
+                            -1, *traj_batch.obs.shape[2:]
+                        ),
+                        "next_obs": np.array(traj_batch.next_obs).reshape(
+                            -1, *traj_batch.next_obs.shape[2:]
+                        ),
+                        "action": np.array(traj_batch.action).reshape(-1),
+                        "reward": np.array(traj_batch.reward).reshape(-1),
+                        "done": np.array(traj_batch.next_done).reshape(-1),
+                        "log_prob": np.array(traj_batch.log_prob).reshape(-1),
+                    }
+                    save_path = Path(config["TRAJ_SAVE_PATH"])
+                    save_path.mkdir(parents=True, exist_ok=True)
+                    fp = save_path / f"trajectories_batch_{int(update_step):06d}.npz"
+                    np.savez_compressed(fp, **batch_data)
+                    print(f"  [save_traj] step {int(update_step)} → {fp.name} "
+                          f"({len(batch_data['obs'])} transitions)", flush=True)
+
+                jax.experimental.io_callback(
+                    save_callback, None, traj_batch, update_step
+                )
+
             runner_state = (
                 train_state,
                 env_state,
@@ -531,6 +569,16 @@ if __name__ == "__main__":
     )
     parser.add_argument("--save_output_dir", type=str, default=None,
                         help="If set, orbax save path = <dir>/policies (overrides wandb.run.dir)")
+    # Trajectory saving (matches ppo.py / pipeline schema). Files named
+    # trajectories_batch_NNNNNN.npz; consumed by pipeline/scan_streaming.py.
+    parser.add_argument("--save_traj", action="store_true",
+                        help="Save (obs, next_obs, action, reward, done, log_prob) batches to --traj_save_path")
+    parser.add_argument("--save_traj_every", type=int, default=10,
+                        help="Save one batch every N update_steps when --save_traj is set")
+    parser.add_argument("--save_traj_start_step", type=int, default=0,
+                        help="Skip the first N update_steps before saving (lets the policy improve first)")
+    parser.add_argument("--traj_save_path", type=str, default=None,
+                        help="Directory to write trajectories_batch_NNNNNN.npz files")
     parser.add_argument("--num_repeats", type=int, default=1)
     parser.add_argument("--layer_size", type=int, default=512)
     parser.add_argument("--wandb_project", type=str)
