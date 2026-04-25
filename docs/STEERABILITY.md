@@ -1089,3 +1089,77 @@ collection pulled at writing time):
   z-scores, and α-sweep correlations are intentionally not hyperlinked
   — they are derived from but not the headline number of any run.
 
+
+
+---
+
+## Specificity matrix (2026-04-25)
+
+**Question.** Does each prompt's intended axis move the *behaviorally
+relevant per-episode metric*, and not move off-diagonal axes?
+
+**Setup.** 21 prompts × `C_grounded_2M`, n=30 episodes per cell,
+freezenone checkpoint, `psf_v2_cadence5` pipeline. Per-cell target
+metric is per-episode count for inventory + action behaviors,
+share-of-cardinal-moves for direction prompts, achievement rate for
+chain tasks, raw mean episode length for life/death.
+
+**Headline.** **11/21 cells WIN, 8 NULL, 2 WRONG-WAY.**
+
+| prompt | target | baseline | cell | Δ | z | wandb |
+|---|---|---|---|---|---|---|
+| target_collect_stone_v2 | stone/ep | 17.9 | 22.5 | +4.6 | +1.2 | [1u3v3hya](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/1u3v3hya) |
+| target_place_stone_v2   | PLACE_STONE/ep | 7.1 | 13.7 | +6.7 | +1.8 | [3os11d6g](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/3os11d6g) |
+| target_hunt_animals_v2  | cow_eat/ep | 5.2 | 7.6 | +2.4 | +1.1 | [r0t86i4p](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/r0t86i4p) |
+| avoid_animals_v2        | cow_eat/ep | 5.2 | 3.7 | -1.5 | -1.5 | [0x286zyt](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/0x286zyt) |
+| avoid_water_v2          | drink/ep | 13.8 | 8.1 | -5.7 | -1.7 | [nhmftcco](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/nhmftcco) |
+| target_descend_v2       | DESCEND/ep | 4.6 | 9.6 | +5.1 | +2.0 | (see specificity dir) |
+| die_fast_v2             | length | 629 | 383 | -246 | -3.0 | (see specificity dir) |
+| direction_left_v2       | LEFT/cardinal | 0.24 | 0.40 | +0.16 | +6.0 | (see specificity dir) |
+| direction_right_v2      | RIGHT/cardinal | 0.27 | 0.31 | +0.04 | +2.0 | (see specificity dir) |
+| direction_up_v2         | UP/cardinal | 0.28 | 0.33 | +0.05 | +3.0 | (see specificity dir) |
+| direction_down_v2       | DOWN/cardinal | 0.21 | 0.26 | +0.05 | +3.3 | (see specificity dir) |
+
+NULL or wrong-way:
+- `target_avoid_stone_v2` (z=+0.5, **wrong sign**) — prompt's "avoid stone"
+  high-level goal contradicts kept upgrade-tree rule "Stone Tier: craft
+  stone pickaxe if you have stone and wood"; Gemini text *does* describe
+  avoidance by step 70 but the policy has already mined.
+- `target_eat_cow_v2` (z=+0.3) — episodes lengthen (629→850, subsistence
+  loop) but per-episode cow_eat only nudges. The policy stretches a fixed
+  cow-acquisition rate over more steps.
+- `target_drink_water_v2` (z=-0.7, wrong sign) — per-step drink rate
+  identical to baseline (0.022); shorter episodes (-122 steps) drag the
+  per-episode count down. **Length confound, not behavior.**
+- `target_stay_overworld_v2` (z=-0.7), `target_place_plant_v2` (z=-0.2),
+  `target_defeat_zombie_v2` (z=+0.1) — null.
+- `target_make_iron_pickaxe_v2` and `target_collect_diamond_v2` —
+  **0/30 occurrences each**. Chain-task ceiling.
+- `target_collect_sapling_v2` (z=-1.1, wrong sign) — saplings stay rare
+  (0.62→0.37/ep); the prompt didn't elicit search-for-sapling behavior.
+- `survive_long_v2` (z=-2.3, **wrong sign**) — length 629→416. The strict
+  "establish base with water+cow+stone within 3 tiles" criteria rarely
+  satisfy; Gemini loops on "no base, walk to water"; the policy actually
+  dies *faster* than no-prompt baseline.
+
+Full per-cell × per-metric matrix (all 21 cells × 25 columns) at
+[`docs/SPECIFICITY_MATRIX.md`](SPECIFICITY_MATRIX.md). Per-cell counts
+JSON at `probe_results/inventory_counts/specificity/<cell>.json`. Matrix
+JSON at `probe_results/specificity_matrix.json`. Tool: `tools/specificity_matrix.py`.
+
+### Mechanism summary
+
+1. **Direct, single-action steering wins.** Collect/place/avoid + cardinal
+   directions all work. The mechanism is a gradient-shift toward the
+   action class, not inferential planning.
+2. **Chain-task prompts are zero-rate.** 0/60 episodes across iron_pickaxe
+   and diamond prompts. Embedding can't supply multi-step planning the
+   policy lacks.
+3. **Negative steering asymmetry**: avoid_water and avoid_animals work,
+   target_avoid_stone fails. The asymmetry is **not** about the negative
+   framing — stone is on the critical path of game progression so the
+   prompt's goal conflicts with its still-included Stone-tier rule.
+4. **survive_long's wrong-way result is the cleanest indictment** of the
+   strict-base prompt class: same surface form as die_fast (which works
+   to z=-3.0), opposite direction → length actually shortens. Iteration
+   target.

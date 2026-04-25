@@ -1,0 +1,37 @@
+{
+  "_note": "C_grounded_2M baseline — extended fields. n=50 episodes from psf_v2_cadence5_grounded_predonly_top2M/freezenone_50ep, replayed with tools/replay_inventory_counts.py + summary.json scan. Generated 2026-04-25.",
+  "n": 50,
+  "return_mean": 14.66,
+  "return_se": 0.83,
+  "length_mean": 628.8,
+  "length_se": 79.4,
+  "per_episode_counts": {
+    "stone":               {"mean": 17.94, "se": 2.16},
+    "wood":                {"mean": 17.58, "se": 1.30},
+    "coal":                {"mean": 1.80,  "se": 0.27},
+    "iron":                {"mean": 1.08,  "se": 0.19},
+    "diamond":             {"mean": 0.00,  "se": 0.00},
+    "sapling":             {"mean": 0.62,  "se": 0.21},
+    "cow_eat_events":      {"mean": 5.22,  "se": 0.79},
+    "plant_eat_events":    {"mean": 0.00,  "se": 0.00},
+    "drink_intake_events": {"mean": 13.76, "se": 2.71},
+    "monsters_killed_total":{"mean": 3.76, "se": 0.56},
+    "action_PLACE_STONE":  {"mean": 7.08,  "se": 1.73},
+    "action_PLACE_PLANT":  {"mean": 3.28,  "se": 0.75},
+    "action_DESCEND":      {"mean": 4.58,  "se": 1.24},
+    "action_ASCEND":       {"mean": 2.88,  "se": 0.73},
+    "action_SLEEP":        {"mean": 4.08,  "se": 1.12},
+    "action_PLACE_TABLE":  {"mean": 6.72,  "se": 0.83},
+    "action_PLACE_FURNACE":{"mean": 4.10,  "se": 0.88},
+    "action_PLACE_TORCH":  {"mean": 5.14,  "se": 1.11},
+    "action_LEFT":         {"mean": 72.70, "se": 7.97},
+    "action_RIGHT":        {"mean": 79.70, "se": 7.96},
+    "action_UP":           {"mean": 83.70, "se": 10.06},
+    "action_DOWN":         {"mean": 71.60, "se": 9.59}
+  },
+  "achievement_rates": {
+    "defeat_zombie":     0.72,
+    "make_iron_pickaxe": 0.00,
+    "collect_diamond":   0.00
+  }
+}
