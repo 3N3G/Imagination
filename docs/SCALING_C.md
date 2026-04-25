@@ -279,7 +279,26 @@ policy to see how much higher the ceiling moves.
 ## Status
 
 - [x] Code change to `ppo_rnn.py` to support `--save_traj` (this doc).
-- [ ] User approval to run the Gemini labelling spend.
-- [ ] Resubmit PPO-RNN 1e8 with `--save_traj` (the in-flight 7492203
-      job runs WITHOUT it; we'd need a fresh job).
-- [ ] Phases 2–6.
+- [x] User approval to run the Gemini labelling spend.
+- [ ] **BLOCKER (2026-04-25 17:10 EDT): the `craftax` conda env's JAX
+      0.8.0 cannot find cuSPARSE on GPU compute nodes — falls back to
+      CPU.** All 3 in-flight PPO jobs (7492202 PPO-symbolic, 7492203
+      PPO-RNN baseline, 7496030 PPO-RNN+save_traj) cancelled because
+      they were running on CPU and would not finish in walltime.
+      Diagnostic: `python -c "import jax; print(jax.devices())"` on
+      a GPU node prints `[CpuDevice(id=0)]` after a `RuntimeError:
+      Unable to load cuSPARSE`. The library file
+      (`libcusparse.so.12`, 486 MB) IS present at
+      `/data/user_data/geney/.conda/envs/craftax/lib/python3.12/
+      site-packages/nvidia/cusparse/lib/`, but JAX 0.8 expects a newer
+      cusparse version than the installed `nvidia-cusparse-cu12
+      12.5.10.65`. Possible fixes (require user judgement, not landed):
+        - `pip install --upgrade nvidia-cusparse-cu12` in the craftax
+          env (low risk; single library upgrade).
+        - Pin `jax==0.4.31` + matching `jaxlib` (compatible with
+          12.5.x cusparse; may regress other JAX functionality).
+        - Re-create the env from a known-good lockfile if one exists.
+      Until this is fixed, **all PPO-baseline + PPO-trajectory-save
+      work is blocked**. SCALING_C Phases 1, plus the new PPO-symbolic
+      / PPO-RNN baseline numbers the user asked for, all wait on this.
+- [ ] Phases 2–6 (after Phase 1 unblocks).

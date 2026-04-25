@@ -860,42 +860,58 @@ target_collect_stone, v2_long_tail}.
 
 | condition | freezenone (canonical C) | awr-only | Δ awr − freezenone |
 |---|---|---|---|
-| baseline (gemini) | 14.66 ± 0.83 (n=50) | **17.43 ± 0.77 (n=27, partial)** | **+2.77** |
-| target_descend_v2 | 17.23 ± 0.89 (n=30) | 17.45 ± 0.86 (n=17, partial) | +0.22 |
+| baseline (gemini) | 14.66 ± 0.83 (n=50) | **17.67 ± 0.72 (n=30)** | **+3.01** |
+| target_descend_v2 | 17.23 ± 0.89 (n=30) | 16.60 ± 0.92 (n=28) | −0.63 |
 | direction_left_v2 — LEFT% of moves | 0.243 → 0.343 (+41% rel) | 0.242 → 0.340 (+40% rel) | matches |
-| direction_left_v2 — Δret | −6.72 (z=−5.7) | −5.00 (z=−3.7) | both collapse |
-| die_fast_v2 — Δlength | −246 (629→383) | −172 (590→418) | both shorten |
-| avoid_animals_v2 — eat_cow rate | (under analysis) | 96% → 100% (NULL) | both NULL |
+| direction_left_v2 — Δret | 7.94 (z=−5.7 vs base) | 12.43 (z=−4.0 vs base) | both collapse |
+| die_fast_v2 — Δlength | −246 (629→383) | −233 (651→418) | both shorten |
+| die_fast_v2 — Δret | 11.66 (-3.0 vs base) | 13.00 (-4.7 vs base) | both drop |
+| avoid_animals_v2 | 11.54 (Δret -3.12) | 17.00 (Δret -0.67) | awr-only resists |
+| target_collect_stone_v2 | 15.76 (Δret +1.10) | 14.43 (Δret -3.23) | awr-only HURT |
+| v2_long_tail (patch) | 16.80 (Δret +2.14) | 16.10 (Δret -1.57) | **awr-only HURT** |
+| achievement_max_v2 (score-max) | 18.39 (Δret +3.73) | 17.50 (n=15, Δret -0.17) | awr-only no help |
 
-**Two findings:**
+**Three findings (n=30 final on most cells):**
 
-1. **The AWR-only baseline is +2.77 return higher than the canonical
-   freezenone baseline.** The 50k-step BC+oracle finetune appears to
-   *drop* return rather than lift it. With more episodes the AWR-only
-   estimate may move further but the magnitude of the gap is large
-   relative to the SE.
+1. **The AWR-only baseline is +3.01 return higher than the canonical
+   freezenone baseline.** The 50k-step BC+oracle finetune phase that
+   produces freezenone *drops* return by 3 raw points. The
+   straightforward read is that the BC+oracle objective is mismatched
+   with the deploy-time embedding distribution; the policy is being
+   regularised toward labels it doesn't actually need to imitate.
 
-2. **Steerability is preserved on AWR-only.** Direction-left moves
+2. **Steerability axes preserved.** Direction-left moves
    move-share-of-cardinal-moves by +40% relative (vs +41% on
-   freezenone). die_fast shortens episodes ~170 steps. target_descend
-   pushes enter_dungeon +20pp. The same axis-by-axis behaviors that
-   make freezenone steerable also work on awr-only, just from a
-   higher starting point.
+   freezenone). die_fast shortens episodes ~233 steps. target_descend
+   extends episodes (+370 steps; enter_dungeon rate similar). The
+   axis-level behaviour transfers cleanly from freezenone to awr-only.
+
+3. **But the score-max + patch-by-prompt prompts that worked on
+   freezenone DO NOT lift awr-only above its already-high baseline.**
+   - `target_collect_stone_v2`: freezenone +1.10, awr-only **−3.23**.
+   - `v2_long_tail` patch: freezenone +2.14, awr-only **−1.57**.
+   - `achievement_max_v2` (score-max): freezenone +3.73, awr-only
+     **−0.17** (n=15 partial, may move).
+   - The freezenone+best-prompt ceiling (≈18.4) ≈ the awr-only
+     baseline (17.67) — both arrive at the same place.
+
+   **Interpretation**: the achievable return ceiling for this
+   policy-on-this-data is ~18 raw, regardless of which checkpoint and
+   which prompt you use. Freezenone needs a strong prompt to recover
+   what awr-only does on its own. Awr-only is already near its
+   ceiling; prompt steering can only disrupt.
 
 **Implications:**
 
-- The "C policy" we have been treating as canonical may be a
-  suboptimal checkpoint within the same training run. Re-running the
-  Specificity matrix and the score-max iteration on the AWR-only
-  checkpoint could move *all* return numbers up by ~3 points without
-  any retraining.
-- For the SCALING_C plan (`docs/SCALING_C.md`), this also implies the
-  BC+AWR phase may not be necessary — a pure-AWR pipeline on the new
-  PPO-RNN-derived data could land at a higher return ceiling with less
-  compute.
-- One open caveat: the AWR-only baseline n=27 estimate of 17.43 came
-  in BELOW the n=14 partial estimate of 18.39 — the 30-eval will be
-  the canonical number. Even at 17.43 the gap to freezenone is large.
+- For SCALING_C: the BC+AWR finetune phase is *not* a value-add and
+  may be skippable. A pure-AWR pipeline on PPO-RNN-derived data
+  should land cleanly at the new data's reachable ceiling.
+- For ongoing experiments: report awr-only as the *actual* C performance
+  number (17.67 ± 0.72), with freezenone+best-prompt as a "BC-finetune
+  recovery" baseline. The fact that they tie at ~18.4 is the headline.
+- This does not change the steerability story — direction, descent,
+  die_fast still steer on awr-only with similar magnitudes, just from
+  a higher base.
 
 Job: 7493701 (7-cell array). Eval dir:
 `/data/group_data/rl/geney/eval_results/psf_v2_cadence5_grounded_predonly_top2M_awr_only/`.
