@@ -96,9 +96,15 @@ deploy-time fidelity ratio (14.66 / 21.21 ≈ 70%) holds, the new
 deployed C policy should land at ~18-20 raw return out-of-the-box, and
 combined with the score_max_v2 prompt could reach 22-26.
 
-(Caveat: the AWR-only ablation in STEERABILITY.md showed the BC+oracle
-finetune *drops* return ~2.8; a pure-AWR pipeline on the new data would
-likely outperform a BC+AWR one.)
+(Caveat from the AWR-only ablation in STEERABILITY.md: the
+BC+oracle finetune *drops* baseline return ~3 raw points but in
+exchange creates *prompt-headroom* — achievement rates the policy
+hasn't saturated, which prompts can then fill. Pure AWR on the new
+data would land at a higher floor but with reduced prompt-receptivity;
+BC+AWR on the new data would land lower but be more steerable. **For
+the steerability research, BC+AWR is the right recipe.** For raw
+score, pure AWR suffices. The two converge to roughly the same total.
+Decide based on the research goal.)
 
 ### Earlier-version mistake worth recording
 

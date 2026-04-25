@@ -886,32 +886,64 @@ target_collect_stone, v2_long_tail}.
    extends episodes (+370 steps; enter_dungeon rate similar). The
    axis-level behaviour transfers cleanly from freezenone to awr-only.
 
-3. **But the score-max + patch-by-prompt prompts that worked on
-   freezenone DO NOT lift awr-only above its already-high baseline.**
-   - `target_collect_stone_v2`: freezenone +1.10, awr-only **−3.23**.
-   - `v2_long_tail` patch: freezenone +2.14, awr-only **−1.57**.
-   - `achievement_max_v2` (score-max): freezenone +3.73, awr-only
-     **−0.17** (n=15 partial, may move).
-   - The freezenone+best-prompt ceiling (≈18.4) ≈ the awr-only
-     baseline (17.67) — both arrive at the same place.
+3. **The score-max prompts that lift freezenone DON'T lift awr-only —
+   but for a non-trivial reason: awr-only has eaten the headroom
+   freezenone had.** Per-axis comparison on the achievement RATES the
+   prompt is targeting:
 
-   **Interpretation**: the achievable return ceiling for this
-   policy-on-this-data is ~18 raw, regardless of which checkpoint and
-   which prompt you use. Freezenone needs a strong prompt to recover
-   what awr-only does on its own. Awr-only is already near its
-   ceiling; prompt steering can only disrupt.
+   | prompt | metric | freezenone base → cell | awr-only base → cell |
+   |---|---|---|---|
+   | direction_left | LEFT/cardinal share | 0.236 → 0.368 (+13pp); ret −8.5 | 0.244 → 0.340 (+10pp); ret −5.2 |
+   | die_fast | length | 629 → 383 (−246); ret −2.2 | 651 → 418 (−233); ret −4.7 |
+   | target_descend | enter_dungeon% | **12 → 27 (+15pp)**; ret **+2.6** | **17 → 25 (+8pp)**; ret −1.6 |
+   | target_collect_stone | place_stone% | 68 → 73 (+5pp); ret −0.4 | **93 → 77 (−17pp)**; ret −3.2 |
+   | v2_long_tail patch | (composite) | wake_up 52→90, etc.; ret +2.1 | smaller deltas; ret −1.6 |
+   | achievement_max_v2 | (composite) | wake_up 52→75 etc.; ret +3.7 | n=15 partial; ret −0.2 |
 
-**Implications:**
+   **The awr-only checkpoint is BEHAVIORALLY STEERABLE.** Direction,
+   descent, length all move under the same prompts as on freezenone
+   — direction_left still shifts LEFT% by 10pp on awr-only.
+   What it ISN'T is *return-improvable* by prompts. And the reason is
+   visible in the second column above: on awr-only, baseline rates
+   for the achievements the prompt targets are ALREADY HIGH
+   (place_stone 93% vs freezenone 68%; enter_dungeon 17% vs 12%; sleep
+   chain higher; etc.). The prompt can shift the action distribution
+   the same way it does on freezenone, but there's no rate-headroom
+   left for the achievement to fire more often. For
+   `target_collect_stone` it actually *removes* place_stone behavior
+   the policy was already doing — the prompt's stone-mining emphasis
+   competes with the awr-only policy's already-optimal placement
+   routine.
 
-- For SCALING_C: the BC+AWR finetune phase is *not* a value-add and
-  may be skippable. A pure-AWR pipeline on PPO-RNN-derived data
-  should land cleanly at the new data's reachable ceiling.
-- For ongoing experiments: report awr-only as the *actual* C performance
-  number (17.67 ± 0.72), with freezenone+best-prompt as a "BC-finetune
-  recovery" baseline. The fact that they tie at ~18.4 is the headline.
-- This does not change the steerability story — direction, descent,
-  die_fast still steer on awr-only with similar magnitudes, just from
-  a higher base.
+   **Net**: BC+oracle is **not redundant**. It trades baseline
+   performance (-3 raw return) for *prompt-headroom* (achievement
+   rates left low so prompts can fill them). Both routes converge to
+   ~18 raw return on this data — but only freezenone-with-prompt is
+   *steerable in the score-improvement sense*. AWR-only is *steerable
+   in the behavior-shift sense* but cannot be score-improved by
+   prompts because it has no rate-headroom on the targeted axes.
+
+**Implications (revised):**
+
+- For research goal "demonstrate steerability of LLM-conditioned offline
+  RL policies": **BC+oracle freezenone is the right recipe** — it gives
+  us both axis-steerability (preserved on awr-only too) AND
+  score-improvability (only on freezenone).
+- For SCALING_C: now ambiguous. Pure-AWR on better data should land at
+  a higher floor (the data's ceiling) but with reduced prompt-headroom.
+  BC+AWR on better data might land at a slightly lower floor with much
+  more prompt-headroom. The user's research goal here matters: if
+  steerability is the headline, keep BC+AWR; if raw score is the
+  headline, AWR-only suffices.
+- The 50k extra training steps + the BC+oracle objective are paying
+  for "prompt-fillable rate-headroom" — a measurable property of the
+  resulting policy. Earlier reading "BC+oracle drops return so it's
+  redundant" was incomplete; the trade-off is performance vs
+  prompt-receptivity.
+- For ongoing score-max iteration: keep iterating on freezenone (where
+  the headroom is). Awr-only score-max is unlikely to push past 18.
+- One open caveat: `achievement_max_v2` on awr-only is n=15 partial.
+  Need n=30 to confirm it doesn't lift the score (currently −0.17).
 
 Job: 7493701 (7-cell array). Eval dir:
 `/data/group_data/rl/geney/eval_results/psf_v2_cadence5_grounded_predonly_top2M_awr_only/`.
