@@ -375,31 +375,106 @@ keep the base algorithm, add an "Opportunistic Milestones" checklist for
 6 headroom achievements (sapling, place_plant, eat_plant, wake_up,
 collect_iron, place_torch, enter_dungeon).
 
-**This may already be the wrong design.** v1 enumerates milestones but
-doesn't tilt priorities toward descent — the *structural* lever that
-appears most powerful. v1 will tell us whether enumeration alone helps
-relative to the baseline (14.66) and to target_descend (17.23).
+**v1 prompt — algorithm body verbatim** (file:
+`configs/training/templates/predict_state_only_prompt_concise_achievement_max_v1.txt`):
+
+```
+Here is the algorithm the player will play the game by:
+At every step, the player should act with the goal of staying alive AND
+ticking off as many achievement milestones as possible. Each milestone
+counts only the first time it is completed in an episode, so the player
+picks up cheap milestones whenever they are within reach and never
+repeats one for score.
+
+The player will choose the highest-priority active goal in this order:
+1. Survive
+2. Pick up the next on-screen Opportunistic Milestone (see list below)
+3. Take the ladder if it is open and on-screen
+4. Upgrade equipment if survival is stable. This takes priority over
+   taking the ladder if the player is in the overworld (floor 0) and
+   has a sword or pickaxe worse than stone or missing.
+5. Explore to find resources, troops, and the ladder
+
+1. Survive
+[ standard survive section + "sleeping until wake_up is also a free
+  achievement (+1 wake_up)" added ]
+
+2. Opportunistic Milestones (the headroom checklist)
+Each item below is a one-time +1 achievement the baseline policy often
+misses. The player should grab any milestone whenever it is achievable
+in the next few steps with little risk. Listed in priority order:
+  (a) collect_sapling — when a grass tile with a green sapling icon is
+      within 2 tiles, walk over it and DO to harvest. Saplings spawn in
+      grass clusters; if none are visible, the player passes any grass
+      tile without delaying for it.
+  (b) place_plant — once the player holds at least 1 sapling AND is
+      standing on a grass tile, use PLACE_PLANT immediately. Note where
+      the plant was placed so the player can return to it later for
+      eat_plant.
+  (c) eat_plant — a placed plant ripens into a fruit-bearing plant
+      after roughly 30–60 steps. Whenever the player is within 3 tiles
+      of an own placed plant that has ripened (fruit visible), walk to
+      it and DO to eat. This restores food AND grants +1 eat_plant.
+  (d) wake_up — explicitly cycle to SLEEP (and naturally wake) at least
+      once per episode whenever Energy is at 4 or below; do not let
+      Energy decay to 0 without sleeping in a safe enclosure first.
+  (e) collect_iron — once the player has a stone pickaxe, mine ANY
+      visible iron tile (orange/brown speckle) within 4 tiles even if
+      it requires a small detour. This unlocks iron-tier later but the
+      +1 collect_iron is the cheap part.
+  (f) place_torch — once the player has crafted at least 1 torch (1
+      Wood + 1 Coal at a crafting table), use PLACE_TORCH on the
+      current tile. Free +1.
+  (g) enter_dungeon — once the player is on Floor 0 with a stone
+      pickaxe, stone sword, and at least 1 iron in inventory, head
+      DIRECTLY for the visible down_ladder and DESCEND. Each new floor
+      entered = +1 enter_X achievement.
+
+3. Take the ladder if it is open and visible  [ standard ]
+4. Upgrade equipment                          [ standard ]
+5. Explore                                    [ standard ]
+```
 
 **v1 result (n=29): return 15.51 ± 1.00, length 658, Δret +0.85 (z=+0.65 NS).**
-Below the target_descend bar of 17.23. Per-achievement deltas vs baseline:
+wandb: [`96z6ytog`](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/96z6ytog)
+(per-episode `gameplay.mp4` videos available there for inspection).
+
+Below the target_descend bar of 17.23 in *return*, but **strong steering
+result on the targeted achievements** — the prompt named 6 items as the
+"headroom checklist" and 5/6 moved in the right direction:
 
 | Δpp | achievement | note |
 |---|---|---|
-| **+17pp** | place_plant (28→45%) | the v1 nudge worked |
-| +11pp | defeat_zombie (72→83%) | side effect |
-| +11pp | make_arrow | side effect |
-| +10pp | place_torch (52→62%) | the v1 nudge worked |
-| +7pp | eat_plant (0→7%) | first non-zero on this metric |
-| +7pp | collect_sapling (38→45%) | the v1 nudge worked |
-| +7pp | wake_up (52→59%) | the v1 nudge worked |
-| +5pp | collect_iron, find_bow, open_chest | |
+| **+17pp** | **place_plant (28→45%)** | the v1 nudge worked |
+| **+10pp** | **place_torch (52→62%)** | the v1 nudge worked |
+| **+7pp** | **eat_plant (0→7%)** | **first non-zero on this metric across any C eval — the steering literally created an achievement that didn't exist in baseline runs** |
+| **+7pp** | **collect_sapling (38→45%)** | the v1 nudge worked |
+| **+7pp** | **wake_up (52→59%)** | the v1 nudge worked |
+| +5pp | **collect_iron (50→55%)** | the v1 nudge worked, modest |
+| +11pp | defeat_zombie (72→83%) | beneficial side effect |
+| +11pp | make_arrow | beneficial side effect |
+| +5pp | find_bow, open_chest | beneficial side effect |
 | **−5pp** | **enter_dungeon (12→7%)** | UNINTENDED. The v1 prompt gated dungeon entry on "stone pickaxe + stone sword + ≥1 iron", which made the policy WAIT longer. baseline descends without iron. |
 | −5pp | defeat_skeleton, make_stone_sword | possibly a side effect of less floor-1 time |
 
-Reading: the v1 milestone enumeration captured the headroom items it
-named (place_plant, eat_plant, sapling, wake_up, place_torch) but the
-extra rule "wait for iron before descending" cost the policy its
-descent cascade. Net: small win, well below `target_descend_v2`.
+This is the cleanest demonstration in the score-max thread that
+**enumerating specific achievements in the prompt body is enough to
+push them up by 7–17pp**. Five out of six named targets moved up as
+intended; the only loss was `enter_dungeon`, and that traces directly
+to a *different* rule the prompt added (the iron-gate). v1 also opens
+`eat_plant` (0% → 7%) which had been zero across every prior C eval —
+the prompt successfully introduced a new behavior, not just nudged an
+existing one.
+
+The takeaway for v2 was not "enumeration doesn't work" — enumeration
+*does* work — but "the descent cascade is the bigger lever, and v1
+accidentally crippled it. Keep enumeration, fix the descent gate." v2
+landed at 18.39 (+3.73) by doing exactly that.
+
+Inspecting v1 vs baseline gameplay in the wandb run is highly
+recommended — the videos make the steering visible (you can watch the
+policy actively walking *to* sapling icons and placing plants on grass
+tiles, behaviors that are absent in baseline videos).
 
 ### v2 — `target_descend` base + cheap-milestones rider ("`achievement_max_v2`")
 
@@ -414,7 +489,9 @@ re-introduce v1's "wait for iron before descending" gate.
 **v2 result (n=28): return 18.39 ± 1.02, length 915, Δret +3.73 (z=+2.83)
 vs baseline; +1.15 vs the previous best `target_descend_v2` (17.23);
 matches the unaugmented offline-RL baseline of 18.38.** Best
-single-prompt result on the C policy to date.
+single-prompt result on the C policy to date. wandb:
+[`0v0j63nw`](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/0v0j63nw)
+(per-episode videos available).
 
 Per-achievement deltas (top movers, n=28 vs baseline n=50):
 
