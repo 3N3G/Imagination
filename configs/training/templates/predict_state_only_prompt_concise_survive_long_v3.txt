@@ -1,0 +1,59 @@
+You are forecasting a plausible future for a Craftax state.
+
+Craftax overview:
+Craftax is a game about exploring dungeons, mining, crafting and fighting enemies.
+
+Use these game rules:
+1) Coordinates are (Row, Column), centered on the player at (0,0).
+   - Negative Row = UP, Positive Row = DOWN.
+   - Negative Column = LEFT, Positive Column = RIGHT.
+2) Intrinsics: Health, Food, Drink, Energy, Mana. All out of 9.
+   - Food/Drink/Energy naturally decay.
+   - If Food/Drink/Energy reaches 0, Health will decay.
+   - If Food/Drink/Energy are maintained, Health can recover.
+3) Floor progression uses ladders.
+   - Descending requires reaching the ladder on the current floor.
+   - On non-overworld floors, the ladder is generally closed until enough mobs are killed.
+4) Actions: NOOP, LEFT, RIGHT, UP, DOWN, DO (interact/attack/mine/drink/eat),
+   SLEEP, PLACE_STONE, PLACE_TABLE, PLACE_FURNACE, PLACE_PLANT,
+   MAKE_{WOOD,STONE,IRON,DIAMOND}_{PICKAXE,SWORD}, REST, DESCEND, ASCEND,
+   MAKE_ARROW, SHOOT_ARROW, CAST_FIREBALL, CAST_ICEBALL, PLACE_TORCH,
+   DRINK_POTION_*, READ_BOOK, ENCHANT_*, LEVEL_UP_*.
+
+Here is the algorithm the player will play the game by:
+At every step, the player should act with the goal of maximizing how long the episode lasts. The player keeps Food, Drink, and Energy comfortably topped up at all times and refuses any action that risks Health.
+
+The player will choose the highest-priority active goal in this order:
+1. Top up Food, Drink, or Energy whenever any of them drops to 7 or below
+2. Move toward the safest visible terrain when no intrinsic needs replenishing
+3. NOOP when on safe terrain and all intrinsics are at 8 or 9
+4. Run from any visible enemy
+
+1. Top up the lowest intrinsic
+The player tracks Food, Drink, and Energy and acts as soon as any of them is at 7 or below.
+- Drink ≤ 7: the player walks to the nearest visible water tile and uses DO until Drink is 9. If the player is already adjacent to water, DO immediately.
+- Food ≤ 7: the player walks to the nearest visible cow and uses DO to attack it, then eats the meat until Food is 9. If a fruit-bearing plant is closer, the player walks to it and DOes to eat instead.
+- Energy ≤ 7: the player walks to the most enclosed adjacent tile (corner of stone, between trees, etc.) and uses SLEEP until wake_up. The player does not need a fully sealed base — any enclosed-looking tile is acceptable.
+The thresholds are 7 (not the usual 4) so the player keeps a buffer and never lets intrinsics drop into the danger zone where Health starts decaying.
+
+2. Move to safe terrain
+If all intrinsics are 8 or 9 but the current tile is exposed (no walls around, enemies visible nearby), the player moves toward the nearest natural enclosure (a corner of stone, a clump of trees, the edge of water) and stops there. The player does not range far — any safer tile within 5 tiles of the current position is preferred over walking far.
+
+3. NOOP
+When all intrinsics are 8 or 9 and the current tile is safe (no enemy within 4 tiles), the player picks NOOP. NOOP passes time without spending any risk; it is preferred over any movement when there is nothing to gain.
+
+4. Run from enemies
+If any enemy mob is visible and within 4 tiles, the player walks AWAY from it (the direction that puts the most empty tiles between the player and the enemy) until it is out of sight or until walking further would lead the player into worse terrain. The player does not engage in combat unless there is no escape route.
+
+The player NEVER descends a ladder, NEVER explores beyond the immediate area, NEVER enters dungeons, NEVER picks fights, and NEVER mines or crafts beyond what is needed for an immediate sleep enclosure. The single goal is to keep the episode going.
+
+Predict at a high level what the next five steps for the player will look like, given that they are following the algorithm. Do not forecast beyond five time steps! In particular, the player can move at most five tiles during these five steps. Reason during your state understanding about which intrinsic (if any) is below 7, whether enemies are within 4 tiles, and whether the current tile is safe enough for NOOP.
+
+State Understanding: <A few sentences analyzing the current scene. Focus on careful spatial reasoning of the relevant tiles or tiles near the player. Identify which intrinsic is lowest and where the nearest matching resource is, or note that all intrinsics are 8+. Note any enemies within 4 tiles. >
+
+Prediction: <1 positive, direction-stating sentence describing the player's action. Good examples: "Move right to the water tile and drink until full.", "Walk down-left to the cow and attack it for food.", "SLEEP next to the stone wall until wake_up.", "NOOP since the player is on a safe tile and all intrinsics are at 8 or above." Do not use "instead of", "rather than", "avoid", "away from", "refuse", or any other negation — just state the direction and target. Do not reference specific coordinates. >
+
+Now, predict the future of the following state.
+
+Current state:
+{current_state_filtered}

@@ -184,6 +184,10 @@ _V2_TEMPLATES = {
         "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_survive_long_v2.txt",
         "thinking": _TEMPLATE_DIR / "predict_state_only_prompt_concise_survive_long_v2.txt",
     },
+    "survive_long_v3": {
+        "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_survive_long_v3.txt",
+        "thinking": _TEMPLATE_DIR / "predict_state_only_prompt_concise_survive_long_v3.txt",
+    },
     # Specificity matrix: rare-behavior upward steering + opposite-direction
     # mirrors. All concise-only fallback (no thinking variants yet).
     "target_collect_diamond_v2": {
@@ -209,6 +213,10 @@ _V2_TEMPLATES = {
     "target_avoid_stone_v2": {
         "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_target_avoid_stone_v2.txt",
         "thinking": _TEMPLATE_DIR / "predict_state_only_prompt_concise_target_avoid_stone_v2.txt",
+    },
+    "target_avoid_stone_v3": {
+        "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_target_avoid_stone_v3.txt",
+        "thinking": _TEMPLATE_DIR / "predict_state_only_prompt_concise_target_avoid_stone_v3.txt",
     },
     "target_stay_overworld_v2": {
         "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_target_stay_overworld_v2.txt",
@@ -1123,7 +1131,9 @@ def main():
                              "target_defeat_zombie_v2",
                              "target_place_plant_v2",
                              "target_avoid_stone_v2",
+                             "target_avoid_stone_v3",
                              "target_stay_overworld_v2",
+                             "survive_long_v3",
                              "embed_arith"],
                     help="How to generate hidden state embeddings: "
                          "gemini=normal Gemini+Qwen, constant=embed fixed string, "

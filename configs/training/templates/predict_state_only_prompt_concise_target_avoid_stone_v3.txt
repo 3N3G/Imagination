@@ -1,0 +1,51 @@
+You are forecasting a plausible future for a Craftax state.
+
+Craftax overview:
+Craftax is a game about exploring dungeons, mining, crafting and fighting enemies.
+
+Use these game rules:
+1) Coordinates are (Row, Column), centered on the player at (0,0).
+   - Negative Row = UP, Positive Row = DOWN.
+   - Negative Column = LEFT, Positive Column = RIGHT.
+2) Intrinsics: Health, Food, Drink, Energy, Mana. All out of 9.
+   - Food/Drink/Energy naturally decay.
+   - If Food/Drink/Energy reaches 0, Health will decay.
+   - If Food/Drink/Energy are maintained, Health can recover.
+3) Floor progression uses ladders.
+   - Descending requires reaching the ladder on the current floor.
+   - On non-overworld floors, the ladder is generally closed until enough mobs are killed.
+4) Actions: NOOP, LEFT, RIGHT, UP, DOWN, DO (interact/attack/mine/drink/eat),
+   SLEEP, PLACE_STONE, PLACE_TABLE, PLACE_FURNACE, PLACE_PLANT,
+   MAKE_{WOOD,STONE,IRON,DIAMOND}_{PICKAXE,SWORD}, REST, DESCEND, ASCEND,
+   MAKE_ARROW, SHOOT_ARROW, CAST_FIREBALL, CAST_ICEBALL, PLACE_TORCH,
+   DRINK_POTION_*, READ_BOOK, ENCHANT_*, LEVEL_UP_*.
+
+Here is the algorithm the player will play the game by:
+At every step, the player should act with the goal of staying alive while keeping a wide berth from any stone tile. The player treats stone tiles as obstacles and routes around them, never mines them, and never crafts items that require stone.
+
+This means the player will choose the highest-priority active goal in this order:
+1. Survive
+2. Explore wood-tier territory away from stone clusters
+3. Stay in place (NOOP) when intrinsics are full and no resource is in immediate reach
+
+1. Survive
+The player must track health, food, drink, and energy. If food is <= 4, get food immediately by killing animals and eating them. If drink is <= 4, get drink immediately from water tiles. If energy is <= 4, find an enclosed corner made of TREES or WATER (not stone) and sleep there. If health is <= 4, restore food, drink, and energy before doing anything risky. To avoid losing health, run from arrows and from enemies. The player should never sleep in the open. The player builds enclosures only from PLACE_PLANT or PLACE_TABLE — never from PLACE_STONE — even if a stone cluster is nearby.
+
+2. Explore wood-tier territory
+The player walks toward terrain made of grass, water, sand, trees, and paths — terrain that does NOT contain stone tiles. When a stone tile is on screen, the player walks AROUND it by choosing the direction that leads to the most non-stone tiles. The player gathers wood whenever a tree is reachable and crafts only wood-tier items (wood pickaxe, wood sword) at a crafting table. The player does NOT mine stone, coal, iron, or diamonds, and does NOT craft stone, iron, or diamond tools. Stone and stone-adjacent resources are off-limits.
+
+3. NOOP
+When food, drink, and energy are all >= 7 and the player is on a tile with no immediate resource to gather and no enemy within 4 tiles, the player picks NOOP. This passes time without spending any risk.
+
+The player NEVER mines stone, coal, iron, ruby, sapphire, or diamond. The player NEVER crafts a stone pickaxe, stone sword, iron pickaxe, iron sword, or any stone-requiring item. The player NEVER places stone (PLACE_STONE is off the action list). The player STAYS at wood tier for the entire run.
+
+Predict at a high level what the next five steps for the player will look like, given that they are following the algorithm. Do not forecast beyond five time steps! In particular, the player can move at most five tiles during these five steps. Reason during your state understanding about the most immediate next step according to the algorithm and then predict the player's immediate behavior.
+
+State Understanding: <A few sentences analyzing the current scene. Focus on careful spatial reasoning of the relevant tiles or tiles near the player. Note where the nearest stone tiles are so the player routes around them. >
+
+Prediction: <1 positive, direction-stating sentence describing the high-level behavior of the player in the next five steps. E.g. "move right to the cluster of trees", or "move down to the water tiles to drink", or "NOOP since intrinsics are full and the surrounding terrain has no stone". Do not use "instead of", "rather than", "avoid", "away from", "refuse", or any other negation — just state the direction and target. Do not reference specific coordinates. >
+
+Now, predict the future of the following state.
+
+Current state:
+{current_state_filtered}

@@ -1163,3 +1163,35 @@ JSON at `probe_results/specificity_matrix.json`. Tool: `tools/specificity_matrix
    strict-base prompt class: same surface form as die_fast (which works
    to z=-3.0), opposite direction → length actually shortens. Iteration
    target.
+
+### v3 prompt iteration (2026-04-25, post-matrix)
+
+After the matrix landed, the two clearest prompt-logic-bottleneck cells
+were re-run with simpler prompts (n=30 each, output dir
+`..._specificity_iter`):
+
+| cell | n | stone | length | verdict |
+|---|---|---|---|---|
+| baseline (no prompt) | 50 | 17.9 ± 2.2 | 629 ± 79 | — |
+| target_avoid_stone_v2 | 30 | 19.8 ± 3.1 | 527 ± 79 | wrong-way (z=+0.5) |
+| **target_avoid_stone_v3** | 30 | **12.4 ± 2.6** | 502 ± 82 | **WIN (z=-1.6)** |
+| survive_long_v2 | 30 | 14.2 ± 2.7 | 416 ± 50 | wrong-way (z=-2.3) |
+| **survive_long_v3** | 30 | 18.3 ± 3.3 | **669 ± 119** | NULL (z=+0.3) |
+
+`v3` design changes:
+- `target_avoid_stone_v3`: deleted the entire Upgrade Decision Tree
+  (the v2 prompt kept "Stone Tier: craft stone pickaxe", which
+  contradicted the avoid-stone goal). Replaced exploration with
+  "wood-tier territory only".
+- `survive_long_v3`: dropped the strict "establish base with water +
+  cow + stone within 3 tiles" criteria. Replaced with "keep intrinsics
+  ≥7, NOOP when safe, run from enemies, never descend".
+
+Two observations:
+- `avoid_stone` flipped from wrong-way to a clear WIN. Removing the
+  internal contradiction was the fix → the policy CAN read negative
+  steering when the prompt is internally consistent.
+- `survive_long` flipped from wrong-way to NULL (matches baseline). It
+  no longer disrupts the policy but does not extend episodes either.
+  **The policy's survival skill cap is a fidelity ceiling, not a prompt
+  problem.** Final WIN tally: 12/21, NULL 9/21, WRONG-WAY 1/21.
