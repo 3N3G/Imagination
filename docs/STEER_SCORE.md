@@ -1,11 +1,168 @@
 # STEER_SCORE — pushing C_grounded_2M to maximum return via prompt iteration
 
 **Goal**: maximize per-episode return on `C_grounded_2M` (freezenone)
-through Gemini-prompt steering. Each Craftax achievement is worth +1
-reward (max possible ≈ 67); baseline score is 14.66 ± 0.83. **Headroom
-is large** but the policy has hard fidelity ceilings on chain tasks
-(0/30 iron pickaxe, 0/30 diamond per the specificity matrix). This doc
-records the prompt-iteration journey.
+through Gemini-prompt steering.
+
+## Craftax scoring system (read once, then carried as background)
+
+Reward per step = `achievement_reward + health_reward`, where
+`achievement_reward = sum_over_achievements_just_unlocked(tier_pts)` and
+`health_reward = (player_health - init_health) * 0.1`. Each achievement
+fires only on the *first* time it is unlocked in an episode. The
+tier-points are encoded by `achievement_mapping()` in
+`craftax/craftax/constants.py`:
+
+| tier | count | pts/each | subtotal | examples |
+|---|---|---|---|---|
+| BASIC | 25 | 1 | 25 | collect_wood/stone/iron/coal/diamond, craft wood/stone/iron tools, place_stone/table/furnace/torch/plant, eat_cow, eat_plant, collect_drink, defeat_zombie/skeleton, wake_up |
+| INTERMEDIATE | 18 | 3 | 54 | enter_dungeon, enter_gnomish_mines, eat_bat, eat_snail, find_bow, fire_bow, open_chest, drink_potion, defeat_orc_solider/orc_mage/gnome_warrior/gnome_archer, collect_sapphire, collect_ruby, make_diamond_pickaxe/sword, make_iron_armour, make_diamond_armour |
+| ADVANCED | 15 | 5 | 75 | enter_sewers, enter_vault, enter_troll_mines, defeat_lizard/kobold/knight/archer/troll/deep_thing, learn/cast_fireball, learn/cast_iceball, enchant_sword, enchant_armour |
+| VERY ADVANCED | 9 | 8 | 72 | enter_fire_realm, enter_ice_realm, enter_graveyard, defeat_pigman, defeat_fire_elemental, defeat_frost_troll, defeat_ice_elemental, damage_necromancer, defeat_necromancer |
+| **TOTAL** | **67** | | **226** | |
+
+So **226 is the max from achievements alone.** Health reward is small
+(~0.1 per HP per step recovered), and never dominant in our experiments.
+The Craftax paper / public leaderboard reports return as % of 226.
+
+Reference scores (% of 226):
+- Random policy ≈ 0.1–0.5%
+- 1B PPO-RNN (paper) ≈ 15.3% = 34.6 raw
+- 1B PPO-GTrXL (paper) ≈ 18.3% = 41.4 raw
+- **PPO-RNN 1e8 (our replication)** ≈ 12.3% = **27.87 raw** (see analysis below)
+- Unaugmented offline-RL (PSF top-2M, no augmentation) ≈ **18.38**
+- C_grounded_2M baseline (current focus) ≈ **14.66** = 6.5% of max
+
+## PPO-RNN 1e8 baseline — what does the strongest pure-RL policy at our scale actually achieve?
+
+Source: wandb run [`fkxga61m`](https://wandb.ai/iris-sobolmark/craftax-baselines-replication/runs/fkxga61m)
+(Craftax-Symbolic-v1, 1e8 timesteps, default
+[Craftax_Baselines](https://github.com/MichaelTMatthews/Craftax_Baselines/blob/main/ppo_rnn.py)
+PPO-RNN). Training-time `episode_return = 27.87`,
+`achievements (unique-per-ep mean) = 21.36`. Per-tier breakdown (all
+rates from the wandb summary, full JSON at
+`probe_results/ppo_baselines_achievement_breakdown.json`):
+
+| tier | per-tier weighted contribution | unique unlocked at all (>0%) | sum-of-rates |
+|---|---|---|---|
+| BASIC (1pt × 25) | **+17.6** | **25/25** | 17.65 |
+| INTERMEDIATE (3pt × 18) | **+11.1** | 13/18 | 3.71 |
+| ADVANCED (5pt × 15) | **+0.0** | **0/15** | 0.00 |
+| VERY ADVANCED (8pt × 9) | **+0.0** | **0/9** | 0.00 |
+| **derived total** | **28.77** | **38/67** | |
+
+The derived total (28.77) is within 1 point of the wandb-logged
+`episode_return` (27.87) — the small gap is the health reward + sampling.
+
+**Per-achievement rates from PPO-RNN 1e8 (sorted by rate):**
+
+| ach | rate | tier |
+|---|---|---|
+| collect_sapling | 99.5% | BASIC |
+| collect_wood | 99.0% | BASIC |
+| place_plant | 99.0% | BASIC |
+| make_wood_pickaxe | 98.0% | BASIC |
+| place_table | 98.0% | BASIC |
+| collect_stone | 97.5% | BASIC |
+| place_furnace | 97.5% | BASIC |
+| place_stone | 97.5% | BASIC |
+| make_wood_sword | 91.5% | BASIC |
+| collect_coal | 86.4% | BASIC |
+| make_stone_pickaxe | 84.9% | BASIC |
+| make_stone_sword | 84.9% | BASIC |
+| make_arrow | 81.9% | BASIC |
+| make_torch | 80.9% | BASIC |
+| place_torch | 80.9% | BASIC |
+| collect_drink | 78.4% | BASIC |
+| eat_cow | 72.4% | BASIC |
+| **enter_dungeon** | **67.8%** | INTERMEDIATE |
+| collect_iron | 66.8% | BASIC |
+| **find_bow** | **65.8%** | INTERMEDIATE |
+| **open_chest** | **65.8%** | INTERMEDIATE |
+| **eat_snail** | **60.8%** | INTERMEDIATE |
+| **fire_bow** | **49.7%** | INTERMEDIATE |
+| wake_up | 39.7% | BASIC |
+| defeat_zombie | 38.2% | BASIC |
+| defeat_skeleton | 36.2% | BASIC |
+| **make_iron_pickaxe** | **31.7%** | BASIC |
+| **drink_potion** | **30.2%** | INTERMEDIATE |
+| **defeat_orc_solider** | **17.6%** | INTERMEDIATE |
+| make_iron_sword | 15.1% | BASIC |
+| **collect_diamond** | **8.5%** | BASIC |
+| **collect_ruby** | **6.5%** | INTERMEDIATE |
+| **collect_sapphire** | **4.0%** | INTERMEDIATE |
+| **make_diamond_sword** | **1.0%** | INTERMEDIATE |
+| eat_plant | 0.5% | BASIC |
+| **make_diamond_pickaxe** | **0.5%** | INTERMEDIATE |
+| **make_iron_armour** | **0.5%** | INTERMEDIATE |
+| **defeat_orc_mage** | **0.5%** | INTERMEDIATE |
+| (all 15 ADVANCED) | 0% | ADVANCED |
+| (all 9 VERY ADVANCED) | 0% | VERY ADVANCED |
+
+**Three things this baseline tells us:**
+
+1. **PPO-RNN 1e8 is *also* capped at the descend-to-floor-1 boundary.**
+   It enters the dungeon (floor 1) 68% of the time, but never enters
+   floor 2 or below (0% on enter_sewers/vault/troll_mines and all
+   higher floors). Whatever skill is needed to clear floor 1 enemies
+   and find floor 1's ladder is not reliably there at 1e8 steps. Only
+   the much larger 1B PPO-GTrXL run gets meaningfully past floor 1.
+
+2. **Iron tier is reachable, diamond is barely reachable, magic is
+   not.** make_iron_pickaxe at 32% is the headline late-tier success.
+   make_diamond_* hovers at 0.5–1% — a handful of episodes per 1k. No
+   spell ever cast. No enchantment ever applied.
+
+3. **C_grounded_2M is at 51% of PPO-RNN 1e8's score** (14.66 / 28.77),
+   from a tiny fraction of the data and a tiny fraction of the compute.
+   The score-max v2 prompt narrows that gap further (18.39 / 28.77 =
+   64%).
+
+**Per-tier comparison vs the policies we're working with:**
+
+| policy | weighted total | BASIC contrib | INTER contrib | ADV/VADV |
+|---|---|---|---|---|
+| PPO-RNN 5M | 7.86 | 7.86 | 0.0 | 0.0 |
+| PPO-RNN 20M | 14.98 | 14.98 | 0.0 | 0.0 |
+| C_grounded freezenone (baseline) | 15.56 | 14.83 | 0.73 | 0.0 |
+| **C_grounded + achievement_max_v2** | **~19** | ~17 | ~2 | 0.0 |
+| **PPO-RNN 1e8** | **28.77** | **17.6** | **11.1** | 0.0 |
+| 1B PPO-RNN (paper) | ~34 | — | — | small |
+| 1B PPO-GTrXL (paper) | ~41 | — | — | larger |
+| max possible | 226 | 25 | 54 | 75+72 |
+
+The ceiling our prompt-steering experiments are aiming at is **the
+basic + intermediate band** (max 79). PPO-RNN 1e8 already harvests
+~29 of those 79; we are at ~19. Closing the C-vs-PPO gap requires the
+intermediate-tier achievements that PPO-RNN gets (find_bow, open_chest,
+drink_potion, fire_bow, eat_snail, enter_dungeon at higher rate, and
+defeat_orc_solider). Several of these are *new categories* that
+C_grounded_2M's training data essentially never exhibited (because the
+source PSF run never reached the dungeon at high rate). This is the
+core motivation for [SCALING_C](SCALING_C.md): a higher-quality
+trajectory source would expand the action repertoire AWR can train.
+
+(`probe_results/ppo_baselines_achievement_breakdown.json` has the full
+per-achievement rates from the wandb summaries for PPO-RNN 1e8 and the
+partial-32M PPO-symbolic 1e8 run.)
+
+## Strategy goal restated
+
+Given the ~226-pt scale: each BASIC achievement we unlock from
+0%→100% adds 1 pt. Each INTERMEDIATE adds 3. Each ADVANCED adds 5.
+Each VERY ADVANCED adds 8. The cheapest wins for prompt steering are:
+- BASIC at <100% on freezenone — `make_iron_pickaxe` (0% → headroom 1pt),
+  `eat_plant` (0% → headroom 1pt), `wake_up` (52% → headroom 0.5pt),
+  many others — total ~10 BASIC pts of headroom.
+- INTERMEDIATE at 0% on freezenone but reachable: `enter_gnomish_mines`,
+  `find_bow`, `fire_bow`, `open_chest`, `drink_potion`, `eat_bat`,
+  `eat_snail`, `defeat_orc_solider`, `defeat_orc_mage` — most need
+  the policy to actually descend reliably first. Total ~50pt of
+  potential if all hit.
+- ADVANCED tier mostly out of reach without clearing floor 1.
+
+Headroom of ~60 BASIC+INTER pts. Realistic ceiling on C without
+retraining is probably +10-15 from baseline 14.66 → ~25-30 (which
+would land us at PPO-RNN 1e8 parity but from far less compute).
 
 ## Baseline diagnosis (n=50, no prompt change)
 
