@@ -1,0 +1,87 @@
+You are forecasting a plausible future for a Craftax state.
+
+Craftax overview:
+Craftax is a game about exploring dungeons, mining, crafting and fighting enemies. Each one-time achievement (collect a resource, craft an item, defeat a foe, descend a floor, find a bow, open a chest, etc.) adds points to the score (+1 BASIC, +3 INTERMEDIATE for floor-1 specials like bow/chest/orc/snail/potion). The player's goal is to unlock as many DIFFERENT achievements as possible across one episode, weighted heavily toward the floor-1 INTERMEDIATE band.
+
+Use these game rules:
+1) Coordinates are (Row, Column), centered on the player at (0,0).
+   - Negative Row = UP, Positive Row = DOWN.
+   - Negative Column = LEFT, Positive Column = RIGHT.
+2) Intrinsics: Health, Food, Drink, Energy, Mana. All out of 9.
+   - Food/Drink/Energy naturally decay.
+   - If Food/Drink/Energy reaches 0, Health will decay.
+   - If Food/Drink/Energy are maintained, Health can recover.
+3) Floor progression uses ladders.
+   - Descending requires reaching the ladder on the current floor.
+   - On non-overworld floors, the ladder is generally closed until enough mobs are killed.
+4) Actions: NOOP, LEFT, RIGHT, UP, DOWN, DO (interact/attack/mine/drink/eat),
+   SLEEP, PLACE_STONE, PLACE_TABLE, PLACE_FURNACE, PLACE_PLANT,
+   MAKE_{WOOD,STONE,IRON,DIAMOND}_{PICKAXE,SWORD}, REST, DESCEND, ASCEND,
+   MAKE_ARROW, SHOOT_ARROW, CAST_FIREBALL, CAST_ICEBALL, PLACE_TORCH,
+   DRINK_POTION_*, READ_BOOK, ENCHANT_*, LEVEL_UP_*.
+
+Here is the algorithm the player will play the game by:
+At every step, the player picks the highest-value achievement-source available within a few tiles, with descent to floor 1 as the structural backbone. The high-value targets are tier-weighted: floor-1 INTERMEDIATE achievements (bow, chest, orc, snail, potion) are worth 3 points each — three times a basic mining/crafting achievement.
+
+The priority order:
+1. If on Floor 0 (overworld) — Target descend (move toward the visible open ladder; use DESCEND when standing on it; otherwise explore toward unexplored ladder-likely terrain).
+2. If on Floor 1+ — Floor-1 hunting list (see below): pursue any visible bow / chest / orc / snail / potion within 4 tiles BEFORE generic descent.
+3. Survive.
+4. One-shot opportunistic milestones within 3 tiles (sapling, ripe placed plant, sleep, place_torch).
+5. Take the next ladder if open and on-screen and the floor's specials are exhausted.
+6. Upgrade equipment if survival is stable and Floor-0 (do not delay descent for upgrades on Floor 1+).
+7. Explore.
+
+1. Floor 0 (overworld): Target descend
+The player moves directly toward any visible open ladder and uses DESCEND as soon as the player is standing on it. If no ladder is visible, the player walks toward the most ladder-likely unexplored direction. The player only mines through stone walls when they block the shortest path to the ladder. Each new floor entered grants both +3 enter_X achievement AND a player_xp the player can spend on Strength / Dexterity / Intelligence.
+
+2. Floor 1+: Floor-1 hunting list (THE BIG POINT RESERVOIR)
+Once on Floor 1 (the dungeon), the player's job changes. Floor 1 is FULL of one-time +3 achievement targets that the overworld doesn't have. The player should NOT immediately descend further — instead, search the visible map for these targets and pursue them in this order:
+  (a) **bow** — looks like a small arrow / curved line on the floor. If visible, walk to it and DO to pick up (+3 find_bow).
+  (b) **chest** — a small box icon. If visible, walk to it and DO to open (+3 open_chest, may also drop a potion → +3 drink_potion if the player then DRINK_POTION_*'s it).
+  (c) **orc soldier** — a large humanoid with a brown/orange tint, melee. If visible AND the player has a wood/stone/iron sword, walk to it and DO to attack (+3 defeat_orc_solider). If the player only has bare hands or wood, RETREAT first.
+  (d) **snail** — a small spiral on the ground. If visible, walk to it and DO to attack, then DO again to eat the meat (+3 eat_snail).
+  (e) **fire_bow** — once the player has the bow in inventory, the player should SHOOT_ARROW at any visible mob from 2+ tiles range (+3 fire_bow). Combine with attacking orc soldiers from range.
+  (f) **drink_potion** — if a potion is in inventory (from chests), use the appropriate DRINK_POTION_* action immediately (+3 drink_potion).
+None of these are worth dying for. If health is <= 4 OR drink/food/energy < 4, fall back to Survive (priority 3) before pursuing any floor-1 target.
+
+3. Survive
+The player must track health, food, drink, and energy. If food is <= 4, get food immediately by killing animals and eating them. If drink is <= 4, get drink immediately from water tiles. If energy is <= 4, make a safe enclosure and SLEEP — also unlocks +1 wake_up. If health is <= 4, restore food, drink, and energy before doing anything risky. To avoid losing health, avoid arrows, and avoid enemies unless you can kill them. The player should never sleep in the open. Before sleeping, block enemies out, for example with stone walls.
+
+4. One-shot opportunistic milestones (1-3 tile detour ONLY)
+Each item below is a one-time +1 achievement the baseline policy often misses. Grab when reachable in 1–3 steps, never detour > 3 tiles from the current goal:
+  (a) collect_sapling — green sapling icon on a grass tile within 3 tiles → DO to harvest.
+  (b) place_plant — if carrying ≥1 sapling AND on grass → PLACE_PLANT.
+  (c) eat_plant — if within 1 tile of an own ripened plant (fruit visible) → DO to eat.
+  (d) place_torch — once carrying ≥1 torch → PLACE_TORCH on current tile (first one is +1).
+
+5. Take the ladder if it is open and visible
+Only on Floor 1+, take the ladder ONLY after the visible Floor-1 specials have been exhausted (bow picked up, chest opened, snail eaten, orc attempted). Going deeper without picking up Floor 1's +3s is leaving 6-12 points on the table.
+
+6. Upgrade equipment
+Same Upgrade Decision Tree as the base prompt: Diamond if Diamond+Coal+Wood; Iron if 1 Iron+1 Coal+1 Wood (place table+furnace if needed); Stone if Stone+Wood; Wood otherwise. On Floor 0 only — do not pause Floor-1 hunting to upgrade unless intrinsics are stable AND a crafting station is adjacent.
+
+Crafting Costs & Requirements:
+- Pickaxe/Sword: 1 Wood + 1 [Wood/Stone/Iron/Diamond].
+- Armor: 3 [Iron/Diamond].
+- Stations: Crafting Table (3 Wood), Furnace (1 Stone). Crafting anything requires being adjacent to a Crafting Table. Iron and Diamond tier items also require being adjacent to a Furnace.
+- Misc: Arrows (1 Wood + 1 Stone = 2), Torches (1 Wood + 1 Coal = 4).
+
+Resource Gathering & Maintenance Rules:
+- On Floor 0: Mine Coal whenever seen. Mine Iron whenever seen (requires Stone Pickaxe).
+- Deficit Gathering on Floor 0: <10 Wood → gather wood; <10 Stone with only wood tools → mine stone.
+- Surplus → craft arrows or torches.
+
+7. Explore
+If no Floor-1 special is visible, no immediate upgrade is available, the ladder is exhausted/unreachable, and intrinsics are stable, EXPLORE the unexplored direction most likely to reveal a chest, bow, or open ladder.
+
+Predict at a high level what the next five steps for the player will look like, given that they are following the algorithm. Do not forecast beyond five time steps! In particular, the player can move at most five tiles during these five steps. Reason during your state understanding about which floor the player is on, which Floor-1 specials are visible (if applicable), and whether descent or hunting is the current top priority.
+
+State Understanding: <A few sentences analyzing the current scene. Note the current floor. On Floor 0, identify the ladder if visible. On Floor 1+, identify any visible bow, chest, orc soldier, snail, or potion within 4 tiles. Note any one-shot milestone target within 3 tiles. >
+
+Prediction: <1 positive, direction-stating sentence describing the high-level behavior of the player in the next five steps. Good examples: "Move down to the visible open ladder and descend to Floor 1.", "Walk left to the visible chest and DO to open it.", "Move right to the bow on the floor and pick it up.", "SHOOT_ARROW at the orc soldier two tiles to the right." Do not use "instead of", "rather than", "avoid", "away from", "refuse", or any other negation — just state the direction and target. Do not reference specific coordinates. >
+
+Now, predict the future of the following state.
+
+Current state:
+{current_state_filtered}

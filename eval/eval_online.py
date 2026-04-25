@@ -196,6 +196,10 @@ _V2_TEMPLATES = {
         "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_achievement_max_v2.txt",
         "thinking": _TEMPLATE_DIR / "predict_state_only_prompt_concise_achievement_max_v2.txt",
     },
+    "achievement_max_v3": {
+        "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_achievement_max_v3.txt",
+        "thinking": _TEMPLATE_DIR / "predict_state_only_prompt_concise_achievement_max_v3.txt",
+    },
     # v3 iterations of the NULL specificity-matrix cells
     "target_eat_cow_v3": {
         "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_target_eat_cow_v3.txt",
@@ -1168,6 +1172,7 @@ def main():
                              "target_stay_overworld_v2",
                              "survive_long_v3",
                              "achievement_max_v1", "achievement_max_v2",
+                             "achievement_max_v3",
                              "target_eat_cow_v3", "target_drink_water_v3",
                              "target_stay_overworld_v3", "target_place_plant_v3",
                              "target_defeat_zombie_v3", "target_collect_sapling_v3",

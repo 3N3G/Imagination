@@ -202,23 +202,112 @@ Never reached (40/67), notable misses:
 - `enter_*` (sewers/vault/troll_mines/fire/ice/graveyard) (0%) — would
   need to descend multiple floors first; only enter_dungeon is reachable.
 
-## Achievement headroom assessment
+## Achievement headroom assessment (PPO-RNN-anchored, tier-weighted)
 
-Achievements with **realistic upward headroom** (already achieved
-sometimes, just need consistency boost):
+The earlier headroom estimate undercounted: `enter_dungeon` and
+several other reachable items are INTERMEDIATE (3 pts), not BASIC
+(1 pt). PPO-RNN 1e8 — same env, same observation space, just much
+more compute — is the upper-bound *rates* we should aim at, since it
+demonstrates the policy can actually achieve them. Below: per-target
+headroom in **points** (rate-gain × tier-pts), using PPO-RNN 1e8 as the
+ceiling and the C_grounded freezenone baseline as the floor.
 
-| ach | baseline | realistic ceiling | gain |
-|---|---|---|---|
-| wake_up | 52% | 80% | +0.28 |
-| collect_iron | 50% | 80% | +0.30 |
-| collect_sapling | 38% | 80% | +0.42 |
-| place_plant | 28% | 70% | +0.42 |
-| enter_dungeon | 12% | 50% | +0.38 |
-| eat_plant | 0% | 30% | +0.30 |
-| **Sum** | | | **+2.10** |
+### BASIC (1 pt each) — the cheap/easy reservoir
 
-If we can lift these 6 achievements without disrupting the existing
-high-rate ones, return should rise from 14.66 to ≈ 16.7 (+14% relative).
+| ach | C base | PPO-RNN 1e8 | rate-gain | tier | pt-gain |
+|---|---|---|---|---|---|
+| wake_up | 52% | 40% | already above PPO-RNN here | 1 | 0 |
+| collect_iron | 50% | 67% | +17pp | 1 | +0.17 |
+| collect_sapling | 38% | 99% | +61pp | 1 | +0.61 |
+| place_plant | 28% | 99% | +71pp | 1 | +0.71 |
+| eat_plant | 0% | 0.5% | already at PPO-RNN ceiling | 1 | 0 |
+| make_iron_pickaxe | 0% | 32% | +32pp | 1 | +0.32 |
+| make_iron_sword | 0% | 15% | +15pp | 1 | +0.15 |
+| collect_diamond | 0% | 8.5% | +8.5pp | 1 | +0.085 |
+| collect_coal | 72% | 86% | +14pp | 1 | +0.14 |
+| collect_drink | 82% | 78% | already above | 1 | 0 |
+| place_stone | 68% | 97.5% | +29.5pp | 1 | +0.30 |
+| place_furnace | 62% | 97.5% | +35pp | 1 | +0.35 |
+| place_torch | 52% | 81% | +29pp | 1 | +0.29 |
+| make_torch | 58% | 81% | +23pp | 1 | +0.23 |
+| make_stone_pickaxe | 76% | 85% | +9pp | 1 | +0.09 |
+| make_stone_sword | 70% | 85% | +15pp | 1 | +0.15 |
+| make_arrow | 72% | 82% | +10pp | 1 | +0.10 |
+| place_table | 96% | 98% | tiny | 1 | +0.02 |
+| make_wood_sword | 88% | 91% | tiny | 1 | +0.03 |
+| make_wood_pickaxe | 94% | 98% | tiny | 1 | +0.04 |
+| collect_stone | 94% | 97.5% | tiny | 1 | +0.035 |
+| collect_wood | 100% | 99% | already at ceiling | 1 | 0 |
+| eat_cow | 86% | 72% | already above | 1 | 0 |
+| defeat_zombie | 72% | 38% | already above | 1 | 0 |
+| defeat_skeleton | 74% | 36% | already above | 1 | 0 |
+| **BASIC subtotal** | | | | | **+3.97** |
+
+C is already *above* PPO-RNN on combat (zombie/skeleton/cow), drink, and
+wake_up — these are the survival skills the offline-RL policy learned
+from the curated PSF data. The PPO-RNN policy is much *worse* at
+single-step combat but much better at the rest of the BASIC tier.
+
+### INTERMEDIATE (3 pt each) — the big reservoir, mostly floor-1+
+
+| ach | C base | PPO-RNN 1e8 | rate-gain | tier | pt-gain |
+|---|---|---|---|---|---|
+| **enter_dungeon** | 12% | **68%** | +56pp | 3 | **+1.68** |
+| find_bow | 2% | 66% | +64pp | 3 | +1.92 |
+| open_chest | 2% | 66% | +64pp | 3 | +1.92 |
+| eat_snail | 4% | 61% | +57pp | 3 | +1.71 |
+| fire_bow | 0% | 50% | +50pp | 3 | +1.50 |
+| drink_potion | 0% | 30% | +30pp | 3 | +0.90 |
+| defeat_orc_solider | 0% | 18% | +18pp | 3 | +0.54 |
+| collect_ruby | 0% | 6.5% | +6.5pp | 3 | +0.20 |
+| collect_sapphire | 2% | 4% | +2pp | 3 | +0.06 |
+| make_diamond_sword | 0% | 1% | +1pp | 3 | +0.03 |
+| make_diamond_pickaxe | 0% | 0.5% | +0.5pp | 3 | +0.015 |
+| make_iron_armour | 0% | 0.5% | +0.5pp | 3 | +0.015 |
+| defeat_orc_mage | 2% | 0.5% | already above | 3 | 0 |
+| (5 INTER never reached by PPO-RNN either) | 0% | 0% | — | 3 | 0 |
+| **INTER subtotal** | | | | | **+10.5** |
+
+The big leverage points are: `enter_dungeon` (+1.68), `find_bow` (+1.92),
+`open_chest` (+1.92), `eat_snail` (+1.71), `fire_bow` (+1.50). All
+require descending to floor 1 (gnomish_mines / dungeon level) and
+hunting the lights/chests/snails on that floor. PPO-RNN gets these
+because it descends 68% of the time; C only descends 12%, so most of
+this band is locked behind the descent gate.
+
+### ADVANCED + VERY ADVANCED — out of reach without floor-2+
+
+PPO-RNN 1e8 itself never gets any of the 24 ADV / VADV achievements
+(0/15 ADVANCED, 0/9 VERY ADVANCED). The descent gate at floor 1 is
+binding even for the much-larger-compute baseline. The 1B PPO-GTrXL
+paper number (18.3% of max ≈ 41.4) presumably gets some of these. For
+us — at our compute scale — these tiers are genuinely closed unless we
+either (a) fine-tune from a stronger base (SCALING_C with PPO-RNN data),
+or (b) hand-craft a multi-floor exploration prompt that the policy can
+follow.
+
+### Total realistic prompt-only ceiling
+
+If we could match PPO-RNN 1e8's per-achievement profile via prompt
+steering on the existing C_grounded freezenone checkpoint:
+
+|  | gain |
+|---|---|
+| BASIC reservoir | +3.97 |
+| INTERMEDIATE reservoir | +10.5 |
+| above-PPO-RNN combat / drink / wake_up | -2 to -3 (C loses these) |
+| **net** | **~+11 to +12** |
+
+So a perfect prompt would push C from 14.66 → ~26 — close to PPO-RNN
+1e8's 27.87. **Prompt-only steering cannot exceed the PPO-RNN ceiling**
+because we have no way to introduce floor-2+ behaviors that the policy
+never learned in offline data.
+
+That sets the realistic target for prompt iteration: **score-max v3
+should aim for the 22–26 range** (currently v2 = 18.39). The remaining
+~7 pts headroom is mostly the floor-1 cluster (enter_dungeon → bow,
+chest, orc, snail, potion). v3 needs explicit *floor-1 instructions*,
+not just "descend".
 
 ## Strategy
 
