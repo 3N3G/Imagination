@@ -838,6 +838,70 @@ prompt cannot fix what the policy can't read.
 A_full is unmoved (Δret ≈ 0) — the content-blind policy is robust to
 both patches.
 
+<a id="awr-only-ablation"></a>
+### AWR-only ablation: does the BC+oracle finetune help?
+
+**Setup.** The canonical `C_grounded_2M` checkpoint
+(`psf_v2_cadence5_grounded_predonly_top2M/freezenone/final.pth`) is
+produced in two phases:
+1. AWR pretrain — 100k steps, β=10, oracle_loss_weight=0.0 →
+   `awr/final.pth`.
+2. BC + AWR finetune — 50k steps, β=30, oracle_loss_weight=0.5,
+   oracle_fraction=0.05, freeze_mode=none, init from #1 →
+   `freezenone/final.pth`.
+
+Phase 2 was added because the original v2 sweeps suggested it lifted
+return slightly. The AWR-only checkpoint (#1) had never been evaluated
+at scale on the steerability suite.
+
+A 7-cell chain (job 7493701) ran the AWR-only checkpoint against
+{baseline, target_descend, direction_left, die_fast, avoid_animals,
+target_collect_stone, v2_long_tail}.
+
+| condition | freezenone (canonical C) | awr-only | Δ awr − freezenone |
+|---|---|---|---|
+| baseline (gemini) | 14.66 ± 0.83 (n=50) | **17.43 ± 0.77 (n=27, partial)** | **+2.77** |
+| target_descend_v2 | 17.23 ± 0.89 (n=30) | 17.45 ± 0.86 (n=17, partial) | +0.22 |
+| direction_left_v2 — LEFT% of moves | 0.243 → 0.343 (+41% rel) | 0.242 → 0.340 (+40% rel) | matches |
+| direction_left_v2 — Δret | −6.72 (z=−5.7) | −5.00 (z=−3.7) | both collapse |
+| die_fast_v2 — Δlength | −246 (629→383) | −172 (590→418) | both shorten |
+| avoid_animals_v2 — eat_cow rate | (under analysis) | 96% → 100% (NULL) | both NULL |
+
+**Two findings:**
+
+1. **The AWR-only baseline is +2.77 return higher than the canonical
+   freezenone baseline.** The 50k-step BC+oracle finetune appears to
+   *drop* return rather than lift it. With more episodes the AWR-only
+   estimate may move further but the magnitude of the gap is large
+   relative to the SE.
+
+2. **Steerability is preserved on AWR-only.** Direction-left moves
+   move-share-of-cardinal-moves by +40% relative (vs +41% on
+   freezenone). die_fast shortens episodes ~170 steps. target_descend
+   pushes enter_dungeon +20pp. The same axis-by-axis behaviors that
+   make freezenone steerable also work on awr-only, just from a
+   higher starting point.
+
+**Implications:**
+
+- The "C policy" we have been treating as canonical may be a
+  suboptimal checkpoint within the same training run. Re-running the
+  Specificity matrix and the score-max iteration on the AWR-only
+  checkpoint could move *all* return numbers up by ~3 points without
+  any retraining.
+- For the SCALING_C plan (`docs/SCALING_C.md`), this also implies the
+  BC+AWR phase may not be necessary — a pure-AWR pipeline on the new
+  PPO-RNN-derived data could land at a higher return ceiling with less
+  compute.
+- One open caveat: the AWR-only baseline n=27 estimate of 17.43 came
+  in BELOW the n=14 partial estimate of 18.39 — the 30-eval will be
+  the canonical number. Even at 17.43 the gap to freezenone is large.
+
+Job: 7493701 (7-cell array). Eval dir:
+`/data/group_data/rl/geney/eval_results/psf_v2_cadence5_grounded_predonly_top2M_awr_only/`.
+
+---
+
 ### What this changes about the central claim
 
 Patch-by-prompt is the strongest single-axis demonstration that a

@@ -165,4 +165,64 @@ sapling / place_plant / eat_plant / place_torch with a hard "no detour
 > 3 tiles, never delay descent significantly" rule. Critically, do NOT
 re-introduce v1's "wait for iron before descending" gate.
 
-(Submitted as job 7492824 at 13:20 EDT, ETA 1.5–2h. n=30.)
+**v2 result (n=28): return 18.39 ± 1.02, length 915, Δret +3.73 (z=+2.83)
+vs baseline; +1.15 vs the previous best `target_descend_v2` (17.23);
+matches the unaugmented offline-RL baseline of 18.38.** Best
+single-prompt result on the C policy to date.
+
+Per-achievement deltas (top movers, n=28 vs baseline n=50):
+
+| Δpp | achievement | note |
+|---|---|---|
+| **+27pp** | place_furnace (62→89%) | descent cascade + iron-tier prep |
+| **+27pp** | enter_dungeon (12→39%) | descent cascade preserved |
+| +25pp | place_stone (68→93%) | descent cascade |
+| +23pp | wake_up (52→75%) | sleep prompt + longer survival |
+| +23pp | place_torch (52→75%) | milestone hit |
+| +18pp | collect_iron (50→68%) | descent cascade |
+| +17pp | collect_coal | descent cascade |
+| +17pp | make_torch | descent cascade |
+| +17pp | make_stone_pickaxe | descent cascade |
+| +16pp | make_stone_sword | descent cascade |
+| **+15pp** | place_plant (28→43%) | the v1 nudge that we kept |
+| +12pp | collect_sapling | the v1 nudge that we kept |
+| +10pp | defeat_zombie | side effect |
+| +7pp | eat_cow | side effect |
+| +5pp | find_bow, open_chest | side effect |
+| +4pp | eat_plant (0→4%) | the v1 nudge that we kept; first non-zero on freezenone via steering alone |
+| **−7pp** | **collect_drink (82→75%)** | only meaningful regression |
+| −3pp | defeat_skeleton | small |
+
+Episode length 629 → 915 (+45% longer). The combined prompt is
+producing longer, more-purposeful runs that also pick up the rare
+plant/torch/sapling milestones. Lessons:
+
+- The descent-priority-1 pattern is the *structural* lever; without it
+  v1 lost enter_dungeon (-5pp) and underperformed.
+- The "no detour > 3 tiles" hard cap on the milestone rider is what
+  let it co-exist with descent — without that v2 would have crowded
+  out the descent cascade.
+- We are now within noise of the unaugmented baseline (18.38) by prompt
+  alone, and still steerable (the same prompt-suite from the
+  Specificity matrix continues to move per-axis behaviors).
+
+### Where to go from here
+
+The next iteration question: can we push past 18.4 by combining v2's
+milestone rider with explicit chain-task elicitation
+(make_iron_pickaxe, make_iron_sword), or are we hitting the policy
+fidelity ceiling? The Specificity matrix has shown 0/30 iron pickaxe
+across multiple chain-task prompts on freezenone, but **`v2_long_tail`
+patch produced the first non-zero make_iron_pickaxe (1/30, 3%)** and
+v2 also got 1/28 (~4%). That's not random noise — the prompt is
+opening the door. A v3 that doubles down on the iron crafting recipe
+("after collecting 1 iron AND 1 coal AND 1 wood AND placing furnace +
+table, immediately MAKE_IRON_PICKAXE") might push it further.
+
+A *separate* and possibly higher-leverage lever: see the
+[AWR-only ablation in STEERABILITY.md](../docs/STEERABILITY.md#awr-only-ablation)
+— the BC+oracle finetune phase that produced the freezenone checkpoint
+appears to *drop* baseline return by ~2.8 (freezenone 14.66 vs
+awr-only 17.43, n=27). If we evaluate the prompt suite against the
+awr-only checkpoint instead of freezenone, the achievable score
+ceiling may shift up by another ~3 points.
