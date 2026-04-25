@@ -915,13 +915,51 @@ target_collect_stone, v2_long_tail}.
    competes with the awr-only policy's already-optimal placement
    routine.
 
-   **Net**: BC+oracle is **not redundant**. It trades baseline
-   performance (-3 raw return) for *prompt-headroom* (achievement
-   rates left low so prompts can fill them). Both routes converge to
-   ~18 raw return on this data — but only freezenone-with-prompt is
-   *steerable in the score-improvement sense*. AWR-only is *steerable
-   in the behavior-shift sense* but cannot be score-improved by
-   prompts because it has no rate-headroom on the targeted axes.
+   **Net (revised again 2026-04-25 after per-achievement check)**: the
+"BC+oracle creates artificial rate-gaps" framing is partially right
+but also partially wrong. The per-achievement breakdown of
+`achievement_max_v2` on both checkpoints shows that on the
+high-headroom axes, **awr-only moves AS MUCH or MORE than freezenone
+in absolute terms**:
+
+| achievement | freezenone Δpp | awr-only Δpp |
+|---|---|---|
+| eat_plant   | 0 → 3 (+3) | 0 → 7 (**+7**) |
+| place_plant | 28 → 47 (+19) | 47 → 67 (**+20**) |
+| collect_sapling | 38 → 53 (+15) | 47 → 67 (**+20**) |
+| enter_dungeon | 12 → 37 (+25) | 17 → 33 (+17) |
+| eat_cow | 86 → 93 (+7) | 97 → 100 (+3) ceiling |
+| wake_up | 52 → 70 (+18) | 93 → 100 (+7) ceiling |
+
+Where awr-only's score doesn't improve is on the
+**already-saturated-but-prompt-disrupted** axes: `collect_iron` 70%
+→ 40% on awr-only (the descent prompt pulls the policy off iron
+mining when iron was already 70%, vs +17 on freezenone where iron was
+only 50%); `place_torch` 80% → 67% (saturated then disrupted). Same
+pattern on `make_torch`, `make_stone_pickaxe`, `make_stone_sword`.
+
+**The actual story**: awr-only is *fully axis-steerable* in the same
+direction as freezenone for every prompt-targeted achievement. Score
+doesn't go up because:
+(i) gains on under-saturated achievements (place_plant, sapling,
+    eat_plant) are offset by
+(ii) drops on already-saturated achievements that the descent prompt
+    crowds out (iron, torches).
+
+This means the right question is not "does awr-only steer?" (it does)
+but "can a prompt iterated to AVOID the saturation-disruption push
+awr-only's score above freezenone+v2's 18.39?" If yes, awr-only is
+the better starting point — and BC+oracle does become genuinely
+unnecessary (it gives up 3 baseline points for prompt-headroom we
+don't actually need if the prompt is good enough). If no, BC+oracle
+buys us a different operating point that prompts can fill.
+
+**Critical pending experiment**: `achievement_max_v3` on awr-only
+(submitted job 7496528). v3 has explicit floor-1 hunting (bow, chest,
+orc, snail, potion) — achievements both checkpoints are at 0% on. If
+v3 elicits these on awr-only, we get awr-only's higher baseline +
+floor-1 INTERMEDIATE wins → could exceed freezenone+v2 by 3-5 points.
+Result will land in ~1.5h.
 
 **Implications (revised):**
 

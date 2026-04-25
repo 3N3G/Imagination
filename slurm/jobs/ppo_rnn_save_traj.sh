@@ -27,7 +27,7 @@ mkdir -p "${SAVE_DIR}" "${TRAJ_SAVE_DIR}"
 # → ~100 batches × 65K = ~6.5M transitions saved, covering update_steps 500
 # - 1525 (ep_return ~17 → 28). Plenty to filter top-4M from.
 "${SCRIPT_DIR}/submit.sh" \
-    --env craftax \
+    --env craftax_fast_llm \
     --job "ppo_rnn_save_traj" \
     --gpu L40S \
     --mem 64G \
