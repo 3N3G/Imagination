@@ -496,38 +496,67 @@ single-prompt result on the C policy to date. wandb:
 **Status note (2026-04-25 17:43 EDT)**: v3 freezenone eval (job
 7495771) was cancelled at episode 9/30 due to a /data/group_data/rl
 quota-exhausted error. v3 awr-only test (job 7496528) was cancelled
-before getting any episodes for the same reason. Both are pending
-re-submission once disk quota is freed. See
-[`docs/SCALING_C.md`](SCALING_C.md) "Status" for cleanup candidates
-(70GB+ recoverable from old experiments).
+before getting any episodes for the same reason. Both re-submitted
+to /data/user_data/geney/ as a quota workaround (job 7497483, 4-cell
+array adding v4 too).
 
-### v3 freezenone — partial (n=9) directional signal
+### v3 freezenone — n=9 partial signal was a fluke
 
-Even at n=9 the per-achievement deltas relative to v2 are
-suggestive (huge SE on return so this is *not* a return claim, just
-a behavior-shift claim):
+Initial n=9 partial showed promising floor-1 deltas (enter_dungeon
+12→56%, orc 0→22%, fire_bow 0→11%) and ret 18.32. With n=19 the
+picture changes substantially: ret 15.73 ± 1.53, enter_dungeon at
+16%, orc at 5%, fire_bow at 5%. **The n=9 result was sampling noise
+caused by Gemini API non-determinism** (each fresh run produces
+different gemini outputs at the same prompt+input), not a stable v3
+effect. v3 net-of-noise underperforms v2 (15.73 vs 18.33) on
+freezenone. On awr-only v3 hit 16.68 (n=26) — also below the
+17.67 awr-only baseline.
 
-| ach | baseline | v2 (n=30) | v3 (n=9 partial) | v3 − v2 |
+### v4 — 3-phase plan ("`achievement_max_v4`")
+
+Hypothesis: the v3 floor-1 hunting failed because the policy died on
+floor 1 too fast. v4 added an explicit 3-phase plan: Phase A builds
+the toolkit on Floor 0 (stone pickaxe + sword + arrows + torches)
+*before* descending, Phase B hunts the +3 specials on Floor 1, Phase
+C ASCENDs back to Floor 0 to recover if HP ≤ 5.
+
+**v4 freezenone result (n=30 DONE): ret 12.73 ± 1.51, length 461.**
+**WORSE than v2 (18.33) AND worse than baseline (14.66).** The
+detailed multi-phase plan crowds out the policy's natural routine:
+
+| ach | base% | v2% | v4% | v4−v2 |
 |---|---|---|---|---|
-| enter_dungeon | 12% | 37% | **56%** | +19pp |
-| defeat_orc_solider | 0% | 3% | **22%** | +19pp |
-| fire_bow | 0% | 3% | 11% | +8pp |
-| find_bow | 2% | 7% | 11% | +4pp |
-| open_chest | 2% | 7% | 11% | +4pp |
-| eat_snail | 4% | 7% | 0% | −7pp |
-| make_iron_pickaxe | 0% | 0% | 0% | 0 |
-| collect_diamond | 0% | 0% | 0% | 0 |
+| place_stone | 68 | 93 | 57 | **−36** |
+| place_furnace | 62 | 90 | 43 | **−47** |
+| wake_up | 52 | 70 | 50 | −20 |
+| enter_dungeon | 12 | 37 | 20 | −17 |
 
-v3 return at n=9 is 18.32 ± 1.93 (essentially equal to v2's 18.33,
-within noise). Length is shorter (698 vs v2's 878) — the policy
-descends faster but seems to die on floor 1 more often. The floor-1
-INTERMEDIATE achievements DO get pushed up by v3, but the prompt
-isn't yet teaching the policy to *survive* floor 1 long enough to
-collect the resulting +3-pt rewards reliably. A v4 might add a
-"retreat to floor 0 if HP ≤ 5" rule.
+v4 awr-only (n=24): ret 14.85 ± 1.28 (vs awr-only baseline 17.67).
+Same disruption pattern.
 
-(Re-run with full n=30 needed once disk freed — partial-data SE is
-too high to draw return conclusions.)
+### Lesson: the prompt-iteration ceiling on this policy is ~v2 (18.4)
+
+Three failed iterations after v2 — (v3 floor-1 hunting, v4 3-phase
+plan, and even just the v2-on-awr-only check at n=15 partial) — all
+land at or below v2's ret 18.39 on freezenone (or awr-only's 17.67
+baseline, which freezenone+v2 ties). The prompt mechanism alone
+can't push C-on-this-data above 18-19 raw return because:
+- Floor-1 INTERMEDIATE achievements (bow, chest, orc) need policy
+  skills the offline-RL training data doesn't really exhibit. Gemini
+  text describes these in terms of icons but the policy hasn't
+  learned to act on those features.
+- More-detailed multi-phase prompts confuse the policy more than
+  they help — they push it off its trained-on routine.
+- Both checkpoints (freezenone + awr-only) converge to the ~18
+  ceiling reachable from this PSF data.
+
+**To push past 18, we need [SCALING_C](SCALING_C.md): re-train C on
+PPO-RNN-derived trajectories** where the source policy actually
+demonstrates floor-1 behaviors. The offline-RL training data is the
+binding constraint here, not the prompt.
+
+(Currently blocked on disk quota: PPO-RNN+save_traj would write
+~80GB and `/data/group_data/rl` quota is exhausted.)
 
 Per-achievement deltas (top movers, n=28 vs baseline n=50):
 
