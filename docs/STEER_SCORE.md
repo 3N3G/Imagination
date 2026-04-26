@@ -531,8 +531,25 @@ detailed multi-phase plan crowds out the policy's natural routine:
 | wake_up | 52 | 70 | 50 | −20 |
 | enter_dungeon | 12 | 37 | 20 | −17 |
 
-v4 awr-only (n=24): ret 14.85 ± 1.28 (vs awr-only baseline 17.67).
+v4 awr-only (n=30): ret 15.33 ± 1.07 (vs awr-only baseline 17.67).
 Same disruption pattern.
+
+### Final all-cell summary (n=30)
+
+| variant | freezenone | awr-only |
+|---|---|---|
+| baseline | 14.66 ± 0.83 (n=50) | **17.67 ± 0.72** |
+| v2 (target_descend + milestones) | **18.33 ± 0.96** | (15-ep partial 17.50) |
+| v3 (floor-1 hunting) | 15.30 ± 1.42 | 15.83 ± 1.11 |
+| v4 (3-phase plan) | 12.73 ± 1.51 | 15.33 ± 1.07 |
+
+Notable v3 win even at lower return: `make_iron_pickaxe` 10% on
+freezenone-v3 (vs 0% on baseline, v2, and any prior C eval).
+**First-ever non-zero make_iron_pickaxe rate on C-style policy via
+prompt steering alone.** Same prompt produces 0% on awr-only.
+`drink_potion` also reached 3% on v4-freezenone (first non-zero on C).
+So v3/v4 do unlock NEW achievements — they just can't co-exist with
+the baseline routine well enough to net more return.
 
 ### Lesson: the prompt-iteration ceiling on this policy is ~v2 (18.4)
 
