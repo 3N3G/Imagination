@@ -197,6 +197,38 @@ def load_from_orbax(ckpt_dir: Path, action_dim: int, obs_dim: int,
     if step is None:
         raise FileNotFoundError(f"No checkpoint step under {ckpt_dir}")
 
+    # Older runs saved sharding info naming the device "cuda:0". Newer JAX
+    # versions enumerate the same device as "gpu:0" or differently — orbax
+    # then can't deserialize. Force-rewrite the on-disk _sharding file to
+    # point all entries at this process's first available device, then restore.
+    sharding_path = ckpt_dir / str(step) / "default" / "_sharding"
+    if sharding_path.exists():
+        import json as _json, base64
+        with sharding_path.open() as _f:
+            _shmap = _json.load(_f)
+        local_devs = jax.local_devices()
+        if local_devs:
+            # Use the same naming JAX currently emits for device 0
+            target_device = str(local_devs[0])
+            # All sharding values look like
+            # '{"sharding_type": "SingleDeviceSharding", "device_str": "cuda:0"}'
+            _changed = False
+            for k, v in list(_shmap.items()):
+                try:
+                    sd = _json.loads(v)
+                    if sd.get("device_str") not in (target_device,):
+                        sd["device_str"] = target_device
+                        _shmap[k] = _json.dumps(sd)
+                        _changed = True
+                except Exception:
+                    pass
+            if _changed:
+                # Backup once
+                _bak = sharding_path.with_suffix(".bak")
+                if not _bak.exists():
+                    sharding_path.replace(_bak)
+                with sharding_path.open("w") as _f:
+                    _json.dump(_shmap, _f)
     restored = mgr.restore(step)
     # TrainState layout: {opt_state, params, step} where params = {'params': {Dense_0, ...}}
     params = restored.get("params")

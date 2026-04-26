@@ -140,6 +140,7 @@ def run_eval(args):
         ep_achievements = {}
         ep_action_counts = np.zeros(ACTION_DIM, dtype=np.int32)
         ep_frames = []
+        ep_actions = []  # for replay/death-classification downstream
 
         while not done and step < 10000:
             obs_np = np.array(obs, dtype=np.float32)
@@ -154,6 +155,7 @@ def run_eval(args):
 
             ep_values.append(v)
             ep_action_counts[action] += 1
+            ep_actions.append(int(action))
 
             rng, step_key = jax.random.split(rng)
             obs, env_state, reward, done, info = env.step(step_key, env_state, action, env_params)
@@ -196,6 +198,7 @@ def run_eval(args):
             "achievements": ep_achievements,
             "num_achievements": len(ep_achievements),
             "mean_value": float(np.mean(ep_values)) if ep_values else 0,
+            "actions": ep_actions,
         }
         all_results.append(result)
         print(f"\n  Return: {ep_return:.2f}  Length: {step}  Achievements: {len(ep_achievements)}")
