@@ -1,0 +1,178 @@
+# Where C dies — replay-based cause-of-death classification
+
+**Scope**: all 50 episodes from the C_grounded_2M freezenone baseline
+eval (wandb run [`pjb8wf7z`](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/pjb8wf7z),
+mean return 14.66 ± 0.83). Replayed each episode deterministically
+with the saved action sequence, captured the final `env_state`, and
+classified the cause-of-death.
+
+Tool: `tools/classify_episode_deaths.py`.
+Output: `probe_results/death_classification_C_baseline.json`.
+Validation: cross-checked HP against Gemini's final-call text — 2/50
+small mismatches caused by RNG drift between replay and original eval
+(deaths happen within the 5-step Gemini cadence window after the last
+Gemini call).
+
+## Headline tally
+
+| cause | n | % |
+|---|---|---|
+| killed_by_melee_adjacent | 30 | **60%** |
+| dehydration (drink → 0) | 5 | 10% |
+| killed_by_ranged_or_arrow | 4 | 8% |
+| starvation (food → 0) | 2 | 4% |
+| exhaustion (energy → 0) | 1 | 2% |
+| killed_unknown_combat | 1 | 2% |
+| alive_or_timeout (replay-RNG drift) | 7 | 14% |
+
+## Critical observation: ALL 50 EPISODES ENDED ON FLOOR 0
+
+Player floor at death across all 50 episodes = 0. The policy never
+even gets killed on Floor 1+ — because **only 6/50 (12%) ever
+reached Floor 1 at all** (the `enter_dungeon` achievement). Of those
+6, all died on Floor 0 too because Craftax episodes track the floor
+at the death tile, and they came back up to 0. Either way: **the
+policy spends its life on Floor 0 and dies there**.
+
+This explains the per-achievement gap directly:
+- `find_bow` 2%, `open_chest` 2%, `eat_snail` 4%, `defeat_orc_solider`
+  0% — ALL of these are floor-1+ entities. The policy can't do them
+  because it doesn't go where they are.
+- `enter_dungeon` 12% means 12% of episodes reach Floor 1 at all,
+  but they die quickly there (or come back up because of low HP).
+- C is at 0% on iron pickaxe / diamond / spells / enchant — same
+  story scaled up: those are floor-2+ activities.
+
+## Death-mechanism breakdown
+
+### 1. Melee deaths (60%)
+
+These are zombies (and possibly skeletons that closed to melee
+range) on Floor 0. The pattern in the replay data: HP drops from
+2 → 0 in a single step (so a 2-damage melee hit, consistent with
+zombie attacks). Median episode length for melee-deaths = 380 steps
+— the policy survives ~6 minutes of game time before being caught.
+
+Examples (final state at last replay step):
+- ep5: length=211, ret=23.1 (already collected lots of stuff,
+  killed by adjacent zombie)
+- ep15: length=1499, ret=18.1 (long episode, eventually caught)
+- ep28: length=1071, food=1, drink=7, energy=2 (intrinsics drained,
+  zombie finished it)
+
+**The policy doesn't reliably retreat from advancing zombies.** It
+keeps performing whatever its routine is (mining, crafting, walking
+to a goal) until an adjacent zombie chops HP to 0.
+
+### 2. Intrinsic depletion (16%)
+
+| sub-cause | n | example |
+|---|---|---|
+| dehydration | 5 | ep6 length=1770: drink=0 + food=0, died of compounding |
+| starvation | 2 | ep19 length=407: food=0 + energy=0 |
+| exhaustion | 1 | ep1 length=408: energy=0 |
+
+**Drink management is the worst.** 5/8 of these deaths are from
+drink hitting 0. The `target_drink_water_v2` prompt actually showed
+the policy's per-step drink rate is the same as baseline (0.022) —
+the policy doesn't drink more even when prompted to. So the issue
+is not "the prompt doesn't tell it to drink" but "the policy's
+trained drinking behavior is just a fixed-rate habit, not a
+needs-driven action".
+
+### 3. Ranged deaths (8%)
+
+Skeleton arrows on Floor 0. The policy doesn't dodge arrow paths.
+
+### 4. Alive-or-timeout (14%)
+
+These are episodes where my replay shows HP > 0 at the last action
+recorded (slight RNG drift in env transitions makes my replay's
+final state diverge from the original eval). Cross-checking
+Gemini's last text on those episodes: most have HP=1-4 + low
+intrinsics (drink/food/energy at 0). Almost certainly real deaths
+that landed within the 5-step Gemini cadence window after the last
+Gemini call.
+
+## Diagnosis: where is the bottleneck?
+
+The user asked: "is the main issue for improving it further the
+amount of training data with oracle labels, reducing the
+errors/getting more optimality in gemini predictions, something
+else?"
+
+**It's not Gemini prediction quality.** Inspecting Gemini's last
+calls before death: in many episodes Gemini correctly identifies
+the threat. ep14's last Gemini call says "There are two zombies
+nearby... Health is also critically low (1)" — Gemini sees the
+problem. The policy doesn't act on it. For ep23 (HP=1, last 5
+actions all DO=attack), Gemini was telling it to engage but the
+policy didn't break off when HP got critical. This is consistent
+with the broader finding that C reads embedding *content* but the
+underlying policy lacks the *retreat/dodge/manage* skills.
+
+**It's not lack of oracle labels.** The training data already uses
+oracle Gemini labels. The policy memorized them well enough to read
+them at deploy time. Adding more oracle labels would re-train the
+same fixed-rate routines.
+
+**It IS the trajectory data quality.** Two specific sub-points:
+
+1. **Survival skills.** The source PSF data was generated by a PPO
+   policy that itself dies on Floor 0 to zombies — the trajectories
+   in our top-2M subset have raw episode return mean 21.21, range
+   [20.1, 32.1]. There's no high-return tail teaching long-survival
+   combat behavior. AWR-trained policies (the C path) imitate the
+   demonstrated behavior; if the demonstration doesn't show
+   "retreat from low HP", the student doesn't learn it.
+2. **Floor-1 navigation.** The source PSF policy enters the dungeon
+   only ~12% of the time. The C policy inherits that 12% rate.
+   PPO-RNN 1e8 enters 68% of the time and harvests floor-1 specials
+   on the way. Until C trains on data that *reaches* floor 1
+   reliably, the +7.8 raw return waiting in the floor-1
+   INTERMEDIATE band stays locked.
+
+So: **better training-data trajectories (SCALING_C) are the binding
+fix**, not more oracle labels and not better Gemini predictions.
+Order-of-magnitude estimate (per `docs/SCALING_C.md` gap table):
++10.84 raw return potential by switching to PPO-RNN-1e8-derived
+trajectories.
+
+## Side-by-side return × cause-of-death
+
+To check: do the high-return episodes die differently from the
+low-return ones?
+
+| return bucket | n | dominant cause (verified) |
+|---|---|---|
+| ≥ 20 | 6 | melee=4, starvation=1, ranged=1 |
+| 15–19 | 24 | melee=15, dehydration=4, ranged=1, starvation=1, exhaustion(unknown_combat)=1, alive=2 |
+| 10–14 | 12 | melee=6, ranged=2, alive=3, exhaustion=1 |
+| < 10 | 8 | melee=5, dehydration=1, alive=2 |
+
+Same melee-dominant pattern across all return brackets. **High-return
+episodes die the same way as low-return ones** — they just survive
+longer first. No qualitative regime change with score.
+
+## Implications for steering / prompt iteration
+
+- **Score-max iteration won't fix this** — even the best prompt
+  (achievement_max_v2 = 18.33) still has the policy spending all
+  its time on Floor 0 dying to zombies. The +3.7 lift from baseline
+  came from doing *more* on Floor 0 (place_furnace +27, place_stone
+  +25, wake_up +23), not from surviving longer or descending more.
+- **Mid-episode switch prompts** (which can re-orient the policy
+  late) probably can't fix this either — the policy lacks the
+  underlying retreat/dodge skill.
+- **The fundamental answer is** to train C on trajectories that
+  themselves demonstrate floor-1 play and zombie-avoidance.
+  SCALING_C is exactly that.
+
+## Files / artifacts
+
+- `tools/classify_episode_deaths.py` — replay + classifier
+- `probe_results/death_classification_C_baseline.json` — full JSON
+  with per-episode (final_hp, food, drink, energy, floor,
+  position, melee_within_1, ranged_within_5, lava_under, cause,
+  return, length, last-10 actions)
+- This doc: `docs/DEATH_ANALYSIS.md`
