@@ -480,3 +480,49 @@ PYTHONPATH=. python -m pipeline.build_bitpacked_top_subset \
 
 (`--num_envs 1024` flag added to `pipeline/filter_and_repack.py` to
 support the flat 2D NPZ format the new save_callback emits.)
+
+## Pipeline status (2026-04-26 11:00 EDT)
+
+Job chain queued / staged:
+
+| phase | script | status | job id |
+|---|---|---|---|
+| 1 (continuous traj save) | `ppo_rnn_save_traj_continuous.sh` | RUNNING (~20 min in) | 7507785 |
+| 2 (filter + top-4M) | `scaling_c_phase2.sh` | PENDING (auto-fires) | 7507797 (afterok:7507785) |
+| 3 (Gemini grounded label) | `scaling_c_phase3_gemini_label.sh` | READY, awaits user spend approval (~$400) | — |
+| 4 (embed + merge) | `scaling_c_phase4_embed_merge.sh` | READY (waits for Phase 3) | — |
+| 5 (AWR + BC+AWR) | `scaling_c_phase5_train.sh` | READY (waits for Phase 4) | — |
+| 6 (eval) | reuse `score_max_v2_userdata.sh` patterns | n/a | — |
+
+Phases 3-5 are not auto-chained — Phase 3 is the expensive Gemini
+spend ($400) and we want a human eyeball on the Phase 2 manifest
+(actual mean RTG, episode count, achievement coverage) before
+firing the labelling job.
+
+## Ideas for further data quality improvements (post-Phase 6)
+
+If the new C_v2 lands at the optimistic 22-26 raw return ceiling and
+we still want more headroom:
+
+1. **Combine top-2M PSF v2 + top-4M PPO-RNN v3** into a 6M dataset.
+   Adds floor-0 coverage diversity from PSF v2 to the higher-quality
+   PPO-RNN data. Cost: nothing extra (data already exists). Risk:
+   noise from mixing distributions.
+
+2. **Multi-seed PPO-RNN**. Run 2-3 PPO-RNN seeds at 1e8 each (~3h
+   compute, ~70GB disk) and combine. Doubles seed-diversity for AWR.
+   Worth doing if Phase 6 shows that single-seed PPO-RNN data caps
+   at the same ceiling as the existing PSF v2 (i.e. data quality
+   dominated by exploration variance, not policy ceiling).
+
+3. **PPO-RNN at 2e8 timesteps**. If 1e8 is still climbing (last log
+   shows mean=27.87, paper PPO-RNN extrapolates to ~33 by 5e8), more
+   training would push the source-data quality ceiling higher. Cost:
+   ~2-3h compute, ~50GB disk. Diminishing returns past 2e8.
+
+4. **PPO-GTrXL data** (paper's 1B variant, gets 41.4 raw return —
+   18.3% of max, unlocks ADV/VADV achievements). Would require
+   training PPO-GTrXL at scale. Big infra investment but the only
+   path to ADV/VADV coverage in the offline data.
+
+These are deferred until Phase 6 lands.
