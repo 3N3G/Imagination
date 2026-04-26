@@ -415,3 +415,68 @@ infrastructure investment.
       PPO-RNN+save_traj job especially would generate ~80GB of new
       traj data which the quota cannot hold even on user_data.
 - [ ] Phases 2–6 (after disk freed AND Phase 1 traj saved).
+
+## 2026-04-26 update — Phase 1 data has a save-cadence bias bug
+
+The Phase 1 job (7503746, completed 2026-04-26 01:11) ran with
+`--save_traj_every 10 --save_traj_start_step 500`. 103 batches saved
+(~6.7M transitions, 3.3 GB compressed). When I scanned all 103
+batches (`tools/`-style script — see commit log) and computed
+per-completed-episode return, the result was:
+
+| metric | value |
+|---|---|
+| total visible completed episodes | 19,778 |
+| per-episode return mean | **1.09** |
+| per-episode return median | **−0.10** |
+| max single-episode return | 30.10 |
+| episodes ≥ 20 raw return | 66 (0.3%) |
+
+This sharply contradicts the wandb training-time mean of **27.87**
+(and the Phase 6 video eval of 26.12).
+
+**Root cause**: `--save_traj_every 10` saves 1 update step every 10.
+One update step = 64 timesteps × 1024 envs. Episodes average ~317
+timesteps. Probability that an episode ends within the 64-timestep
+window of a saved batch ≈ 64/317 = 20% per env, but the **start** of
+those episodes was almost always in the unsaved 9-batch gap before
+this saved batch. So the only "completed" episodes I see in the saved
+data are *partial tails* — typically the last 1–60 steps of an
+otherwise long episode, dominated by the death penalty.
+
+The 60% of visible episodes with return ∈ [−1, 0) are precisely
+those tails: a few negative-reward steps before death.
+
+**Implication**: the existing data CANNOT be turned into a
+return-filtered top-K subset because we don't observe full episodes.
+Per-step rewards are correct in isolation, but episode-attribution
+fails. Picking "top-K rows by RTG" requires knowing each row's
+forward rewards through episode end, which span unsaved batches.
+
+**Fix**: re-run PPO-RNN with `--save_traj_every 1
+--save_traj_start_step 1000` (continuous save through last 525
+batches = ~24 GB, ~34M transitions). 525 contiguous batches → every
+episode that begins in the save window also ends there. RTG can be
+computed correctly. Picking top-4M-rows by RTG then works.
+
+Job submitted as 7507785 (slurm/jobs/ppo_rnn_save_traj_continuous.sh).
+Walltime 6h, 24GB disk budget. Output:
+`/data/group_data/rl/geney/raw_trajectories/ppo_rnn_1e8_save_traj_continuous/`.
+
+After this lands, Phase 2 invocation:
+
+```bash
+PYTHONPATH=. python -m pipeline.filter_and_repack \
+    --input_dir /data/group_data/rl/geney/raw_trajectories/ppo_rnn_1e8_save_traj_continuous \
+    --output_dir /data/group_data/rl/geney/new_craftax_llm_labelled_results_shards/filtered_trajectories_pporn_1e8 \
+    --min_return 15 --gamma 0.99 \
+    --num_envs 1024
+
+PYTHONPATH=. python -m pipeline.build_bitpacked_top_subset \
+    --input-dir /data/group_data/rl/geney/new_craftax_llm_labelled_results_shards/filtered_trajectories_pporn_1e8 \
+    --output-dir /data/group_data/rl/geney/new_craftax_llm_labelled_results_shards/filtered_trajectories_psf_v3_pporn_1e8_top4M \
+    --target-rows 4000000
+```
+
+(`--num_envs 1024` flag added to `pipeline/filter_and_repack.py` to
+support the flat 2D NPZ format the new save_callback emits.)

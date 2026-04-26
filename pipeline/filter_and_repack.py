@@ -114,6 +114,7 @@ def process_trajectories(
     min_return: float,
     gamma: float,
     samples_per_file: int,
+    num_envs_override: int | None = None,
 ):
     input_path = Path(input_dir)
     output_path = Path(output_dir)
@@ -132,9 +133,14 @@ def process_trajectories(
     if len(obs_shape) == 3:
         num_steps, num_envs = obs_shape[0], obs_shape[1]
     elif len(obs_shape) == 2:
-        # Flat (N, obs_dim) — assume legacy format, infer num_envs
-        num_envs = 128
+        # Flat (N, obs_dim) — caller must supply --num_envs (legacy default 128).
+        num_envs = num_envs_override if num_envs_override is not None else 128
         num_steps = obs_shape[0] // num_envs
+        if obs_shape[0] != num_steps * num_envs:
+            raise ValueError(
+                f"Flat obs of length {obs_shape[0]} not divisible by "
+                f"num_envs={num_envs}; pass --num_envs explicitly."
+            )
     else:
         raise ValueError(f"Unexpected obs shape: {obs_shape}")
     print(f"Detected layout: num_steps={num_steps}, num_envs={num_envs}")
@@ -399,6 +405,12 @@ def main():
         default=100000,
         help="Approximate samples per output NPZ file (default: 100000)",
     )
+    parser.add_argument(
+        "--num_envs",
+        type=int,
+        default=None,
+        help="Override num_envs for flat (2D) raw NPZs. PPO-RNN uses 1024.",
+    )
     args = parser.parse_args()
 
     process_trajectories(
@@ -407,6 +419,7 @@ def main():
         min_return=args.min_return,
         gamma=args.gamma,
         samples_per_file=args.samples_per_file,
+        num_envs_override=args.num_envs,
     )
 
 
