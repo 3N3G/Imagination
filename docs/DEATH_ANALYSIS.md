@@ -45,24 +45,66 @@ This explains the per-achievement gap directly:
 
 ## Death-mechanism breakdown
 
-### 1. Melee deaths (60%)
+### Drink-low is the underlying weakness in ~30% of deaths
 
-These are zombies (and possibly skeletons that closed to melee
-range) on Floor 0. The pattern in the replay data: HP drops from
-2 → 0 in a single step (so a 2-damage melee hit, consistent with
-zombie attacks). Median episode length for melee-deaths = 380 steps
-— the policy survives ~6 minutes of game time before being caught.
+User noticed (correct): in ~ep50/49/48/47/46 the player dies with
+0 drink. Tracking intrinsic trajectories across the full replay,
+the picture is broader: **drink is at 0 for the ENTIRE last 50
+steps in 15/50 episodes (30%)**, and is implicated as a co-cause
+even when the proximate kill is melee:
+
+| cause | n | mean % of last-50-steps with drink ≤ 0 | mean % with drink ≤ 2 |
+|---|---|---|---|
+| dehydration | 5 | **100%** | 100% |
+| alive_or_timeout | 7 | **39%** | 45% |
+| killed_by_melee_adjacent | 30 | 12% (8 episodes at 100%, 22 at 0%) | 33% |
+| killed_by_ranged_or_arrow | 4 | 4% | 33% |
+| starvation | 2 | 0% (food=0 instead) | 12% |
+| exhaustion | 1 | 0% (energy=0) | 36% |
+
+So:
+- 5 episodes die *of* dehydration (cause-of-death = HP=0 with drink=0)
+- An additional **8 melee-death episodes had drink=0 for the entire
+  last 50 steps** before being caught
+- An additional 7 alive_or_timeout episodes (which are real deaths
+  within the 5-step Gemini cadence) had drink=0 for ~40% of their
+  final phase
+
+Conservative estimate: **~13/50 = 26% of deaths have drink=0 as a
+load-bearing co-cause.** Less conservative (counting any episode
+with sustained drink≤2 in the last 50 steps): ~25/50 = 50%.
+
+**Mechanism**: Craftax health regen requires drink (and food and
+energy) to be ≥5. With drink=0 the player loses 1 HP per step of
+intrinsic decay AND cannot regenerate after taking melee hits. So
+the immediate cause is "zombie chops HP to 0" but the underlying
+reason is "you couldn't regen the previous hits because you were
+dehydrated".
+
+### 1. Melee deaths (60%) — primarily Floor 0 zombies
+
+These are zombies (and skeletons that closed to melee range) on
+Floor 0. The pattern in the replay data: HP drops from 2 → 0 in a
+single step (so a 2-damage melee hit, consistent with zombie
+attacks). Median episode length for melee-deaths = 380 steps.
+
+8/30 of these episodes had drink=0 throughout the last 50 steps
+(see table above) — the player was dying of compound dehydration +
+melee. The other 22 had drink ≥3 at death, so those are pure
+combat losses without intrinsic stress.
 
 Examples (final state at last replay step):
-- ep5: length=211, ret=23.1 (already collected lots of stuff,
-  killed by adjacent zombie)
-- ep15: length=1499, ret=18.1 (long episode, eventually caught)
-- ep28: length=1071, food=1, drink=7, energy=2 (intrinsics drained,
-  zombie finished it)
+- ep5: length=211, ret=23.1, drink=3 (pure combat death — collected
+  lots, then caught)
+- ep15: length=1499, ret=18.1, drink=2 (long survive, drink low at
+  end, then caught)
+- ep24: length=613, ret=20.1, drink=0 — dehydrated for 32% of
+  episode, finally killed by adjacent zombie
+- ep28: length=1071, food=1, drink=7, energy=2 — intrinsics drained,
+  zombie finished it
 
-**The policy doesn't reliably retreat from advancing zombies.** It
-keeps performing whatever its routine is (mining, crafting, walking
-to a goal) until an adjacent zombie chops HP to 0.
+**The policy doesn't reliably retreat from advancing zombies, and
+also doesn't reliably maintain drink.** Both behaviors compound.
 
 ### 2. Intrinsic depletion (16%)
 

@@ -29,19 +29,21 @@ from craftax.craftax.constants import BlockType
 
 
 def replay_one(env, env_params, rng_in, reset_key, actions):
-    """Step env with actions, return state at step N-1 (just before terminal) and at step N."""
+    """Step env with actions, return state at step N-1 (just before terminal), state at step N,
+    and a per-step intrinsics trace [(hp, food, drink, energy), ...]."""
     obs, state = env.reset(reset_key, env_params)
     rng = rng_in
     prev_state = state
-    final_step = 0
+    intrinsics_trace = []
+    intrinsics_trace.append((float(state.player_health), float(state.player_food), float(state.player_drink), float(state.player_energy)))
     for i, a in enumerate(actions):
         prev_state = state
         rng, sk = jax.random.split(rng)
         obs, state, reward, done, info = env.step(sk, state, int(a), env_params)
-        final_step = i + 1
+        intrinsics_trace.append((float(state.player_health), float(state.player_food), float(state.player_drink), float(state.player_energy)))
         if done:
             break
-    return prev_state, state, final_step
+    return prev_state, state, len(intrinsics_trace) - 1, intrinsics_trace
 
 
 def classify(prev_state, state, actions, length):
@@ -161,13 +163,32 @@ def main():
         rng, reset_key = jax.random.split(rng)
         actions = ep.get("actions", [])
         if not actions: continue
-        prev_state, state, final_step = replay_one(env, env_params, rng, reset_key, actions)
+        prev_state, state, final_step, trace = replay_one(env, env_params, rng, reset_key, actions)
         cause, details = classify(prev_state, state, actions, ep["length"])
         details["episode"] = ep["_ep_idx"]
         details["return"] = ep["return"]
         details["n_achievements"] = len(ep.get("achievements", {}))
         details["actions_last10"] = [int(a) for a in actions[-10:]]
         details["cause"] = cause
+        # Intrinsic-trajectory summaries
+        import numpy as _np
+        hp_arr = _np.array([t[0] for t in trace])
+        food_arr = _np.array([t[1] for t in trace])
+        drink_arr = _np.array([t[2] for t in trace])
+        energy_arr = _np.array([t[3] for t in trace])
+        L = len(trace)
+        last_n = min(50, L)
+        details["frac_last50_drink_le_2"] = float((drink_arr[-last_n:] <= 2).mean())
+        details["frac_last50_drink_le_0"] = float((drink_arr[-last_n:] <= 0).mean())
+        details["frac_last50_food_le_2"] = float((food_arr[-last_n:] <= 2).mean())
+        details["frac_last50_food_le_0"] = float((food_arr[-last_n:] <= 0).mean())
+        details["frac_last50_energy_le_2"] = float((energy_arr[-last_n:] <= 2).mean())
+        details["frac_last50_hp_le_2"] = float((hp_arr[-last_n:] <= 2).mean())
+        details["frac_episode_drink_le_0"] = float((drink_arr <= 0).mean())
+        details["frac_episode_food_le_0"] = float((food_arr <= 0).mean())
+        details["min_drink_episode"] = float(drink_arr.min())
+        details["min_food_episode"] = float(food_arr.min())
+        details["min_energy_episode"] = float(energy_arr.min())
         rows.append(details)
         if (i + 1) % 10 == 0:
             print(f"  classified {i+1}/{len(eps)}", flush=True)
