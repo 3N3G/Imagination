@@ -812,6 +812,35 @@ def run_eval(args):
                         filtered = filter_text_obs(text_obs)
                         prompt = template.replace("{current_state_filtered}", filtered)
 
+                        # Oracle future: if template has {future_state_filtered} and
+                        # --oracle-future-embed is set, roll the env forward 5 steps
+                        # with the trained policy to get the actual t+5 obs and inject
+                        # it. This emulates the training-time grounded prompt.
+                        if (getattr(args, "oracle_future_embed", False)
+                                and "{future_state_filtered}" in prompt):
+                            fut_env_state = env_state
+                            fut_obs = obs
+                            fut_hidden = current_hidden  # use the same hidden as a stand-in
+                            fut_rng = rng
+                            for _ in range(5):
+                                # Pick action with the current policy (greedy)
+                                _fut_obs_np = np.asarray(fut_obs, dtype=np.float32)
+                                _fut_hidden_normed = (fut_hidden - hidden_mean) / hidden_std
+                                _f_obs_t = torch.tensor(_fut_obs_np, dtype=torch.float32, device=device).unsqueeze(0)
+                                _f_hid_t = torch.tensor(_fut_hidden_normed, dtype=torch.float32, device=device).unsqueeze(0)
+                                with torch.no_grad():
+                                    _pi, _ = model(_f_obs_t, _f_hid_t)
+                                    _fut_a = int(_pi.probs.argmax(dim=-1).item())
+                                fut_rng, _f_step_key = jax.random.split(fut_rng)
+                                fut_obs, fut_env_state, _r, _d, _i = env.step(
+                                    _f_step_key, fut_env_state, _fut_a, env_params
+                                )
+                                if bool(_d):
+                                    break
+                            _fut_text = obs_to_text(np.asarray(fut_obs, dtype=np.float32))
+                            _fut_filtered = filter_text_obs(_fut_text)
+                            prompt = prompt.replace("{future_state_filtered}", _fut_filtered)
+
                         # Append adversarial/die suffix if needed
                         if _embedding_mode == "adversarial":
                             prompt += ADVERSARIAL_PROMPT_SUFFIX
@@ -1213,6 +1242,10 @@ def main():
     p.add_argument("--extract-prediction-only", action="store_true",
                     help="At eval time, embed only the Prediction: suffix of Gemini output "
                          "(matches predonly-trained policies).")
+    p.add_argument("--oracle-future-embed", action="store_true",
+                    help="If the prompt template has a {future_state_filtered} block, "
+                         "fill it by rolling the env forward 5 steps with the current "
+                         "policy (greedy). Emulates training-time grounded prompt.")
     p.add_argument("--prompt-template-path", type=str, default=None,
                     help="Override the Gemini prompt template (default: built-in concise).")
     p.add_argument("--gemini-thinking-budget", type=int, default=None,

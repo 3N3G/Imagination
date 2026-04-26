@@ -1,9 +1,54 @@
 # Path 1 — C's train/eval distribution mismatch
 
-**Status**: deferred per user request 2026-04-24 ("save for a future
-discussion, find all options not super satisfying"). This doc captures
-the diagnosis, the five mitigation options I considered, the trade-offs
-of each, and the open questions.
+**Status**: revisited 2026-04-26 with a direct quantification
+experiment (job 7504013). Original deferred content preserved below.
+
+## 2026-04-26: direct quantification experiment
+
+User asked: "How much is the difference between using summaries
+(cheating) vs predictions from gemini about the future (no cheating
+but using a strong LLM to make future predictions)? Is that
+difference too large so that trying to not cheat in any way inhibits
+learning of a steerable policy?"
+
+To answer this without retraining, added a `--oracle-future-embed`
+flag to `eval/eval_online.py`. When the prompt template contains a
+`{future_state_filtered}` placeholder, the eval loop:
+
+1. Saves the current `env_state` and `rng` (JAX env states are pure
+   pytrees so saving = just keeping a reference).
+2. Rolls the env forward 5 steps using **greedy** actions from the
+   trained policy itself (i.e., the policy's own forward prediction
+   is used as the "ground-truth future"). Closest possible emulation
+   of training-time grounded prompts where future obs came from a
+   stored PPO rollout.
+3. Renders the t+5 obs into text via `obs_to_text` +
+   `filter_text_obs`, fills `{future_state_filtered}`.
+4. Restores the original `env_state` for the actual policy step.
+5. Calls Gemini with the now-grounded prompt.
+
+Submitted as **job 7504013**, 2-cell array on `C_grounded_2M`
+freezenone, n=30 each:
+- Cell 0 (control): regular concise prompt, no future block.
+- Cell 1 (oracle-future): grounded prompt with t+5 future filled.
+
+**If cell 1 ≫ cell 0, the train/eval mismatch is the binding
+constraint** and "no cheating" is genuinely costing us return. If
+cell 1 ≈ cell 0, the policy doesn't strongly use the future-block
+content; the deploy-time embedding is fine.
+
+Caveat: rolling forward with the policy itself produces a partial
+**self-fulfilling future** — the policy gets shown its own next-5
+steps of greedy play. That biases the future block toward what the
+policy was already going to do. A more rigorous test would use a
+separate stronger policy to generate the rollout, but that's a
+larger investment.
+
+(Result lands in ~1.5h. Will append numbers here once available.)
+
+---
+
+(Original deferred-status content below.)
 
 ## The mismatch
 
