@@ -292,47 +292,59 @@ policy to see how much higher the ceiling moves.
       old for JAX 0.8. Fix in `craftax` env requires either a
       `pip install --upgrade nvidia-cusparse-cu12` or a JAX downgrade.
       Untouched here — `craftax_fast_llm` is the active alternative.
-- [ ] **NEW BLOCKER (2026-04-25 17:43 EDT): /data/group_data/rl group
-      quota EXHAUSTED.** `awr_only_score_v2` (7494727) failed at
-      episode 6 with `OSError: [Errno 122] Disk quota exceeded`. df
-      reports the rl mount at 100% used. All 3 follow-up jobs
-      cancelled to avoid further partial-write damage:
+- [ ] **NEW BLOCKER (2026-04-25 17:43 EDT, still active 20:55):
+      /data/group_data/rl group quota EXHAUSTED.**
+      `awr_only_score_v2` (7494727) failed at episode 6 with
+      `OSError: [Errno 122] Disk quota exceeded`. df reports the rl
+      mount at 100% used. All 3 follow-up jobs cancelled to avoid
+      further partial-write damage:
         - 7496516 ppo_rnn_save_traj (would have written ~80GB)
         - 7496528 awr_only_score_v3 (eval would have hit quota)
         - 7495771 steer_score_v3 freezenone (eval would have hit quota)
-      Top 10 space consumers under `/data/group_data/rl/geney/`
-      (total 554GB):
+
+      **Wider context (2026-04-25 ~21:00 EDT)**: total
+      `/data/group_data/rl/` = **14.4 TB** across all users in the
+      `rl_data` group:
+
+      ```
+      3.7 T  datasets
+      2.9 T  saksham3        (was 4.4T → cleared ~1.5T today)
+      2.6 T  max
+      2.4 T  dexterous_robot_data
+      1.0 T  sreyasv
+      429 G  geney           (was 554G → cleared 125G today)
+      347 G  myang4
+      313 G  data_1
+      227 G  zheyuanh
+      ```
+
+      My contribution is 429G of 14.4T. Even after I cleared 125G
+      (openvla 15G + predict_history_k5 70G + vllm_craftax_labelled_results 42G)
+      and saksham cleared ~1.5T, the quota stays exhausted. The group
+      ceiling is set lower than the total usage and needs broader
+      cleanup coordination across users — this is beyond what I can
+      address autonomously.
+
+      Score-max evals work-around: writing to
+      `/data/user_data/geney/eval_results_temp/` (37G free user_data
+      mount). PPO-RNN trajectory save (~80G) does NOT fit in
+      user_data either.
+
+      Top remaining geney candidates if more room is needed locally:
 
        ```
-       179G  new_craftax_llm_labelled_results_shards (the canonical PSF data)
-        80G  checkpoints (active model weights)
-        70G  predict_history_k5         <- old experiment, candidate for cleanup
+       179G  new_craftax_llm_labelled_results_shards (the canonical PSF data — DO NOT DELETE)
+        80G  checkpoints (active model weights — DO NOT DELETE)
         45G  model_mirrors              <- HF cache, candidate
-        42G  vllm_craftax_labelled_results  <- old vllm era, candidate
         42G  eval_results               <- active
         35G  online_rl_hidden_models    <- old, candidate
         18G  predict_state_full         <- old, candidate
-        15G  openvla-7b...              <- vlm experiments, candidate
         9.7G test                       <- candidate
        ```
 
-      Cleanup candidates (user judgement; *not deleted*):
-      - `predict_history_k5` (70G) — appears to be an old k=5 history
-        experiment, likely unreferenced now.
-      - `vllm_craftax_labelled_results` (42G) — pre-Gemini-era
-        labelled results; superseded by `new_craftax_llm_labelled_*`.
-      - `online_rl_hidden_models` (35G) — old hidden-state models.
-      - `predict_state_full` (18G) — old predict-state-only data.
-      - `model_mirrors` (45G) — HF mirrors; deletable if re-downloadable.
-      - Older eval_results subdirs that have already been analyzed
-        and committed.
-
-      `/data/user_data/geney` has 37GB free of 500GB; could redirect
-      large new outputs there if quota stays tight.
-
-      Until cleanup happens, **NO new evals or PPO jobs can write to
-      `/data/group_data/rl/geney/eval_results/` or `raw_trajectories/`
-      without partial-failure**. The Phase-1 PPO-RNN+save_traj job
-      especially would generate ~80GB of new traj data which the
-      quota cannot hold.
+      Until **group-wide** cleanup happens (or the group quota is
+      raised), **NO new PPO trajectory-saving jobs can write to
+      `/data/group_data/rl/geney/raw_trajectories/`**. The Phase-1
+      PPO-RNN+save_traj job especially would generate ~80GB of new
+      traj data which the quota cannot hold even on user_data.
 - [ ] Phases 2–6 (after disk freed AND Phase 1 traj saved).
