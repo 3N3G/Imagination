@@ -3,6 +3,46 @@
 **Goal**: maximize per-episode return on `C_grounded_2M` (freezenone)
 through Gemini-prompt steering.
 
+## Executive summary (2026-04-25)
+
+| variant | freezenone (n=30 unless noted) | awr-only (n=30) | wandb |
+|---|---|---|---|
+| baseline | 14.66 ± 0.83 (n=50) | **17.67 ± 0.72** | — |
+| `target_descend_v2` (existing prompt — accidental score-max) | 17.23 ± 0.89 | 16.60 ± 0.92 | (specificity matrix) |
+| `v2_long_tail` patch | 16.80 ± 1.30 | 16.10 ± 0.88 | [`0uuf13ul`](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/0uuf13ul) |
+| `achievement_max_v1` (milestone enumeration) | 15.51 ± 1.00 | (not run) | [`96z6ytog`](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/96z6ytog) |
+| **`achievement_max_v2`** (descent + cheap milestones) | **18.33 ± 0.96** | 17.50 ± 1.17 (n=15p) | [`0v0j63nw`](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/0v0j63nw) |
+| `achievement_max_v3` (floor-1 hunting) | 15.30 ± 1.42 | 15.83 ± 1.11 | (in user_data) |
+| `achievement_max_v4` (3-phase plan) | 12.73 ± 1.51 | 15.33 ± 1.07 | (in user_data) |
+| **HEADLINE: best per checkpoint** | **18.33 (v2 prompt)** | **17.67 (no prompt)** | |
+| max-of-bench: PPO-RNN 1e8 | 27.87 (training-time) | — | [`fkxga61m`](https://wandb.ai/iris-sobolmark/craftax-baselines-replication/runs/fkxga61m) |
+| max possible | 226 | | |
+
+**Findings:**
+1. **Hard ceiling at ~18 raw return.** Both checkpoints converge there
+   via different recipes: freezenone needs the v2 prompt; awr-only
+   gets there from baseline. v3 (floor-1 hunting) and v4 (3-phase
+   plan) both *underperform* v2 because the more-detailed prompts
+   crowd out the policy's natural high-rate routine
+   (place_stone/place_furnace/wake_up).
+2. **v3 unlocks new achievements** that no other prompt has: 10%
+   make_iron_pickaxe on freezenone (first-ever non-zero on a C eval),
+   3% drink_potion (also first non-zero). These are real
+   steerability wins even though they don't lift total return.
+3. **v1 was a strong steering result** (5/6 named achievements moved
+   +5 to +17pp) even though its return was below v2 — the milestone
+   enumeration mechanism works.
+4. **Past 18 needs SCALING_C** (re-train C on PPO-RNN-derived
+   trajectories where the source policy actually demonstrates floor-1
+   play). Currently blocked on `/data/group_data/rl` disk quota; see
+   [SCALING_C.md](SCALING_C.md).
+5. **The achievable per-tier headroom from the prompts that worked**:
+   place_furnace +27pp, enter_dungeon +27pp, place_stone +25pp,
+   wake_up +23pp, place_torch +23pp, collect_iron +18pp, place_plant
+   +15pp on freezenone+v2. The headroom not yet harvested by ANY
+   prompt: floor-1 INTERMEDIATE band (find_bow, open_chest, etc.) —
+   policy fidelity ceiling.
+
 ## Craftax scoring system (read once, then carried as background)
 
 Reward per step = `achievement_reward + health_reward`, where
