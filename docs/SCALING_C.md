@@ -264,23 +264,90 @@ Re-run the specificity matrix's 21 cells to confirm steerability survives
 the data swap, plus the score-max + survive_long iteration on the new
 policy to see how much higher the ceiling moves.
 
+## Per-achievement gap (the value proposition)
+
+The current best C variant gets 18.33 raw return (freezenone +
+score-max v2 prompt) ≈ 17.67 (awr-only baseline). PPO-RNN 1e8 gets
+**27.87**. The gap is +10.84 raw return points — almost entirely
+concentrated in 12 specific achievements that PPO-RNN reaches at
+high rate but every C variant is at 0–10% on (computed by taking the
+best of {C freezenone baseline, C + score-max v2, AWR-only baseline}
+per achievement and comparing to PPO-RNN 1e8 final-step rates):
+
+| ach | tier | best C variant rate | PPO-RNN 1e8 | rate gap | **value gap (raw)** |
+|---|---|---|---|---|---|
+| find_bow | 3pt | 7% (C+v2) | 66% | +59pp | **+1.77** |
+| open_chest | 3pt | 7% (C+v2) | 66% | +59pp | **+1.77** |
+| eat_snail | 3pt | 7% (C+v2) | 61% | +54pp | **+1.62** |
+| fire_bow | 3pt | 3% (C+v2) | 50% | +46pp | **+1.39** |
+| enter_dungeon | 3pt | 37% (C+v2) | 68% | +31pp | **+0.94** |
+| drink_potion | 3pt | 0% | 30% | +30pp | **+0.90** |
+| place_plant | 1pt | 47% (awr-only) | 99% | +52pp | +0.52 |
+| collect_sapling | 1pt | 53% (C+v2) | 99% | +46pp | +0.46 |
+| defeat_orc_solider | 3pt | 3% (C+v2) | 18% | +14pp | +0.43 |
+| make_iron_pickaxe | 1pt | 0% | 32% | +32pp | +0.32 |
+| collect_ruby | 3pt | 0% | 7% | +7pp | +0.20 |
+| make_iron_sword | 1pt | 0% | 15% | +15pp | +0.15 |
+| collect_diamond | 1pt | 0% | 9% | +9pp | +0.09 |
+| place_furnace | 1pt | 90% (C+v2 / awr) | 97% | +7pp | +0.07 |
+| collect_sapphire | 3pt | 2% (C base) | 4% | +2pp | +0.06 |
+| (smaller misc) | | | | | +0.15 |
+| **TOTAL** | | | | | **+10.84** |
+
+Two clusters dominate:
+1. **Floor-1 INTERMEDIATE band** (find_bow, open_chest, eat_snail,
+   fire_bow, enter_dungeon, drink_potion, defeat_orc_solider) — 7
+   achievements worth **+7.82 raw**. All are floor-1 entities/items
+   the current PSF training data doesn't exhibit because the source
+   PPO descended only ~12% of the time. PPO-RNN 1e8 descends 68% of
+   episodes and harvests these on the way.
+2. **Iron tier execution** (make_iron_pickaxe, make_iron_sword,
+   collect_diamond, plus partial collect_ruby and collect_sapphire)
+   — worth **+0.96 raw**. These need iron → smelt → craft chain
+   execution that the source policy occasionally completes but
+   never reliably.
+
+Achievements where C is already AT or ABOVE PPO-RNN 1e8 (so won't
+contribute to gap): defeat_zombie (C 87% vs PPO 38%), defeat_skeleton
+(87% vs 36%), wake_up (93% vs 40%), eat_cow (97% vs 72%),
+collect_drink (93% vs 78%). C's offline-RL training preserves
+short-range survival skills better than RNN's online learning does.
+
+**Achievements PPO-RNN 1e8 also can't do** (so no further headroom
+beyond +10.84): all 15 ADVANCED tier (enter_sewers/vault/troll_mines,
+defeat_lizard/kobold/knight/troll, learn/cast spells, enchant) and
+all 9 VERY-ADVANCED tier (enter_fire/ice/graveyard, defeat
+elementals, necromancer). These would need a much-stronger source
+policy than 1e8 PPO-RNN — paper's 1B PPO-GTrXL gets some of them
+(41.4 raw return = 18.3% of max).
+
 ## Expected outcome
 
-**Optimistic case (steerability + return both lift):**
-- Baseline return on the new policy: ~22–26 (between full-data PPO 9.5
-  source and PPO-RNN 27.87 source ceiling, reduced by AWR/BC fidelity loss
-  similar to the current 14.7 / 14.4 ratio).
-- Specificity matrix WIN rate similar to current 12/21 (steerability is a
-  property of the embedding pathway, not the trajectory quality).
-- `target_descend_v2` boosts return further; survive-extending may now be
-  possible because the policy actually has the underlying skill.
+**Optimistic case (PPO-RNN-quality data unlocks the floor-1 cluster):**
+- Baseline return on the new C: 18-20 (closing ~1/3 of the gap by
+  baseline learning, +2 from saplings/place_plant which awr-only
+  partially shows is reachable from offline-RL on PPO-style data).
+- C + score-max v2 prompt: **22-26**. The floor-1 INTERMEDIATE
+  cluster (worth +7.8) becomes prompt-elicitable because the
+  trajectories now demonstrate the behavior. v2's "descend to floor
+  1, hunt opportunistic milestones" generic structure should
+  naturally pick up the bow/chest/orc/snail visits.
+- Specificity matrix WIN rate similar to current 12/21 (steerability
+  is a property of the embedding pathway, not the trajectory
+  quality).
 
-**Pessimistic case:**
+**Pessimistic case (data swap doesn't lift much):**
 - The hidden branch reads PPO-RNN-style hidden activations differently
   from PPO-symbolic-style → fidelity drops → return drops.
 - Or: AWR-on-RNN-data fails because the RNN trajectories presuppose
   recurrent state the BC student doesn't have. Mitigation: PPO-symbolic
   1e8 (already running, 7492202) gives a backup higher-return data source.
+
+Either way, the **upper bound is ~28** (PPO-RNN 1e8 is the data-source
+ceiling). To go past that we'd need a stronger source policy
+(1B-scale PPO-GTrXL gets the ADVANCED + VERY-ADVANCED tiers which
+add up to +147 raw points of theoretical room) — a much bigger
+infrastructure investment.
 
 ## Status
 
