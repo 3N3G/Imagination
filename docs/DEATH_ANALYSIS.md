@@ -218,3 +218,37 @@ longer first. No qualitative regime change with score.
   position, melee_within_1, ranged_within_5, lava_under, cause,
   return, length, last-10 actions)
 - This doc: `docs/DEATH_ANALYSIS.md`
+
+## NOOP and sleep
+
+The action-replay analysis (`tools/compare_c_vs_ppo_rnn.py`,
+`probe_results/compare_c_vs_pporn_1e8.json`) showed C uses NOOP 5.3% of
+the time vs PPO-RNN-1e8 0.4%, raising the question of whether C is
+voluntarily emitting NOOP. Inspection of the env source resolves this:
+**NOOP is not a voluntary action during sleep — Craftax overrides
+whatever action the policy emits with NOOP whenever `state.is_sleeping`
+or `state.is_resting` is True.**
+
+Evidence (`craftax/craftax/game_logic.py` lines 3018–3020):
+
+```python
+# Interrupt action if sleeping or resting
+action = jax.lax.select(state.is_sleeping, Action.NOOP.value, action)
+action = jax.lax.select(state.is_resting, Action.NOOP.value, action)
+```
+
+So the recorded action sequence shows NOOP for every step the player
+spent asleep (which can be many — a SLEEP cycle runs until energy
+refills, see lines 1838–1849). C's higher NOOP rate is therefore a
+**sleep-frequency proxy** rather than a behavioral pathology: C
+sleeps more (or for longer cycles) than PPO-RNN-1e8. This is
+consistent with C's 52% wake_up rate vs PPO-RNN's 40%, and with the
+score-max v2 prompt's design where SLEEP is explicitly elevated for
+the +1 wake_up achievement.
+
+Consequence: there is no benefit to masking the NOOP logit at eval
+time, because the post-mask policy can't do anything different during
+the sleep cycle anyway — the env still overrides any other emitted
+action to NOOP until wake. The NOOP-rate gap is a statistic about
+how often the policy enters sleep, not about the policy ever
+"choosing inaction" mid-active-step.
