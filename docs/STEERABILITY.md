@@ -915,51 +915,80 @@ target_collect_stone, v2_long_tail}.
    competes with the awr-only policy's already-optimal placement
    routine.
 
-   **Net (revised again 2026-04-25 after per-achievement check)**: the
-"BC+oracle creates artificial rate-gaps" framing is partially right
-but also partially wrong. The per-achievement breakdown of
-`achievement_max_v2` on both checkpoints shows that on the
-high-headroom axes, **awr-only moves AS MUCH or MORE than freezenone
-in absolute terms**:
+   **Net (revised AGAIN 2026-04-25 evening, after up/down decomposition
+and v3/v4 results)**: the per-achievement Δpp distribution under each
+prompt looks fundamentally different on the two checkpoints. AWR-only
+mostly **goes DOWN on everything when prompted**:
 
-| achievement | freezenone Δpp | awr-only Δpp |
+| prompt | freezenone (UP / DOWN / Σpp) | awr-only (UP / DOWN / Σpp) |
 |---|---|---|
-| eat_plant   | 0 → 3 (+3) | 0 → 7 (**+7**) |
-| place_plant | 28 → 47 (+19) | 47 → 67 (**+20**) |
-| collect_sapling | 38 → 53 (+15) | 47 → 67 (**+20**) |
-| enter_dungeon | 12 → 37 (+25) | 17 → 33 (+17) |
-| eat_cow | 86 → 93 (+7) | 97 → 100 (+3) ceiling |
-| wake_up | 52 → 70 (+18) | 93 → 100 (+7) ceiling |
+| target_descend_v2 | 19↑ / 2↓ / **+199pp** | 2↑ / 17↓ / **−180pp** |
+| target_collect_stone_v2 | 11↑ / 14↓ / −24pp | 1↑ / 20↓ / **−330pp** |
+| v2_long_tail | 16↑ / 6↓ / **+136pp** | 4↑ / 17↓ / −163pp |
+| avoid_animals_v2 | 3↑ / 20↓ / −306pp | 5↑ / 13↓ / −73pp |
+| die_fast_v2 | 2↑ / 22↓ / −201pp | 1↑ / 20↓ / −507pp |
 
-Where awr-only's score doesn't improve is on the
-**already-saturated-but-prompt-disrupted** axes: `collect_iron` 70%
-→ 40% on awr-only (the descent prompt pulls the policy off iron
-mining when iron was already 70%, vs +17 on freezenone where iron was
-only 50%); `place_torch` 80% → 67% (saturated then disrupted). Same
-pattern on `make_torch`, `make_stone_pickaxe`, `make_stone_sword`.
+On freezenone, the score-max prompts produce broadly positive
+Σpp across the achievement set. On awr-only, **every prompt has
+negative Σpp** — the policy does less of nearly everything when
+embedded with anything other than the regular concise prompt.
 
-**The actual story**: awr-only is *fully axis-steerable* in the same
-direction as freezenone for every prompt-targeted achievement. Score
-doesn't go up because:
-(i) gains on under-saturated achievements (place_plant, sapling,
-    eat_plant) are offset by
-(ii) drops on already-saturated achievements that the descent prompt
-    crowds out (iron, torches).
+The mechanism is *saturation + perturbation*, not avoidance or
+fidelity loss:
+- **AWR-only has 16/29 tracked achievements already at ≥85% baseline**
+  (vs freezenone's 6/29). The 13 below-85% achievements split into:
+  9 at exactly 0% on awr-only (the floor-1 INTERMEDIATE band:
+  find_bow, eat_plant, drink_potion, defeat_orc_solider, etc.)
+  and 4 in the 17-70% range (collect_iron 70, sapling 47,
+  place_plant 47, place_torch 80).
+- Any prompt → some embedding-distribution shift → the policy reads
+  it as "do something different" → some of the saturated rates drop.
+- The handful of achievements with real headroom on awr-only
+  (place_plant 47→67, sapling 47→67, eat_plant 0→7) DO go up under
+  v2 — but the absolute gains are smaller than the absolute losses
+  on the saturated set.
 
-This means the right question is not "does awr-only steer?" (it does)
-but "can a prompt iterated to AVOID the saturation-disruption push
-awr-only's score above freezenone+v2's 18.39?" If yes, awr-only is
-the better starting point — and BC+oracle does become genuinely
-unnecessary (it gives up 3 baseline points for prompt-headroom we
-don't actually need if the prompt is good enough). If no, BC+oracle
-buys us a different operating point that prompts can fill.
+**This means the per-achievement comparison earlier in this section
+("awr-only moves AS MUCH or MORE on the high-headroom axes") is
+true but cherry-picked.** The full picture is that awr-only is
+predominantly perturbed-DOWN by every score-style prompt; only a few
+specific achievements with rate-headroom climb.
 
-**Critical pending experiment**: `achievement_max_v3` on awr-only
-(submitted job 7496528). v3 has explicit floor-1 hunting (bow, chest,
-orc, snail, potion) — achievements both checkpoints are at 0% on. If
-v3 elicits these on awr-only, we get awr-only's higher baseline +
-floor-1 INTERMEDIATE wins → could exceed freezenone+v2 by 3-5 points.
-Result will land in ~1.5h.
+**Net interpretation update**: the "BC+oracle is redundant" claim is
+wrong, but the originally-revised "BC+oracle trades baseline for
+prompt-headroom" is also incomplete. The right framing is:
+
+- **AWR-only is operating near its policy ceiling** for the
+  achievements it can do at all. Its saturation profile is
+  the offline-RL upper bound for this training data.
+- **BC+oracle finetune pulls the policy AWAY from the saturation**
+  toward its trained-but-lower distribution; the policy is then
+  more *responsive* to embedding content because the embedding
+  carries useful information about which suppressed behaviors to
+  re-activate.
+- **Both routes converge at ~18 raw return** because that is the
+  ceiling implied by what the source PSF trajectories actually
+  demonstrate. The BC+oracle path lets prompts express the steering;
+  the AWR-only path embeds it directly into the baseline.
+- **Prompts cannot reach 0%-on-both-checkpoints achievements**
+  (find_bow, drink_potion, eat_plant, defeat_orc_solider, etc.) on
+  EITHER checkpoint, because the underlying training data didn't
+  exhibit floor-1 navigation reliably. PPO-RNN 1e8 (which gets these
+  at 30-66%) is the existence proof that the policy could learn
+  them given the right data — but that policy is not in our pipeline
+  yet.
+
+**This re-confirms** that breaking the 18-pt ceiling needs SCALING_C
+(re-train C on PPO-RNN-derived trajectories), not more prompt
+iteration. The 4-attempt score-max iteration log
+(v1=15.51, v2=18.33, v3=15.30, v4=12.73) bears this out: every
+iteration past v2 underperforms because the ceiling is the data, not
+the prompt.
+
+Earlier-version readings of this section ("BC+oracle is redundant"
+and "BC+oracle trades baseline for prompt-headroom") were progressively
+better approximations of the up/down decomposition above. The
+saturation-plus-perturbation reading is the current best.
 
 **Implications (revised):**
 
