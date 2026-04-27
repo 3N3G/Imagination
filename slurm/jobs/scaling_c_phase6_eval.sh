@@ -15,7 +15,7 @@ if [ -z "${ID}" ]; then
     exit 2
 fi
 
-CKPT_BASE="/data/user_data/geney/scaling_c_data/checkpoints_psf_v3_pporn_1e8_grounded_top4M/freezenone"
+CKPT_BASE="/data/group_data/rl/geney/checkpoints/psf_v3_pporn_1e8_grounded_top4M/freezenone"
 CKPT="${CKPT_BASE}/final.pth"
 STATS="${CKPT_BASE}/hidden_state_stats.npz"
 

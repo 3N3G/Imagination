@@ -15,11 +15,12 @@ if [ -z "${ID}" ]; then
     exit 2
 fi
 
-# Phase 4 wrote final data to user_data; oracle data remains on group_data.
-# Checkpoints written to user_data because group_data quota is exhausted.
+# Phase 4 wrote final data to user_data; oracle data is on group_data.
+# Checkpoints land back on group_data (now 68G free again as of 02:55 EDT)
+# to keep user_data from filling — checkpoints can be a few GB each.
 DATA_DIR="/data/user_data/geney/scaling_c_data/final_trajectories_psf_v3_cadence5_grounded_predonly_gemini_emb_top4M"
 ORACLE_DATA="/data/group_data/rl/geney/oracle_pipeline/predict_only_final_v2_cadence5_predonly_gemini_emb/trajectories_000000.npz"
-CKPT_BASE="/data/user_data/geney/scaling_c_data/checkpoints_psf_v3_pporn_1e8_grounded_top4M"
+CKPT_BASE="/data/group_data/rl/geney/checkpoints/psf_v3_pporn_1e8_grounded_top4M"
 
 case "${ID}" in
     0)
