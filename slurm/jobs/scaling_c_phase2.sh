@@ -21,7 +21,9 @@ SHARDS_ROOT="/data/group_data/rl/geney/new_craftax_llm_labelled_results_shards"
 FILTERED_DIR="${SHARDS_ROOT}/filtered_trajectories_pporn_1e8"
 TOP4M_DIR="${SHARDS_ROOT}/filtered_trajectories_psf_v3_pporn_1e8_top4M"
 
-# Optional: --dependency=afterok:JOBID can be passed via "$@"
+# Optional: --dependency=afterok:JOBID can be passed via "$@".
+# Runs scaling_c_phase2_inner.sh which encapsulates the two-stage pipeline
+# (submit.sh's CMD_ARGS expansion can't preserve quoting for inline bash -c).
 "${SCRIPT_DIR}/submit.sh" \
     --env craftax_fast_llm \
     --job "scaling_c_phase2" \
@@ -30,26 +32,4 @@ TOP4M_DIR="${SHARDS_ROOT}/filtered_trajectories_psf_v3_pporn_1e8_top4M"
     --mem 64G \
     --time 4:00:00 \
     "$@" \
-    -- bash -c "
-set -euo pipefail
-echo '=== Stage 2a: filter_and_repack ==='
-PYTHONPATH=. python -m pipeline.filter_and_repack \
-    --input_dir '${RAW_DIR}' \
-    --output_dir '${FILTERED_DIR}' \
-    --min_return 15 \
-    --gamma 0.99 \
-    --num_envs 1024
-
-echo
-echo '=== Stage 2b: build_bitpacked_top_subset (target 4M rows) ==='
-PYTHONPATH=. python -m pipeline.build_bitpacked_top_subset \
-    --input-dir '${FILTERED_DIR}' \
-    --output-dir '${TOP4M_DIR}' \
-    --target-rows 4000000
-
-echo
-echo '=== Phase 2 DONE ==='
-ls -la '${TOP4M_DIR}/'
-echo
-cat '${TOP4M_DIR}/subset_manifest.json'
-"
+    -- bash "${SCRIPT_DIR}/jobs/scaling_c_phase2_inner.sh"
