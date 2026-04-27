@@ -32,6 +32,6 @@ FINAL_DIR="${DATA_BASE}/final_trajectories_psf_v3_cadence5_grounded_predonly_gem
     --job "scaling_c_phase4" \
     --gpu A100_80GB \
     --mem 64G \
-    --time 6:00:00 \
+    --time 14:00:00 \
     "$@" \
     -- bash "${SCRIPT_DIR}/jobs/scaling_c_phase4_inner.sh"
