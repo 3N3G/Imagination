@@ -18,15 +18,14 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 
-DATA_BASE="/data/group_data/rl/geney/new_craftax_llm_labelled_results_shards"
+# Phase 2 wrote to /data/user_data/geney/scaling_c_data/ because group_data
+# quota is exhausted; downstream phases follow the same convention.
+DATA_BASE="/data/user_data/geney/scaling_c_data"
 INPUT_DIR="${DATA_BASE}/filtered_trajectories_psf_v3_pporn_1e8_top4M"
 OUTPUT_DIR="${DATA_BASE}/gemini_labels_psf_v3_cadence5_grounded_3flash"
 TEMPLATE="/home/geney/Imagination/configs/training/templates/predict_state_only_prompt_concise_grounded.txt"
 
-if [ ! -d "${INPUT_DIR}" ]; then
-    echo "ERROR: ${INPUT_DIR} does not exist (Phase 2 may not have completed yet)" >&2
-    exit 1
-fi
+# Existence checks happen INSIDE the SLURM job (login node has no /data mount).
 if [ ! -f "${TEMPLATE}" ]; then
     echo "ERROR: template not found at ${TEMPLATE}" >&2
     exit 1

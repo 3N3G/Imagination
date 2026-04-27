@@ -15,12 +15,11 @@ if [ -z "${ID}" ]; then
     exit 2
 fi
 
-DATA_BASE="/data/group_data/rl/geney/new_craftax_llm_labelled_results_shards"
-ORACLE_BASE="/data/group_data/rl/geney/oracle_pipeline"
-
-DATA_DIR="${DATA_BASE}/final_trajectories_psf_v3_cadence5_grounded_predonly_gemini_emb_top4M"
-ORACLE_DATA="${ORACLE_BASE}/predict_only_final_v2_cadence5_predonly_gemini_emb/trajectories_000000.npz"
-CKPT_BASE="/data/group_data/rl/geney/checkpoints/psf_v3_pporn_1e8_grounded_top4M"
+# Phase 4 wrote final data to user_data; oracle data remains on group_data.
+# Checkpoints written to user_data because group_data quota is exhausted.
+DATA_DIR="/data/user_data/geney/scaling_c_data/final_trajectories_psf_v3_cadence5_grounded_predonly_gemini_emb_top4M"
+ORACLE_DATA="/data/group_data/rl/geney/oracle_pipeline/predict_only_final_v2_cadence5_predonly_gemini_emb/trajectories_000000.npz"
+CKPT_BASE="/data/user_data/geney/scaling_c_data/checkpoints_psf_v3_pporn_1e8_grounded_top4M"
 
 case "${ID}" in
     0)
