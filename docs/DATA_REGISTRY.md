@@ -98,6 +98,31 @@ Drops `text_generated`; keeps `hidden_state` fp16.
 
 ---
 
+## SCALING_C lineage (v3, PPO-RNN-derived data)
+
+Goal: train a higher-return C-style policy on trajectories sourced from
+PPO-RNN 1e8 (training-time mean episode return ~27.87) instead of the
+PPO-symbolic-derived top-2M PSF v2 data (mean ~21.21). All data here is
+on `/data/user_data/geney/scaling_c_data/` because the group_data quota
+is exhausted (deletions reclaimed by other rl_data users).
+
+| Stage | Path | Notes |
+|-------|------|-------|
+| **Raw trajectories** (Phase 1) | `/data/group_data/rl/geney/raw_trajectories/ppo_rnn_1e8_save_traj_continuous/` | Job 7507785 (DONE 2026-04-26 14:07). PPO-RNN 1e8 with `--save_traj_every 1 --save_traj_start_step 1000`. 525 batches, 17 GB compressed, ~34 M transitions. Replaces the buggy `ppo_rnn_1e8_save_traj/` (every-10 cadence; deleted) which had unrecoverable episode-attribution. |
+| **Bitpacked filtered** (Phase 2a) | `/data/user_data/geney/scaling_c_data/filtered_trajectories_pporn_1e8/` | Job 7519127 (RUNNING). `filter_and_repack` with `--min_return 15 --num_envs 1024`. |
+| **Top-4M-rows subset** (Phase 2b) | `/data/user_data/geney/scaling_c_data/filtered_trajectories_psf_v3_pporn_1e8_top4M/` | Job 7519127 stage 2. `build_bitpacked_top_subset` with `--target-rows 4000000`. Picks highest-RTG episodes until ≥ 4 M rows. |
+| **Gemini grounded labels** (Phase 3) | `/data/user_data/geney/scaling_c_data/gemini_labels_psf_v3_cadence5_grounded_3flash/` | NOT YET BUILT. Same recipe as `C_grounded_2M`: grounded prompt + cadence=5 + 3-flash + future_offset=5. Cost ~$400. |
+| **Gemini embeddings** (Phase 4a) | `/data/user_data/geney/scaling_c_data/embeddings_psf_v3_cadence5_grounded_predonly_gemini_emb/` | NOT YET BUILT. Predonly extraction + gemini-embedding-001 (3072-dim). |
+| **Final merged** (Phase 4b) | `/data/user_data/geney/scaling_c_data/final_trajectories_psf_v3_cadence5_grounded_predonly_gemini_emb_top4M/` | NOT YET BUILT. Training-ready data for AWR pretrain + BC+AWR finetune. |
+
+Submit-driver scripts: `slurm/jobs/scaling_c_phase{2,3,4,5}*.sh`. Phase 2
+auto-fires (job 7519127); Phases 3-5 manual after their dependencies land.
+
+**Notable changes:**
+- `pipeline/filter_and_repack.py` gained `--num_envs` flag (default 128
+  for legacy 2D NPZs) so it can handle PPO-RNN's 1024-env layout.
+- `online_rl/ppo_rnn.py` gained `--save_traj/--save_traj_every/--save_traj_start_step/--traj_save_path` to support trajectory dumping.
+
 ## Planned / in-flight (not yet built)
 
 - **Thinking prompt + top2M relabel**: will live at
