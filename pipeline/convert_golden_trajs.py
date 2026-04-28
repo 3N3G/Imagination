@@ -19,7 +19,7 @@ import os
 
 import numpy as np
 
-GOLDEN_DIR = os.path.expanduser("~/Craftax_Baselines/golden_trajs")
+GOLDEN_DIR = os.path.expanduser("~/Imagination/human_golden_trajs")
 GAMMA = 0.99
 OBS_DIM = 8268
 MAP_DIM = 8217
