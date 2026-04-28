@@ -298,7 +298,20 @@ def main():
     p.add_argument("--save-video", action="store_true", default=False)
     p.add_argument("--wandb-name", type=str, default="")
     p.add_argument("--no-wandb", action="store_true", default=False)
+    p.add_argument("--prompt-file", type=str, default="",
+                   help="Override SYSTEM_PROMPT with the contents of this file. "
+                        "File must contain a single {current_state_filtered} placeholder.")
     args = p.parse_args()
+
+    # Optional prompt-file override (used by the prompt-iteration loop).
+    if args.prompt_file:
+        with open(args.prompt_file) as f:
+            override_prompt = f.read()
+        if "{current_state_filtered}" not in override_prompt:
+            raise SystemExit(f"--prompt-file {args.prompt_file} missing {{current_state_filtered}} slot")
+        global SYSTEM_PROMPT
+        SYSTEM_PROMPT = override_prompt
+        print(f"[prompt override] loaded {args.prompt_file} ({len(override_prompt)} chars)")
 
     api_key = args.api_key or os.environ.get("GEMINI_API_KEY", "")
     if not api_key:
