@@ -39,6 +39,12 @@ CKPT_BASE="/data/group_data/rl/geney/checkpoints/psf_v3_pporn_1e8_grounded_${VAR
 AWR_BETA_S0="${AWR_BETA_S0:-10.0}"
 AWR_BETA_S1="${AWR_BETA_S1:-30.0}"
 ORACLE_LOSS_WEIGHT_S1="${ORACLE_LOSS_WEIGHT_S1:-0.5}"
+TOTAL_STEPS_S0="${TOTAL_STEPS_S0:-100000}"
+TOTAL_STEPS_S1="${TOTAL_STEPS_S1:-50000}"
+SAVE_FREQ_S0="${SAVE_FREQ_S0:-25000}"
+SAVE_FREQ_S1="${SAVE_FREQ_S1:-10000}"
+VAL_FREQ_S0="${VAL_FREQ_S0:-5000}"
+VAL_FREQ_S1="${VAL_FREQ_S1:-2500}"
 
 case "${STAGE}" in
     0)
@@ -50,9 +56,9 @@ case "${STAGE}" in
         python -m offline_rl.train_awr_weighted_v2 \
             --save-dir "${SAVE_DIR}" --data-dir "${DATA_DIR}" \
             --oracle-data "${ORACLE_DATA}" --val-data "${ORACLE_DATA}" \
-            --val-freq 5000 --hidden-mode real --layer-width 512 --hidden-dim 3072 \
+            --val-freq "${VAL_FREQ_S0}" --hidden-mode real --layer-width 512 --hidden-dim 3072 \
             --lr 3e-4 --awr-beta "${AWR_BETA_S0}" --entropy-coeff 0.01 --max-grad-norm 1.0 \
-            --total-steps 100000 --save-freq 25000 \
+            --total-steps "${TOTAL_STEPS_S0}" --save-freq "${SAVE_FREQ_S0}" \
             --oracle-fraction 0.05 --oracle-loss-weight 0.0 \
             --wandb-name "awr_psf_v3_pporn_1e8_grounded_${VARIANT_TAG}" --max-dataset-gb 200
         ;;
@@ -71,10 +77,10 @@ case "${STAGE}" in
         python -m offline_rl.train_awr_weighted_v2 \
             --save-dir "${SAVE_DIR}" --data-dir "${DATA_DIR}" \
             --oracle-data "${ORACLE_DATA}" --val-data "${ORACLE_DATA}" \
-            --val-freq 2500 --pretrained-checkpoint "${PRETRAINED}" \
+            --val-freq "${VAL_FREQ_S1}" --pretrained-checkpoint "${PRETRAINED}" \
             --freeze-mode none --hidden-mode real --layer-width 512 --hidden-dim 3072 \
             --lr 1e-4 --awr-beta "${AWR_BETA_S1}" --entropy-coeff 0.01 --max-grad-norm 1.0 \
-            --total-steps 50000 --save-freq 10000 \
+            --total-steps "${TOTAL_STEPS_S1}" --save-freq "${SAVE_FREQ_S1}" \
             --oracle-fraction 0.05 --oracle-loss-weight "${ORACLE_LOSS_WEIGHT_S1}" \
             --wandb-name "freezenone_psf_v3_pporn_1e8_grounded_${VARIANT_TAG}" --max-dataset-gb 200
         ;;
