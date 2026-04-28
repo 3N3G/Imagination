@@ -27,10 +27,13 @@ FINAL_DIR="${DATA_BASE}/final_trajectories_psf_v3_cadence5_grounded_predonly_gem
 
 # Inner script handles the actual embed+merge pipeline (avoids submit.sh
 # CMD_ARGS quoting issue with multi-line bash -c).
+# gemini_embed backend just hits the Gemini API; no GPU needed.
+# Run on CPU partition for faster slot acquisition.
 "${SCRIPT_DIR}/submit.sh" \
     --env craftax_fast_llm \
     --job "scaling_c_phase4" \
-    --gpu A100_80GB \
+    --nogpu \
+    --partition cpu \
     --mem 64G \
     --time 14:00:00 \
     "$@" \

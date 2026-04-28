@@ -19,7 +19,20 @@ fi
 # Checkpoints land back on group_data (now 68G free again as of 02:55 EDT)
 # to keep user_data from filling — checkpoints can be a few GB each.
 DATA_DIR="/data/user_data/geney/scaling_c_data/final_trajectories_psf_v3_cadence5_grounded_predonly_gemini_emb_top4M"
-ORACLE_DATA="/data/group_data/rl/geney/oracle_pipeline/predict_only_final_v2_cadence5_predonly_gemini_emb/trajectories_000000.npz"
+
+# Combined oracle (37 trajs = 25 Mar + 12 newly recorded 2026-04-27).
+# Falls back to the original 25-traj oracle if the combined file is missing
+# (e.g. the rebuild hasn't landed yet at job-start time).
+ORACLE_COMBINED="/data/group_data/rl/geney/oracle_pipeline/predict_only_final_v2_cadence5_predonly_gemini_emb_combined/trajectories_000000.npz"
+ORACLE_LEGACY="/data/group_data/rl/geney/oracle_pipeline/predict_only_final_v2_cadence5_predonly_gemini_emb/trajectories_000000.npz"
+if [ -f "${ORACLE_COMBINED}" ]; then
+    ORACLE_DATA="${ORACLE_COMBINED}"
+    echo "Using COMBINED oracle data (37 trajs): ${ORACLE_DATA}"
+else
+    ORACLE_DATA="${ORACLE_LEGACY}"
+    echo "WARNING: combined oracle file not found, falling back to LEGACY (25 trajs): ${ORACLE_DATA}"
+fi
+
 CKPT_BASE="/data/group_data/rl/geney/checkpoints/psf_v3_pporn_1e8_grounded_top4M"
 
 case "${ID}" in
