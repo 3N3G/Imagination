@@ -9,7 +9,7 @@ set -euo pipefail
 
 VARIANT_TAG="${VARIANT_TAG:-xxhighb}"
 NUM_EPISODES="${NUM_EPISODES:-15}"
-MODE="explore_ood_v1"
+MODE="${MODE:-explore_ood_v1}"
 
 CKPT_BASE="/data/group_data/rl/geney/checkpoints/psf_v3_pporn_1e8_grounded_${VARIANT_TAG}/freezenone"
 CKPT="${CKPT_BASE}/final.pth"
