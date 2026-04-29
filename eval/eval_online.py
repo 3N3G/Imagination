@@ -208,6 +208,10 @@ _V2_TEMPLATES = {
         "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_v2_eat_bat.txt",
         "thinking": _TEMPLATE_DIR / "predict_state_only_prompt_concise_v2_eat_bat.txt",
     },
+    "v2_enter_mines": {
+        "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_v2_enter_mines.txt",
+        "thinking": _TEMPLATE_DIR / "predict_state_only_prompt_concise_v2_enter_mines.txt",
+    },
     "achievement_max_v3": {
         "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_achievement_max_v3.txt",
         "thinking": _TEMPLATE_DIR / "predict_state_only_prompt_concise_achievement_max_v3.txt",
@@ -1220,6 +1224,7 @@ def main():
                              "achievement_max_v2_thresh6",
                              "explore_ood_v1",
                              "v2_eat_bat",
+                             "v2_enter_mines",
                              "achievement_max_v3", "achievement_max_v4",
                              "target_eat_cow_v3", "target_drink_water_v3",
                              "target_stay_overworld_v3", "target_place_plant_v3",
