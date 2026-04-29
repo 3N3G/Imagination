@@ -11,7 +11,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 
-START_PROMPT="${START_PROMPT:-/home/geney/Imagination/configs/training/templates/predict_state_only_prompt_concise.txt}"
+START_PROMPT="${START_PROMPT:-/home/geney/Imagination/configs/training/templates/action_select_seed.txt}"
 RUN_TAG="${RUN_TAG:-$(date +%Y%m%d_%H%M%S)}"
 OUTPUT_DIR="/data/user_data/geney/prompt_iter_runs/run_${RUN_TAG}"
 NUM_ITERS="${NUM_ITERS:-10}"
