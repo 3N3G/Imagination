@@ -1,0 +1,46 @@
+You are forecasting a plausible future for a Craftax state.
+
+Craftax overview:
+Craftax is a game about exploring dungeons, mining, crafting and fighting enemies. Each one-time achievement (collect a resource, craft an item, defeat a foe, descend a floor, eat a creature, etc.) adds points to the score. Many achievements have NEVER been unlocked in any prior playthrough; achieving a new one is highly valuable.
+
+Use these game rules:
+1) Coordinates are (Row, Column), centered on the player at (0,0).
+   - Negative Row = UP, Positive Row = DOWN.
+   - Negative Column = LEFT, Positive Column = RIGHT.
+2) Intrinsics: Health, Food, Drink, Energy, Mana. All out of 9.
+   - Food/Drink/Energy naturally decay (fastest: drink ~20 steps; food ~25; energy ~30).
+   - If Food/Drink/Energy reaches 0, Health will decay.
+   - If Food/Drink/Energy are maintained, Health can recover.
+3) Floor progression uses ladders.
+   - Descending requires reaching the ladder on the current floor.
+   - On non-overworld floors, the ladder is generally closed until enough mobs are killed.
+
+Algorithm — try to unlock NEW achievements while staying alive.
+
+The player will choose the highest-priority active goal in this order:
+1. Survive (food/drink/energy maintenance, threshold <= 6)
+2. Hunt rare-creature foods. The player has eaten cows and snails before but NEVER A BAT. **Bats are small dark flying creatures usually found in dungeon corridors (Floor 1+).** When a bat is within 1-2 tiles, the player should turn to face it and use DO repeatedly until it dies, then walk onto its remains and DO once more to eat it. This unlocks `eat_bat` (+3 score).
+3. Find new dungeon-types. The player has entered the main dungeon before but NEVER ENTERED THE GNOMISH MINES. **Gnomish Mines is a separate sub-area accessed via a DIFFERENT ladder (often distinguished by tile color or position).** When exploring on Floor 0, look for any ladder that LOOKS DIFFERENT from the main downward ladder and try to DESCEND through it. Inside, gnomes (small humanoids) await — defeating one of them unlocks `defeat_gnome_warrior` or `defeat_gnome_archer` (+3 each).
+4. Spell-casting. If the player ever finds a spellbook (often appears as a book-like floor item), use READ_BOOK while on/adjacent to it. Reading unlocks `learn_fireball` (+5) or `learn_iceball` (+5). Once a spell is learned and player has mana>=2, use CAST_FIREBALL or CAST_ICEBALL on a visible mob to unlock cast_*  (+5 more each).
+5. Enchanting. After acquiring an iron sword AND a ruby (red gem) or sapphire (blue gem), look for an enchanting table or special tile. Use ENCHANT_SWORD action while standing adjacent and having mana>=9 to unlock `enchant_sword` (+5).
+6. Standard descent + crafting (collect wood, stone, iron, place table/furnace, craft tools).
+7. Survive maintenance — keep food/drink/energy above 6.
+
+Concrete tactics for this episode:
+- Prioritize attacking ANY bat the player encounters with DO. Do not retreat from bats.
+- When near an unexplored ladder different from the one already used, attempt DESCEND.
+- If a book item appears on the floor or in inventory, immediately use READ_BOOK.
+- If the player has iron sword and a ruby, use ENCHANT_SWORD action even speculatively (it's cheap to attempt).
+
+Action selection follows the algorithm above. The player should never sleep in the open.
+
+Predict at a high level what the next five steps for the player will look like, given that they are following the algorithm. Do not forecast beyond five time steps! In particular, the player can move at most five tiles during these five steps.
+
+State Understanding: <A few sentences analyzing the current scene. Note any bat/spellbook/enchanting tile/different-ladder visible nearby. Focus on careful spatial reasoning.>
+
+Prediction: <1 positive, direction-stating sentence describing the high-level behavior of the player in the next five steps. Good examples: "Move down to the visible bat and attack with DO.", "Walk left to the unexplored downward ladder and DESCEND.", "Read the book on the current tile.", "Move right to mine the iron deposit." Do not use "instead of", "rather than", "avoid", "away from", "refuse", or any other negation — just state the direction and target. Do not reference specific coordinates.>
+
+Now, predict the future of the following state.
+
+Current state:
+{current_state_filtered}

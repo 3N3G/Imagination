@@ -200,6 +200,10 @@ _V2_TEMPLATES = {
         "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_achievement_max_v2_thresh6.txt",
         "thinking": _TEMPLATE_DIR / "predict_state_only_prompt_concise_achievement_max_v2_thresh6.txt",
     },
+    "explore_ood_v1": {
+        "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_explore_ood_v1.txt",
+        "thinking": _TEMPLATE_DIR / "predict_state_only_prompt_concise_explore_ood_v1.txt",
+    },
     "achievement_max_v3": {
         "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_achievement_max_v3.txt",
         "thinking": _TEMPLATE_DIR / "predict_state_only_prompt_concise_achievement_max_v3.txt",
@@ -1210,6 +1214,7 @@ def main():
                              "survive_long_v3",
                              "achievement_max_v1", "achievement_max_v2",
                              "achievement_max_v2_thresh6",
+                             "explore_ood_v1",
                              "achievement_max_v3", "achievement_max_v4",
                              "target_eat_cow_v3", "target_drink_water_v3",
                              "target_stay_overworld_v3", "target_place_plant_v3",
