@@ -12,6 +12,8 @@ if [ -z "${VARIANT_TAG:-}" ]; then echo "ERROR: VARIANT_TAG required" >&2; exit 
 ID="${SLURM_ARRAY_TASK_ID:-${1:-}}"
 if [ -z "${ID}" ]; then echo "ERROR: pass ID 0|1|2" >&2; exit 2; fi
 
+NUM_EPISODES="${NUM_EPISODES:-30}"
+
 CKPT_BASE="/data/group_data/rl/geney/checkpoints/psf_v3_pporn_1e8_grounded_${VARIANT_TAG}/freezenone"
 CKPT="${CKPT_BASE}/final.pth"
 STATS="${CKPT_BASE}/hidden_state_stats.npz"
@@ -32,7 +34,7 @@ case "${ID}" in
     *) echo "unknown ID: ${ID}" >&2; exit 2 ;;
 esac
 
-OUT_DIR="${EVAL_BASE}/${MODE}_30ep"
+OUT_DIR="${EVAL_BASE}/${MODE}_${NUM_EPISODES}ep"
 mkdir -p "${OUT_DIR}"
 
 echo "=== Variant ${VARIANT_TAG} eval cell ${ID} (${MODE}) ==="
@@ -45,9 +47,9 @@ if [ "${MODE}" = "baseline_concise" ]; then
         --embed-backend gemini_embed --hidden-dim 3072 \
         --extract-prediction-only \
         --prompt-template-path "${CONCISE}" \
-        --num-episodes 30 \
+        --num-episodes "${NUM_EPISODES}" \
         --output-dir "${OUT_DIR}" \
-        --wandb-name "eval_psf_v3_pporn_1e8_grounded_${VARIANT_TAG}_${MODE}_30ep"
+        --wandb-name "eval_psf_v3_pporn_1e8_grounded_${VARIANT_TAG}_${MODE}_${NUM_EPISODES}ep"
 else
     python -m eval.eval_online \
         --checkpoint "${CKPT}" --hidden-stats "${STATS}" \
@@ -56,7 +58,7 @@ else
         --prompt-template-path "${CONCISE}" \
         --embedding-mode "${MODE}" --num-episodes 30 \
         --output-dir "${OUT_DIR}" \
-        --wandb-name "eval_psf_v3_pporn_1e8_grounded_${VARIANT_TAG}_${MODE}_30ep"
+        --wandb-name "eval_psf_v3_pporn_1e8_grounded_${VARIANT_TAG}_${MODE}_${NUM_EPISODES}ep"
 fi
 
 echo "=== DONE cell ${ID} ==="
