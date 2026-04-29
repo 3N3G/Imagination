@@ -311,11 +311,40 @@ def main():
             shutil.copy(prompt_path, out_dir / "best_prompt.txt")
             print(f"  *** new best: iter {i}, return {best_return:.2f}")
 
-        # Seed the next iter's prompt.
+        # Seed the next iter's prompt:
+        #   - If THIS iter matched or beat best, accept the proposer's new prompt
+        #     as the next seed (we're climbing).
+        #   - If THIS iter was worse than best, the proposer's new prompt was
+        #     conditioned on the worse prompt — likely also broken. Re-roll the
+        #     proposer with `best_prompt.txt` as the prompt-under-review and
+        #     this iter's episodes as the feedback signal.
+        # This stops a single bad proposal from poisoning the entire run.
         if i + 1 < args.num_iters:
             next_dir = out_dir / f"iter_{i+1:02d}"
             next_dir.mkdir(parents=True, exist_ok=True)
-            (next_dir / "prompt.txt").write_text(next_prompt_text)
+            if summary["mean_return"] >= best_return - 1e-6:
+                (next_dir / "prompt.txt").write_text(next_prompt_text)
+            else:
+                best_prompt_text = (out_dir / "best_prompt.txt").read_text()
+                blocks = "\n\n".join(format_episode_block(j, e)
+                                     for j, e in enumerate(summary["episodes"]))
+                meta_prompt = META_PROMPT_TEMPLATE.format(
+                    n=summary["n"],
+                    prompt=best_prompt_text,
+                    mean_ret=summary["mean_return"],
+                    std_ret=summary["std_return"],
+                    mean_len=summary["mean_length"],
+                    mean_ach=summary["mean_achievements"],
+                    episode_blocks=blocks,
+                )
+                print(f"  iter {i} was worse than best ({summary['mean_return']:.2f} < {best_return:.2f}) "
+                      f"— re-rolling proposer from best_prompt.txt")
+                retry = call_gemini_proposer(meta_prompt, api_key, args.proposer_model)
+                if "{current_state_filtered}" in retry:
+                    (next_dir / "prompt.txt").write_text(retry)
+                else:
+                    print(f"  retry proposal missing placeholder; falling back to best_prompt.txt verbatim")
+                    (next_dir / "prompt.txt").write_text(best_prompt_text)
 
     print(f"\n=== prompt_iter complete ===")
     print(f"  best iter: {best_iter}, return: {best_return:.2f}")
