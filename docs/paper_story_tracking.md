@@ -43,46 +43,99 @@ baseline (12.3% of max) and far below the 1B published scoreboard
 is **not** "imagination policies set new SOTA"; it is at best
 "imagination policies match unaug obs-only and add a new control axis".
 
+**Compute fairness caveat.** The PPO / PPO-RNN / PPO-GTrXL numbers
+above are **online-RL baselines using 1e8–1e9 environment interactions**.
+Our aug policies are **offline RL** (AWR + BC) on a static dataset
+distilled from a 200M-step PPO run, with no fresh environment
+interaction during training. So this is not an apples-to-apples
+comparison: those baselines have access to a much larger compute
+budget *and* a different training paradigm. The right framing in the
+paper is "given a fixed offline dataset, does adding LLM imagination
+help vs the same offline dataset without imagination?" — for which
+the relevant comparand is the unaug obs-only offline-RL baseline
+(18.38), not PPO-RNN. The PPO/PPO-RNN numbers belong in the paper as
+context for absolute scale, not as competitors.
+
 ---
 
 ## 1. Storyline claims about LLMs as world models
 
 ### 1.1 LLMs are weak at long-horizon prediction in Craftax
 
-**Verdict: UNTESTED directly, FOR indirectly.**
+**Verdict: UNTESTED.**
 
-We have not run a controlled long-horizon-only prediction probe. Indirect
-evidence from Gemini-as-direct-actor:
+The Gemini-as-direct-actor numbers (4.06 / 2.60 / 8.10 etc.) DO show
+that Gemini is a poor *agent*, but agent failure confounds two distinct
+abilities: (a) high-level planning over a long horizon, and (b)
+low-level state-execution / pathfinding. The current evidence cannot
+distinguish them, so it cannot underwrite this specific claim.
 
-- 2.5-flash direct actor return = **4.06 ± 1.98** vs unaug obs-only
-  policy 18.38 ([log_2026-04-14](../journals/log_2026-04-14.md))
-- 3.1-flash-lite-preview direct actor = 2.60 ± 1.66 ([log_2026-04-15](../journals/log_2026-04-15.md))
-- 3.1-pro-preview ep1 = 10.80 (single episode, expensive) ([log_2026-04-15](../journals/log_2026-04-15.md))
-- prompt_iter best (10-iter GEPA-style refinement) = **8.10** ([log_2026-04-29](../journals/log_2026-04-29.md))
+Hint about which one dominates: when Gemini provides only the
+high-level imagination and an offline-RL policy provides the low-level
+control, returns climb from ~8 (Gemini-as-actor) to ~18–21
+(aug-policy + good prompt). That gap is consistent with **low-level
+execution** being the binding bottleneck for direct-Gemini, not
+long-horizon planning. But this is suggestive, not a clean test of the
+planning claim.
 
-This says Gemini is a poor *agent*, not specifically that long-horizon
-prediction is the failure mode. To anchor the claim properly we would
-need a separate direct prediction-accuracy probe (e.g., k-step forward
-predictions vs actual env trajectory).
+**Proposed experiments to directly probe long-horizon planning:**
+
+1. **k-step forward-prediction accuracy.** Pick N states from real
+   trajectories, ask Gemini to predict the env state k steps ahead for
+   k ∈ {1, 5, 25, 100}. Score against the actual env state under a
+   matching policy. Failure mode = accuracy collapses with k. Variant:
+   score "achievement events in the next k steps" rather than full
+   state — that's closer to what the imagination prompt actually asks
+   Gemini to produce.
+2. **Plan-quality on hand-built ground-truth plans.** For a small set
+   of curated states with known optimal plans (e.g., "from this state,
+   the shortest path to make_iron_pickaxe is X actions"), ask Gemini
+   to produce a plan and score plan quality (does it list the right
+   subgoals in the right order?) independently of execution.
+3. **Gemini-as-planner + scripted-low-level executor.** Give Gemini
+   only sub-goal-level decisions (e.g., "next subgoal: collect_wood")
+   and use a hand-coded low-level policy to execute the subgoal. If
+   this beats Gemini-as-direct-actor by a large margin, it isolates
+   planning capability from execution. If it doesn't, planning is also
+   a real bottleneck.
 
 ### 1.2 LLMs are weak at low-level / pathfinding prediction
 
-**Verdict: FOR.**
+**Verdict: UNCERTAIN — direction is plausible but the previously cited
+evidence does not isolate it.**
 
-Three independent probes:
+Earlier draft cited HP/Food food_low ΔV (Track-A/B/C) and the
+obs_to_text equipment-fields bug as evidence. Reconsidered: those
+results are about (a) the policy's reading of the embedding's value
+signal and (b) a serializer bug we caused, not about Gemini's
+prediction quality at the low level. Removed.
 
-1. The HP/Food/Drink perturbation probe ([log_2026-04-22](../journals/log_2026-04-22.md)):
-   Track A predonly food_low ΔV = +0.011 (wrong sign). Track C grounded
-   food_low ΔV = +0.098 (10× larger but **wrong sign**). Only Track B
-   thinking gave correct sign (-0.012). Most pipelines do not encode
-   intrinsic-deficit consequences correctly.
-2. obs_to_text gap (log_2026-04-17 detail line in [log.md](../journals/log.md)):
-   pickaxe/sword/bow/armour/enchantment fields were silently dropped in
-   the obs serializer — Gemini was making predictions blind to the
-   player's equipment for the entire pre-Apr-17 dataset. Human inspection
-   only caught it after the v2 rerun.
-3. "Stone-tile navigation" debug noted in [log_2026-04-19](../journals/log_2026-04-19.md):
-   user observed Gemini misreads the local stone vs grass layout.
+Suggestive (but not direct) evidence that low-level is the dominant
+bottleneck: aug-policy (Gemini for high-level imagination + learned
+policy for low-level control) hits 18–21 while Gemini-as-direct-actor
+tops out near 8. That ~10–13 gap is most easily explained by a
+learned low-level policy carrying execution that Gemini alone cannot.
+
+**Proposed experiments to directly probe low-level / pathfinding
+prediction:**
+
+1. **One-step action prediction accuracy.** N random states, ask
+   Gemini to predict the next action a strong policy would take, score
+   top-1 / top-5 vs the policy's actual choice. Compare across
+   templates (concise / thinking / grounded) and across LLMs.
+2. **Spatial-layout reasoning probe.** Show Gemini a small grid of
+   tiles and ask "from (x,y), name the adjacent walkable tiles" or
+   "what is the Manhattan distance to the nearest tree?" — purely
+   perceptual, no planning. The obs_to_text equipment bug
+   ([log_2026-04-17 in log.md](../journals/log.md)) and the stone/grass
+   misread debugged in [log_2026-04-19](../journals/log_2026-04-19.md)
+   are anecdotes pointing at this; a probe would quantify it.
+3. **Symbolic-pathfinding probe.** Hand Gemini a known shortest-path
+   problem on a Craftax map snippet and compare its solution to BFS
+   ground-truth.
+
+(Note: this probe-set is what would be needed to upgrade 1.2's verdict
+from UNCERTAIN to FOR or AGAINST. None of it has been run yet.)
 
 ### 1.3 Gemini performs poorly when directly playing or directly predicting in Craftax
 
@@ -95,30 +148,51 @@ of obs-only offline-RL.
 
 ### 1.4 LLMs encode useful priors at the high-level / planning level
 
-**Verdict: MIXED.**
+**Verdict: UNCERTAIN — claim is interesting, but cannot be backed by
+the existing experiments without overreach.**
 
-Supportive evidence:
-- Track B (thinking) food_low ΔV = -0.012 (CORRECT sign), the only
-  encoder where the policy reads intrinsic deficits in the right
-  direction ([log_2026-04-22](../journals/log_2026-04-22.md)).
-- Patch-by-prompt: `v2_long_tail` patch on C_grounded_2M improves return
-  by **+2.14** (14.66 → 16.80) by clarifying long-tail tasks
-  ([log_2026-04-25](../journals/log_2026-04-25.md), wandb [`0uuf13ul`](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/0uuf13ul)).
-- Score-max v2 prompt on C_grounded_2M: +3.67 over baseline (18.33 vs
-  14.66) — embedding-conditioned descent + opportunistic milestone
-  prompting moves return materially ([log_2026-04-25](../journals/log_2026-04-25.md)).
-- Threshold-6 + canonical-ordering prompt on C_grounded_2M: first-ever
-  unlocks of `make_iron_armour` and `collect_diamond` (4 distinct eps,
-  all length ≥ 1144) on data where these never appear at training
-  ([log_2026-04-27](../journals/log_2026-04-27.md), wandb [`7mcbw5p4`](https://wandb.ai/iris-sobolmark/craftax-offline-awr/runs/7mcbw5p4)).
+The earlier draft used patch-by-prompt and score-max-v2 lifts as
+evidence. Reconsidered: those results show that *prompt content
+changes the policy's behavior in productive directions on a specific
+checkpoint*, which is the steerability claim (3.3) — they do not
+directly test "the LLM encodes useful high-level priors". A prompt
+that contains "go descend" can lift `enter_dungeon` rate even if the
+LLM has no priors of its own, because we wrote the prompt. The thing
+the claim actually wants is "Gemini *generates* high-level useful
+content from a state without us hand-writing the strategy".
 
-Counter-evidence:
-- Gemini-as-direct-actor results above show priors alone don't carry the
-  game.
-- v2 freezenone +2.62 lift was traced to OBS-branch absorbing equipment
-  fields, not imagination content (die/adv prompts produced ≈0 Δ on this
-  policy — content-invariant, [log_2026-04-19](../journals/log_2026-04-19.md)).
-  At least one apparent "imagination win" was actually a tokenizer fix.
+**Proposed experiments to directly probe high-level priors:**
+
+1. **Held-out plan-quality scoring (LLM-vs-human).** Sample N states.
+   Independently: (a) ask Gemini for a top-3 next-subgoal list, (b)
+   ask a small panel of humans for the same. Score Gemini's lists
+   against the human consensus. If Gemini's overlap with humans is
+   high, it has reasonable high-level priors. Cheap, no policy
+   training needed.
+2. **Subgoal-completion under Gemini-as-planner + scripted executor**
+   (also listed under 1.1). If Gemini's chosen subgoals are completed
+   at high rate by a hand-coded executor, the subgoal selection itself
+   was useful. This isolates planning quality from low-level execution.
+3. **Imagination → expected-reward correlation.** For a fixed policy,
+   measure correlation between (a) some scalar score of the Gemini
+   prediction (e.g., # of survival-positive verbs, classifier-rated
+   plan goodness) and (b) the actual return-to-go from that state. If
+   Gemini's imaginations correlate with actual outcomes, the priors
+   are real and useful; if not, the policy's gain is from prompt
+   *style* not prompt *content*.
+4. **Encoder ablation across models.** Compare aug-policy returns when
+   the imagination is generated by models with very different prior
+   strength (e.g., Gemini-3 vs a much smaller open-source LM with no
+   game-knowledge). If priors are the load-bearing thing, this should
+   move return; if not, prompt structure is.
+
+**Negative-control evidence to keep flagged:** the v2 freezenone +2.62
+lift turned out to be an obs-branch tokenizer fix (equipment fields)
+masquerading as an imagination win
+([log_2026-04-19 Exp 24](../journals/log_2026-04-19.md)). Any future
+"priors-help" claim needs a content-probe (die/adv) sanity check
+showing the policy is actually content-sensitive, otherwise the win
+could again be elsewhere.
 
 ### 1.5 LLM priors are insufficient because Craftax requires game-specific procedural knowledge
 
@@ -184,14 +258,71 @@ return").
 
 ### 3.2 Augmented policy generalizes better to OOD
 
-**Verdict: AGAINST on the OOD test we ran.**
+**Verdict: UNCERTAIN — the only OOD probe so far was not well-tuned.**
 
-OOD steering on never-unlocked achievements (eat_bat, enter_gnomish_mines,
-explore_ood_v1) on xxhighb collapsed enter_dungeon 40%→7-20% with NO
-new achievements unlocked, even on minimal v2-edits
-([log_2026-04-29](../journals/log_2026-04-29.md)). xxhighb has high
-content-sensitivity (Δ(real-zero)=+0.7) but is brittle to ANY prompt
-divergence from training distribution.
+The xxhighb OOD-steering test ([log_2026-04-29](../journals/log_2026-04-29.md))
+collapsed on three never-unlocked-achievement prompts (eat_bat,
+enter_gnomish_mines, explore_ood_v1). But several confounds make this
+a poor measurement of "does augmentation help OOD":
+
+- **Targets unreachable from start.** EAT_BAT requires Floor 3+; the
+  policy never reaches Floor 3 from a fresh start, so the OOD prompt
+  is asking the policy to do something it physically cannot reach.
+  ENTER_GNOMISH_MINES needs Floor 1 → Floor 2 descent (8 kills + a
+  ladder), which the policy reaches rarely. Failure on these prompts
+  conflates "OOD generalization fails" with "policy can't reach the
+  state where the prompt would matter".
+- **xxhighb is the highest-β variant** (β=70/200) and has been shown
+  to be brittle to ANY prompt edit, even minimal v2 → v2+1-bullet
+  ([log_2026-04-29](../journals/log_2026-04-29.md)). So the failure
+  could be specific to xxhighb's hyperparameter regime, not the
+  general augmented-vs-unaugmented question.
+- **No matched unaug-baseline run.** Without an unaug obs-only policy
+  evaluated under the same OOD conditions, we can't answer "does
+  augmentation help OOD" — only "does augmentation handle OOD
+  prompts".
+
+So the previous "AGAINST" verdict was overreach. The right call is
+"the experiment we ran does not isolate the question".
+
+**Proposed experiments to directly test OOD generalization:**
+
+1. **Env-state-injection on a reachable OOD target.** Drop the policy
+   onto Floor 3 (or some other never-trained state) with the
+   prerequisites (armor, torches, food). Run aug-policy + matched
+   unaug obs-only policy with no special prompt. Measure raw return
+   and per-achievement frontier. This isolates "does the imagination
+   pathway help when the policy is in a state it was not trained on"
+   from "can the policy navigate TO an OOD state". (Proposed in
+   [log_2026-04-29](../journals/log_2026-04-29.md) end-of-day, not yet
+   built.)
+2. **Held-out achievement OOD with reachability matched.** Pick one
+   achievement that IS reachable from start but is rare in training
+   data (e.g., make_iron_pickaxe at <1% baseline rate). Run a prompt
+   that explicitly targets it on (a) aug-policy, (b) aug-policy with
+   shuffled embeddings, (c) unaug obs-only with the prompt embedded
+   as obs-text. Measure rate of the target achievement. If aug
+   uplifts the target rate above shuffled and above unaug, the LLM
+   embedding pathway is doing OOD work.
+3. **OOD from a non-brittle checkpoint.** Repeat the floor-2/3 prompt
+   battery on **xhighb** (β=50/100, less brittle than xxhighb) AND on
+   **midbeta** (β=20/40, in flight per
+   [log_2026-04-29](../journals/log_2026-04-29.md)) AND on
+   **C_grounded_2M** (the steerability winner). If midbeta or
+   C_grounded_2M handles minimal v2-edits without collapse, the
+   "augmentation is brittle OOD" story is just an
+   xxhighb-hyperparameter artifact.
+4. **Distribution-shift in observation space (not in prompt space).**
+   Modify the obs (e.g., new mob species, new tile texture, modified
+   layout) without changing the prompt template. Compare aug vs
+   unaug. This tests whether the imagination pathway provides extra
+   robustness when the input distribution shifts, which is the
+   actual OOD-generalization claim — most "OOD steering" experiments
+   so far have shifted the prompt, not the env.
+
+(None of these are run. The xxhighb collapse result stands as an
+observation about that specific checkpoint, but should not be cited as
+evidence against the general claim.)
 
 ### 3.3 Augmented policy is steerable
 
@@ -348,18 +479,22 @@ content shift ([log_2026-04-23](../journals/log_2026-04-23.md)).
 
 ### 5.4 Policy works in OOD states / objectives / floors
 
-**Verdict: AGAINST.** Three OOD prompts targeting Floor-2/3 achievements
-(eat_bat, enter_gnomish_mines, explore_ood_v1) on xxhighb all collapsed
-enter_dungeon rate from 40% → 7-20%, no new achievements unlocked
-([log_2026-04-29](../journals/log_2026-04-29.md)). Even minimal v2 → v2+1-bullet
-edits crash performance.
+**Verdict: UNCERTAIN — see 3.2.** The xxhighb collapse on
+Floor-2/3-targeted prompts conflates "OOD generalization fails" with
+"policy can't reach the OOD state in the first place" and is on a
+single brittle hyperparameter regime. The right test is env-state
+injection on a reachable OOD target with a matched unaug baseline,
+which has not been run.
 
-The closest positive: threshold-6 + canonical-ordering prompt unlocks
-**`make_iron_armour` and `collect_diamond` for the first time** on
-C_grounded_2M data that has zero such episodes
-([log_2026-04-27](../journals/log_2026-04-27.md)). 4 distinct episodes,
-all length ≥ 1144. This IS OOD execution, but conditional on
-right-tail survival rather than steering breaking new ground.
+Closest positive observation (not a controlled OOD test): threshold-6
++ canonical-ordering prompt unlocks **`make_iron_armour` and
+`collect_diamond` for the first time** on C_grounded_2M data that has
+zero such episodes ([log_2026-04-27](../journals/log_2026-04-27.md)). 4
+distinct episodes, all length ≥ 1144. This is OOD execution
+(achievements that don't appear in training), but it's conditional on
+the policy already being in the right-tail of survival distribution —
+the prompt is a recipe for a long-survival episode, not a
+distribution-shift test.
 
 ### 5.5 Steering achievable rare/absent achievements
 
@@ -381,8 +516,8 @@ right-tail survival rather than steering breaking new ground.
 | Pillar | Status | Note |
 |---|---|---|
 | Steerability | **FOR** | 12/22 specificity-matrix cells, synthetic-arithmetic killer probe. |
-| Performance improvement vs baseline | **MIXED** | aug + best prompt ≈ unaug; aug alone < unaug. Possibly +0.5–2 raw with right prompt; not significant at n=50 against unaug. |
-| OOD generalization | **AGAINST** | xxhighb collapses on Floor-2/3 prompts. Threshold-6 unlocks iron-tier on existing C only via right-tail survival, not via OOD execution. |
+| Performance improvement vs baseline | **MIXED** | aug + best prompt ≈ unaug; aug alone < unaug. Possibly +0.5–2 raw with right prompt; not significant at n=50 against unaug. The right comparand is unaug obs-only offline-RL (18.38), not online-RL PPO baselines. |
+| OOD generalization | **UNCERTAIN** | The only OOD probe (xxhighb on Floor-2/3 prompts) had unreachable targets, used a brittle hyperparameter regime, and lacked a matched unaug baseline (3.2). The question is open. |
 
 The paper should NOT make a triple-claim. The defensible claim is:
 
@@ -393,8 +528,8 @@ The paper should NOT make a triple-claim. The defensible claim is:
 > (achievement-axis shifts of +5–20pp absolute) and modest return
 > changes (−7 to +3.7 raw return) without policy retraining.
 
-This excludes "OOD generalization" and excludes "beats unaug baseline"
-on raw return.
+This excludes "OOD generalization" (open) and excludes "beats unaug
+baseline" on raw return.
 
 ---
 
@@ -573,21 +708,42 @@ address:
 
 ## 11. What's needed for a defensible paper as of 2026-04-29
 
-Adding these would close the most material gaps:
+Adding these would close the most material gaps. **General rule going
+forward: if a claim isn't directly supported by an existing experiment,
+propose the experiment that would test it; don't backfill with related
+results that gesture at the same direction.**
 
+Already-queued / in-flight (cheap, will land soon):
 - **Replicate `target_collect_stone_v2` Δret = +1.10 at higher n** (currently
   z=+1.0, NS) — would make "first net-positive augmented prompt" a
   significant headline.
-- **Run full 21-cell specificity matrix on xhighb / xxhighb** (in flight
-  per [log_2026-04-29](../journals/log_2026-04-29.md), jobs 7596339-55) to
+- **Full 21-cell specificity matrix on xhighb / xxhighb** (in flight per
+  [log_2026-04-29](../journals/log_2026-04-29.md), jobs 7596339-55) to
   back the steerability story on the highest-return checkpoint.
 - **midbeta variant** (β=20/40 + combined, in flight per
   [log_2026-04-29](../journals/log_2026-04-29.md)) to test the
   steerability ↔ return tradeoff hypothesis.
-- **Floor-3 env-state-injection eval** (proposed, not built per
-  [log_2026-04-29](../journals/log_2026-04-29.md)): drops the policy onto
-  Floor 3 with the necessary prereqs to test pure execution, decoupled
-  from path-planning steerability.
+
+Probes for currently UNCERTAIN claims (need to be built):
+
+- **For 1.1 (long-horizon planning):** k-step forward-prediction
+  accuracy vs env ground-truth; plan-quality scoring against
+  human/expert plans; Gemini-as-planner + scripted-low-level-executor
+  return.
+- **For 1.2 (low-level execution):** one-step action prediction
+  accuracy; spatial-layout perceptual probe (adjacency, distance);
+  symbolic-pathfinding probe vs BFS ground-truth.
+- **For 1.4 (LLM encodes useful priors):** LLM-vs-human plan-quality
+  scoring; imagination-text → return-to-go correlation; encoder
+  ablation across LLMs of different prior strength.
+- **For 3.2 / 5.4 (OOD generalization):** env-state-injection on
+  reachable OOD targets (e.g., dropped onto Floor 3 with prereqs)
+  with **matched unaug baseline**; held-out reachable rare-achievement
+  prompt eval with shuffled-emb and unaug controls; OOD probe on
+  C_grounded_2M and midbeta (not just brittle xxhighb); env-side
+  distribution shift (modified obs without prompt change).
+
+Larger-investment probes:
 - **Larger-n (≥100) replication on aug + best prompt vs unaug** to
   resolve the 3.1 / 5.3 question of whether augmentation strictly
   improves over obs-only at the top of the prompt distribution.
