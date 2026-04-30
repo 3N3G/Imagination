@@ -67,7 +67,15 @@ CELLS = {
 
 
 def variant_root(tag: str) -> Path:
+    """Return the eval-results root for a variant tag.
+
+    For Track C we prefer the benchmarks-style dir (matches all other variants)
+    if it exists; fall back to the legacy n=50 freezenone dir otherwise.
+    """
     if tag == "track_c":
+        bench_root = Path("/data/user_data/geney/eval_results_temp/psf_v3_pporn_1e8_grounded_track_c_steer_score")
+        if bench_root.is_dir():
+            return bench_root
         return Path("/data/group_data/rl/geney/eval_results/psf_v2_cadence5_grounded_predonly_top2M")
     return Path(f"/data/user_data/geney/eval_results_temp/psf_v3_pporn_1e8_grounded_{tag}_steer_score")
 
