@@ -26,13 +26,25 @@ echo "=== OOD steering pilot — variant=${VARIANT_TAG}, mode=${MODE}, n=${NUM_E
 echo "  CKPT: ${CKPT}"
 echo "  OUT:  ${OUT_DIR}"
 
-python -m eval.eval_online \
-    --checkpoint "${CKPT}" --hidden-stats "${STATS}" \
-    --embed-backend gemini_embed --hidden-dim 3072 \
-    --extract-prediction-only \
-    --prompt-template-path "${PROMPT}" \
-    --embedding-mode "${MODE}" --num-episodes "${NUM_EPISODES}" \
-    --output-dir "${OUT_DIR}" \
-    --wandb-name "eval_psf_v3_pporn_1e8_grounded_${VARIANT_TAG}_${MODE}_${NUM_EPISODES}ep"
+if [ "${MODE}" = "baseline_concise" ]; then
+    # No --embedding-mode override for the plain baseline run.
+    python -m eval.eval_online \
+        --checkpoint "${CKPT}" --hidden-stats "${STATS}" \
+        --embed-backend gemini_embed --hidden-dim 3072 \
+        --extract-prediction-only \
+        --prompt-template-path "${PROMPT}" \
+        --num-episodes "${NUM_EPISODES}" \
+        --output-dir "${OUT_DIR}" \
+        --wandb-name "eval_psf_v3_pporn_1e8_grounded_${VARIANT_TAG}_${MODE}_${NUM_EPISODES}ep"
+else
+    python -m eval.eval_online \
+        --checkpoint "${CKPT}" --hidden-stats "${STATS}" \
+        --embed-backend gemini_embed --hidden-dim 3072 \
+        --extract-prediction-only \
+        --prompt-template-path "${PROMPT}" \
+        --embedding-mode "${MODE}" --num-episodes "${NUM_EPISODES}" \
+        --output-dir "${OUT_DIR}" \
+        --wandb-name "eval_psf_v3_pporn_1e8_grounded_${VARIANT_TAG}_${MODE}_${NUM_EPISODES}ep"
+fi
 
 echo "=== DONE ==="
