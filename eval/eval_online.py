@@ -200,6 +200,22 @@ _V2_TEMPLATES = {
         "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_achievement_max_v2_thresh6.txt",
         "thinking": _TEMPLATE_DIR / "predict_state_only_prompt_concise_achievement_max_v2_thresh6.txt",
     },
+    "achievement_max_v2_thresh2": {
+        "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_achievement_max_v2_thresh2.txt",
+        "thinking": _TEMPLATE_DIR / "predict_state_only_prompt_concise_achievement_max_v2_thresh2.txt",
+    },
+    "achievement_max_v2_thresh3": {
+        "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_achievement_max_v2_thresh3.txt",
+        "thinking": _TEMPLATE_DIR / "predict_state_only_prompt_concise_achievement_max_v2_thresh3.txt",
+    },
+    "achievement_max_v2_thresh5": {
+        "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_achievement_max_v2_thresh5.txt",
+        "thinking": _TEMPLATE_DIR / "predict_state_only_prompt_concise_achievement_max_v2_thresh5.txt",
+    },
+    "achievement_max_v2_thresh7": {
+        "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_achievement_max_v2_thresh7.txt",
+        "thinking": _TEMPLATE_DIR / "predict_state_only_prompt_concise_achievement_max_v2_thresh7.txt",
+    },
     "explore_ood_v1": {
         "concise":  _TEMPLATE_DIR / "predict_state_only_prompt_concise_explore_ood_v1.txt",
         "thinking": _TEMPLATE_DIR / "predict_state_only_prompt_concise_explore_ood_v1.txt",
@@ -1222,6 +1238,8 @@ def main():
                              "survive_long_v3",
                              "achievement_max_v1", "achievement_max_v2",
                              "achievement_max_v2_thresh6",
+                             "achievement_max_v2_thresh2", "achievement_max_v2_thresh3",
+                             "achievement_max_v2_thresh5", "achievement_max_v2_thresh7",
                              "explore_ood_v1",
                              "v2_eat_bat",
                              "v2_enter_mines",
